@@ -1,0 +1,54 @@
+# Sionna 0.19 environment – verified compatible versions
+# From conda env: sionna019 / Python 3.10
+# Install with: pip install -r requirements_sionna019.txt
+#
+# ── Core framework ────────────────────────────────────────────────────────────
+sionna==0.19.2
+tensorflow==2.15.0
+keras==2.15.0
+tensorflow-estimator==2.15.0
+
+# ── Ray tracing backend ───────────────────────────────────────────────────────
+mitsuba==3.5.2
+drjit==0.4.6
+
+# ── Numerics ──────────────────────────────────────────────────────────────────
+numpy==1.26.4
+scipy==1.15.3
+
+# ── Data / IO ─────────────────────────────────────────────────────────────────
+pandas==2.3.3
+h5py==3.14.0
+
+# ── Geospatial / OSM ──────────────────────────────────────────────────────────
+# osmnx 2.0.x changed features_from_bbox() signature:
+#   NEW: bbox=(west, south, east, north)  ← used in our notebooks
+#   OLD (1.x): north=N, south=S, east=E, west=W  ← DO NOT USE
+osmnx==2.0.7
+geopandas==1.1.3
+shapely==2.1.2
+pyproj==3.7.1
+rasterio==1.4.4
+
+# ── Visualisation ─────────────────────────────────────────────────────────────
+matplotlib==3.10.8
+pyvista==0.47.3
+open3d==0.19.0
+plotly==6.7.0
+
+# ── ITU material notes ────────────────────────────────────────────────────────
+# Sionna 0.19 RadioMaterial properties (all real-valued floats):
+#   mat.relative_permittivity  – ε_r  (real part, ≥ 1)
+#   mat.conductivity           – σ    (S/m, ≥ 0)
+#   mat.scattering_coefficient – S    (0–1)
+#   mat.xpd_coefficient        – XPD  (0–1)
+#   mat.thickness              – d    (m, for volumetric scattering)
+# RadioMaterial constructor (Sionna 0.19):
+#   RadioMaterial(name, relative_permittivity=5.0, conductivity=0.1,
+#                 scattering_coefficient=0.3, xpd_coefficient=0.1)
+# tf.Variable wrapping works for diff-RT:
+#   RadioMaterial(name, relative_permittivity=tf.Variable(5.0, dtype=tf.float32))
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+ipywidgets==8.0.5
+ipython==8.39.0
