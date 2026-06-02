@@ -110,7 +110,7 @@ def header_band(doc, canvas, styles_ref):
     canvas.rect(0, 0, w, 0.8*cm, fill=1, stroke=0)
     canvas.setFont('Helvetica', 7.5)
     canvas.setFillColor(C_GRAY)
-    canvas.drawString(1.5*cm, 0.25*cm, 'Debbane Saikali — Internal Research Document')
+    canvas.drawString(1.5*cm, 0.25*cm, 'Georges S. Kai')
     canvas.drawRightString(w - 1.5*cm, 0.25*cm, f'Page {canvas.getPageNumber()}')
     canvas.restoreState()
 
