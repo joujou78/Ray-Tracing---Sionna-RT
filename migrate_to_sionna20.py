@@ -365,6 +365,17 @@ with open(script_path, 'w') as f:
     f.write(SCRIPT)
 
 print(f'\nSimulation script written: {script_path}')
+
+# ── Step 4: copy Untitled.ipynb (Sionna 2.0 notebook) ────────────────────────
+src_nb  = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Untitled.ipynb')
+dst_nb  = os.path.join(DST_BASE, 'nottingham_sionna20.ipynb')
+if os.path.exists(src_nb):
+    shutil.copy2(src_nb, dst_nb)
+    print(f'  Copied notebook → {dst_nb}')
+else:
+    print(f'  WARNING: Untitled.ipynb not found at {src_nb}')
+
 print('\nDone. To run in Sionna 2.0:')
-print(f'  cd {DST_BASE}')
-print(f'  python3 nottingham_sionna20.py')
+print(f'  jupyter notebook {dst_nb}')
+print(f'  -- or --')
+print(f'  cd {DST_BASE} && python3 nottingham_sionna20.py')
