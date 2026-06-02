@@ -316,7 +316,7 @@ def build_pdf():
         [
             ['Relative permittivity ε_r', '≈ 13.5', 'ITU-R P.2040-2 / P.527'],
             ['Conductivity σ', '≈ 0.22 S/m', 'ITU-R P.527-6'],
-            ['Scattering coefficient S (calibrated)', '0.65', 'CELL CAL — your simulation'],
+            ['Scattering coefficient S (calibrated)', '0.65', 'CELL CAL — my simulation'],
             ['Cross-polarisation XPD factor', '0.10', 'Empirical urban foliage'],
             ['S from literature (urban macro)', '0.6', 'Vitucci et al. 2019'],
             ['ε_r for winter (bare branches)', '4–6', 'ITU-R P.527 — low moisture'],
@@ -326,7 +326,7 @@ def build_pdf():
     ))
     story.append(Spacer(1, 0.3*cm))
     story.append(Paragraph(
-        '<b>Your current S=0.65 is well-calibrated.</b> Literature reports S≈0.6 for urban macro '
+        '<b>My calibrated S=0.65 is well-justified.</b> Literature reports S≈0.6 for urban macro '
         'scenarios (Vitucci 2019). Slightly higher S at 3.6 GHz vs mm-wave is physically justified '
         'because forward scatter from foliage increases at longer wavelengths. Keep S=0.65.',
         s['body']))
