@@ -34,6 +34,11 @@ FILES_TO_COPY = [
     ('nottingham3602.csv',         'measurement_data.csv'),
 ]
 
+# Fallback paths for files not in nottingham_11km/
+FALLBACK_PATHS = {
+    'nottingham3602.csv': os.path.expanduser('~/Documents/FYP2026/nottingham/nottingham3602.csv'),
+}
+
 # ── Step 1: copy scene directory ─────────────────────────────────────────────
 print(f'Creating output directory: {DST_BASE}')
 os.makedirs(DST_BASE, exist_ok=True)
@@ -58,7 +63,13 @@ for src_name, dst_name in FILES_TO_COPY:
             shutil.copy2(src_alt, dst_path)
             print(f'  Copied {src_name} (from results/) → {dst_name}')
         else:
-            print(f'  WARNING: {src_name} not found — skip')
+            # try known fallback locations
+            src_fb = FALLBACK_PATHS.get(src_name)
+            if src_fb and os.path.exists(src_fb):
+                shutil.copy2(src_fb, dst_path)
+                print(f'  Copied {src_name} (fallback {src_fb}) → {dst_name}')
+            else:
+                print(f'  WARNING: {src_name} not found — skip')
 
 # ── Step 3: write standalone Sionna 2.0 simulation script ────────────────────
 script_path = os.path.join(DST_BASE, 'nottingham_sionna20.py')
