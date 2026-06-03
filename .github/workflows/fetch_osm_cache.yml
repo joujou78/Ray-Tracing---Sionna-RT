@@ -1,0 +1,156 @@
+name: Fetch OSM Enrichment Cache
+
+on:
+  workflow_dispatch:
+    inputs:
+      south:
+        description: 'Bounding box SOUTH (lat)'
+        required: false
+        default: '52.918218'
+      north:
+        description: 'Bounding box NORTH (lat)'
+        required: false
+        default: '53.001149'
+      west:
+        description: 'Bounding box WEST (lon)'
+        required: false
+        default: '-1.447449'
+      east:
+        description: 'Bounding box EAST (lon)'
+        required: false
+        default: '-1.206779'
+      branch:
+        description: 'Branch to commit cache to'
+        required: false
+        default: 'claude/sleepy-brown-fm22o'
+
+jobs:
+  fetch-osm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Fetch Overpass data
+        env:
+          SOUTH: ${{ github.event.inputs.south }}
+          NORTH: ${{ github.event.inputs.north }}
+          WEST:  ${{ github.event.inputs.west }}
+          EAST:  ${{ github.event.inputs.east }}
+        run: |
+          python3 - << 'PYEOF'
+          import requests, json, os, time
+
+          south = os.environ['SOUTH']
+          north = os.environ['NORTH']
+          west  = os.environ['WEST']
+          east  = os.environ['EAST']
+          bbox  = f"{south},{west},{north},{east}"
+
+          ENDPOINTS = [
+              'https://overpass-api.de/api/interpreter',
+              'https://overpass.kumi.systems/api/interpreter',
+              'https://overpass.private.coffee/api/interpreter',
+          ]
+
+          def run_query(q, label):
+              for ep in ENDPOINTS:
+                  for attempt in range(3):
+                      try:
+                          r = requests.post(ep, data={'data': q}, timeout=300)
+                          if r.status_code in (429, 503):
+                              time.sleep(30 * (attempt + 1))
+                              continue
+                          r.raise_for_status()
+                          data = r.json()
+                          print(f"  {label}: {len(data['elements'])} elements from {ep}")
+                          return data
+                      except Exception as e:
+                          print(f"  {label}: {ep} error {e}, retry {attempt+1}")
+                          time.sleep(10)
+              raise RuntimeError(f"{label}: all endpoints failed")
+
+          q1 = f"""[out:json][timeout:300];
+          (
+            node["natural"="tree"]({bbox});
+            way["natural"="wood"]({bbox});
+            way["natural"="tree_row"]({bbox});
+            way["landuse"="forest"]({bbox});
+            way["leisure"="park"]({bbox});
+            way["landuse"="allotments"]({bbox});
+            way["landuse"="recreation_ground"]({bbox});
+            way["barrier"="hedge"]({bbox});
+            way["barrier"="wall"]({bbox});
+            way["barrier"="fence"]({bbox});
+            way["barrier"="retaining_wall"]({bbox});
+            way["barrier"="noise_barrier"]({bbox});
+            way["man_made"="embankment"]({bbox});
+            way["natural"="water"]({bbox});
+            relation["natural"="water"]({bbox});
+            way["waterway"="river"]({bbox});
+            way["waterway"="canal"]({bbox});
+            way["landuse"="reservoir"]({bbox});
+            way["man_made"="reservoir"]({bbox});
+          );
+          out body; >; out skel qt;
+          """
+
+          q2 = f"""[out:json][timeout:300];
+          (
+            way["bridge"="yes"]({bbox});
+            way["railway"="rail"]["bridge"="yes"]({bbox});
+            way["railway"="rail"]["embankment"="yes"]({bbox});
+            way["railway"="rail"]["cutting"="yes"]({bbox});
+            way["building"="parking"]({bbox});
+            way["building"="car_park"]({bbox});
+            way["leisure"="stadium"]({bbox});
+            way["leisure"="sports_centre"]({bbox});
+            way["landuse"="industrial"]({bbox});
+            way["building:part"~"."]({bbox});
+          );
+          out body; >; out skel qt;
+          """
+
+          print("Fetching Query 1 (vegetation/barriers/water)...")
+          d1 = run_query(q1, "Q1")
+
+          print("Fetching Query 2 (infrastructure/buildings/parts)...")
+          d2 = run_query(q2, "Q2")
+
+          # Deduplicate merge
+          seen = set()
+          merged = []
+          for e in d1['elements'] + d2['elements']:
+              key = (e['type'], e['id'])
+              if key not in seen:
+                  seen.add(key)
+                  merged.append(e)
+
+          result = {'elements': merged}
+          print(f"Total merged: {len(merged)} elements")
+
+          os.makedirs('results_sionna019', exist_ok=True)
+          with open('results_sionna019/osm_enrichment.json', 'w') as f:
+              json.dump(result, f)
+          print("Saved -> results_sionna019/osm_enrichment.json")
+          PYEOF
+
+      - name: Commit and push cache
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results_sionna019/osm_enrichment.json
+          git diff --cached --quiet && echo "No changes" || \
+            git commit -m "Auto-fetch OSM enrichment cache for Nottingham bbox" && \
+            git push origin ${{ github.event.inputs.branch }}
