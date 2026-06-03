@@ -159,3 +159,112 @@ Our config (30M samples, depth=6) is above the minimum ✅
 | Overall RMSE target | — | < 15 dB |
 
 Target from calibration guide: near-field mean error in **[-5, +5] dB** range.
+
+---
+
+## DIAG PART — Flat Terrain Audit Findings
+**Date:** 2026-06-03 | Flat terrain test with TX=17m AGL, DSM P70, no enrichment
+
+---
+
+### Flat Terrain RMSE Summary (48 receivers, dist ≥ 50m)
+
+| Band | N | Bias (dB) | RMSE (dB) | Mean paths |
+|------|---|-----------|-----------|-----------|
+| <300m | 8 | -11.1 | 11.9 | 13,958 |
+| 300–700m | 10 | +7.1 | 7.2 | 13,756 |
+| 700–1200m | 10 | +15.5 | 15.7 | 12,891 |
+| 1.2–2km | 10 | +31.8 | 31.9 | 11,410 |
+| >2km | 10 | +15.0 | 15.7 | 9,190 |
+| **Overall** | **48** | **+12.6** | **18.7** | — |
+
+Notable: RX_083781 at 2002m → err = +2.5 dB (essentially perfect — flat direction, minimal terrain variation)
+
+PL-FSPL is constant at ~+8 dB across all distances (167m to 2000m) — buildings create fixed
+urban overhead; terrain creates the distance-dependent component.
+
+---
+
+### Flat Terrain Key Findings
+
+1. **Formula confirmed correct** — 11m receiver: err = -0.5 dB
+2. **Building heights correct at P70** — 13,000–14,000 paths per receiver (vs 4–20 in broken DEM)
+3. **Terrain effect is the dominant missing loss:**
+   - 700m: +15 dB overestimate (6m terrain drop)
+   - 1202m: +32 dB overestimate (31m terrain drop)
+   - 2000m: +15 dB overestimate (varies by direction)
+4. **DEM terrain is non-negotiable** — flat terrain RMSE 18.7 dB vs target 8–10 dB
+
+---
+
+### Critical Issues Found in Geometry Audit
+
+#### Issue 1 — Receivers inside buildings (FLAT_TERRAIN=True) ⚠️ CRITICAL
+- All buildings: base_z=0, heights 6–24m
+- All receivers: z=1.5m
+- Receivers at (x,y) inside building footprints are physically inside buildings
+- Drive-test GPS (±3–5m accuracy) can place receivers inside building edges
+- Fix: snap receivers inside building polygons to nearest road centreline
+
+#### Issue 2 — scat_keep_prob correction missing ⚠️ IMPORTANT
+```python
+scat_keep_prob = 0.001   # Sionna traces 1/1000 scatter paths
+# paths.a is NOT scaled by 1/0.001
+# Scatter power underweighted by: 10 × log10(0.001) = −30 dB
+```
+- **Flat terrain impact:** minor (+1–2 dB) — LOS/diffraction dominate
+- **DEM terrain impact:** major — blocked receivers only had 4–20 paths (scatter only).
+  Each scatter path 30 dB too weak → explains much of the −47 dB DEM underestimate
+- Fix: multiply scatter path amplitudes by sqrt(1/scat_keep_prob) before RSSI sum
+
+#### Issue 3 — Antenna pattern fallback risk
+- Cell 4 must be run before TX placement cell
+- If not run: both TX and RX fall back to hw_dipole (2.15 dBi each)
+- Correct: TX=+2.8 dBi, RX=−2.0 dBi → total = 0.8 dBi
+- Wrong: TX=2.15 + RX=2.15 → total = 4.3 dBi
+- **Error: +3.5 dB systematic overestimate** (accounts for ~3.5 dB of +12.6 dB flat bias)
+- Fix: always run Cell 4 before TX cell; add assertion check
+
+---
+
+### DEM Terrain Root Cause Analysis
+
+**Why DEM gave 4–20 paths while flat gives 13,000+:**
+
+1. **Primary: terrain mesh interferes with diffraction edges**
+   - DEM terrain mesh: 65,536 vertices, 130,050 faces (undulating surface)
+   - Building base_z from centroid DEM ≠ terrain mesh at building edges
+   - Terrain mesh pokes through building bases at edges where terrain > centroid elevation
+   - Sionna diffraction edge computation partially blocked by terrain geometry
+   - Flat terrain: terrain at z=0, buildings at z=0 — clean geometry, full diffraction
+
+2. **Secondary: TX/building coordinate inconsistency**
+   - Cell 36 TX placement: uses _SCENE_CENTRE_DTM (may be 0.0 if DTM tile lookup fails)
+   - Cell 14 building placement: uses origin_elev2 = 64.27m (from DEM_TIFF)
+   - If _SCENE_CENTRE_DTM = 0: TX in absolute ASL, buildings in scene-local → 64.27m offset
+
+3. **Tertiary: scat_keep_prob -30 dB underweight on scatter paths**
+   - For DEM-blocked receivers, scatter was the only path mechanism
+   - Those paths are 30 dB too weak without correction
+
+---
+
+### Fix Priority Order
+
+| Fix | Flat terrain | DEM terrain | Effort |
+|-----|-------------|-------------|--------|
+| Run Cell 4 (antenna pattern) | −3.5 dB bias | −3.5 dB bias | Trivial |
+| scat_keep_prob correction | +1–2 dB | +10–20 dB for blocked | Medium |
+| DEM base_z / terrain mesh fix | — | Eliminates -47 dB error | High |
+| RX inside buildings snap | Reduces variance | Reduces variance | Medium |
+
+---
+
+### Comparison: DEM vs Flat Terrain
+
+| Scene | Paths at 167m | Error at 167m | Error at 700m | RMSE (48 RX) |
+|-------|--------------|--------------|--------------|-------------|
+| DEM (broken) | 4–20 | −32 to −50 dB | −15 to −28 dB | ~∞ |
+| Flat terrain | 13,000–14,000 | −3 to −17 dB | +12 to +17 dB | 18.7 dB |
+| DEM (target) | 10,000+ | −5 to +5 dB | −3 to +5 dB | ~8–10 dB |
+
