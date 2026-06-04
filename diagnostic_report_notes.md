@@ -349,3 +349,22 @@ CELL 3: after building 256×256 terrain grid, skip triangles whose centroid fall
 4. CELL DIAG: path counts at 167m should jump to >5,000
 5. If RMSE still high → check scat_keep_prob correction and antenna pattern
 
+### CELL 3 SUCCESS — DEM Scene Built Correctly ✅
+**Date:** 2026-06-04
+
+```
+terrain clip : 52248 building footprints
+terrain.ply  262144 verts  500483 faces  (clipped 21759 faces under buildings)
+Max building z1 : 95.7m  (base_z=72.3m + h=23.4m)
+Done in 588.6s  →  11 PLY files + scene.xml
+```
+
+All three fixes confirmed working:
+1. **512×512 terrain grid** (262144 verts vs 65536 before) ✅
+2. **21,759 terrain faces clipped** under building footprints ✅
+3. **DEM base_z correct** — buildings at 64–95m scene-local (not 0m) ✅
+4. **trimesh extrusion** — brick faces 929k (vs 747k manual) = proper capped solids ✅
+
+**Next:** Run CELL 4 → CELL 5 → CELL 6 → CELL 7 → CELL DIAG to check path counts at 167m.
+Target: >5,000 paths at 167m (vs 274 before fix, vs 4,700 on flat terrain).
+
