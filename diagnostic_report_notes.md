@@ -368,3 +368,33 @@ All three fixes confirmed working:
 **Next:** Run CELL 4 → CELL 5 → CELL 6 → CELL 7 → CELL DIAG to check path counts at 167m.
 Target: >5,000 paths at 167m (vs 274 before fix, vs 4,700 on flat terrain).
 
+
+---
+## Session 3 — STRtree Terrain Clipping Fix (2026-06-04)
+
+### CELL 3 Build Results (STRtree version)
+- terrain clip: 52248 building footprints (STRtree)
+- terrain.ply: 262144 verts, 436132 faces (clipped **86110 faces** under buildings)
+- Previous (any-vertex): 51730 faces clipped
+- Previous (centroid): 21759 faces clipped
+- Progress: centroid→any-vertex→STRtree: 21k→51k→86k clipped faces
+
+### Root Cause Confirmed
+Terrain vertices OUTSIDE building footprints but at heights ABOVE building base_z
+physically intersect building walls in 3D. Example:
+- TX terrain = 65.4m ASL, TX height = 82.4m ASL
+- At 167m: terrain = 67.22m ASL (1.82m HIGHER than TX terrain)
+- STEP 3: terrain at 50m N of TX = 75.7m ASL → local z = 11.4m
+- Building base_z at 167m = 67.22 - 64.27 = 2.95m local
+- Terrain vertex at 11.4m local STABS THROUGH building wall starting at 2.95m
+
+### Fix Applied
+Replaced any-vertex containment check with 2D triangle-polygon intersection test:
+- Build STRtree of all 52248 building footprints (individual polygons, local coords)
+- For each terrain triangle: create 2D polygon, query STRtree with predicate='intersects'
+- Remove triangle if it intersects ANY building footprint (catches edge-crossing triangles)
+- Result: 86110 faces removed vs 51730 previously
+
+### Pending
+- Run CELL 4 → CELL 5 → CELL 6 → CELL DIAG
+- Target: path count at 167m >> 4 (ideally 100s-1000s)
