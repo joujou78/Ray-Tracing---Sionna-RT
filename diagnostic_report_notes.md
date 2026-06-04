@@ -271,6 +271,53 @@ scat_keep_prob = 0.001   # Sionna traces 1/1000 scatter paths
 
 ---
 
+## RESEARCH — Terrain-Building Geometry: Industry Standard Approaches
+**Date:** 2026-06-04
+
+### How the Industry Solves Terrain-Building Mesh Conflicts
+
+#### Standard Production Pipeline: Blender Boolean Difference
+Every production pipeline using Sionna RT + DEM terrain uses **Blender as geometry pre-processor**:
+1. Import DEM terrain as mesh in Blender
+2. Import building footprints (OSM via blosm addon)
+3. Apply **Boolean Difference modifier** — subtract each building footprint volume from terrain
+4. This cuts clean holes in terrain exactly where buildings sit → no intersections
+5. Export as Mitsuba XML → Sionna RT
+
+Buildings use "Elevation from object" on terrain mesh → base automatically snaps to terrain height.
+Reference: [Sionna scene creation discussion](https://github.com/NVlabs/sionna/discussions/386)
+
+#### NVlabs sionna-large-radio-maps Approach
+- Generates `ground.ply` and `buildings.ply` as **completely separate meshes**
+- Terrain NOT clipped under buildings in their code
+- Uses low-resolution terrain (1000-point grid) where elevation changes are gradual
+- Building `base_z` from heightmap at **centroid only**
+- Works on flat European terrain but breaks on hilly UK terrain (Nottingham ~30m variation)
+- Reference: [sionna-large-radio-maps](https://github.com/NVlabs/sionna-large-radio-maps)
+
+#### OpenGERT Approach
+- Uses Blender Python API (bpy) to merge terrain + buildings
+- Imports USGS DEM terrain, imports OSM buildings, applies Blender Boolean operations
+- Most robust — requires Blender as dependency
+- Reference: [OpenGERT arXiv 2501.06945](https://arxiv.org/abs/2501.06945)
+
+### Our Fix vs Industry Standard
+
+| Approach | Method | Robustness |
+|----------|--------|------------|
+| Industry (Blender) | Boolean Difference cuts terrain under buildings | ✅ Perfect — no intersections |
+| NVlabs large-radio-maps | Separate meshes, low-res terrain, centroid base_z | ⚠️ Flat terrain only |
+| Our fix (shapely clip) | Skip terrain triangles inside footprint union | ✅ Python equivalent of Boolean Difference |
+
+Our shapely centroid-check is correct. Potential limitation: 256×256 grid = 43m cells over 11km scene. Buildings smaller than one cell may not be fully clipped. If needed: increase DEM_GRID_N to 512 (21m cells).
+
+### Key Finding from Rome Paper (arXiv 2507.19653)
+- Used flat 10m buildings (no DEM terrain mesh at all) → avoided conflict entirely
+- Their lesson: antenna placement matters 5-130x more than RT parameters
+- Validates our diagnosis: geometry errors cannot be fixed by increasing ray count
+
+---
+
 ## SESSION 2 FINDINGS — DEM Terrain Root Cause Confirmed
 **Date:** 2026-06-04
 
