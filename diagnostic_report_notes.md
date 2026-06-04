@@ -266,5 +266,39 @@ scat_keep_prob = 0.001   # Sionna traces 1/1000 scatter paths
 |-------|--------------|--------------|--------------|-------------|
 | DEM (broken) | 4–20 | −32 to −50 dB | −15 to −28 dB | ~∞ |
 | Flat terrain | 13,000–14,000 | −3 to −17 dB | +12 to +17 dB | 18.7 dB |
-| DEM (target) | 10,000+ | −5 to +5 dB | −3 to +5 dB | ~8–10 dB |
+| Flat + TX/RX at DEM heights | 4,700–4,800 | −27 to −41 dB | TBD | TBD |
+| DEM (target, after terrain clip) | 10,000+ | −5 to +5 dB | −3 to +5 dB | ~8–10 dB |
+
+---
+
+## SESSION 2 FINDINGS — DEM Terrain Root Cause Confirmed
+**Date:** 2026-06-04
+
+### Flat+Elevated Diagnostic Results
+Test: FLAT_TERRAIN=True, TX_Z_ABS_M=82.36m, RX at z=1.5m (offset patch partial)
+
+| RX | Distance | Paths | Error |
+|----|----------|-------|-------|
+| RX_058056 | 167m | 4,730 | −34.1 dB |
+| RX_058054 | 167m | 4,822 | −37.6 dB |
+| RX_058059 | 176m | 4,848 | −41.3 dB |
+| RX_058106 | 300m | 4,570 | −15.7 dB |
+
+**Key result:** 4,700–4,800 paths at 167m on flat scene vs 274 on DEM → terrain mesh confirmed as root cause.
+
+Large errors in this test are expected — RX were at z=1.5m (not elevated) while TX at 82.36m, so TX looks down from far above at ground-level RX behind buildings. This is not representative.
+
+### Two Factors Reducing Path Counts
+1. **TX/RX height change** (17m→82m AGL): 13,000 → 4,700 paths (height geometry, normal)
+2. **DEM terrain mesh** (flat→DEM at same heights): 4,700 → 274 paths (terrain mesh conflict)
+
+### Fix Applied
+CELL 3: after building 256×256 terrain grid, skip triangles whose centroid falls inside the shapely unary_union of all building footprints (scene-local coords). Only active when FLAT_TERRAIN=False. Commit: c3b7a50
+
+### Next Steps
+1. Set FLAT_TERRAIN=False in Cell 0c
+2. Pull latest, run CELL 2 → CELL 3b → CELL 3 → CELL 4 → CELL 5 → CELL 6 → CELL 7 → CELL DIAG
+3. CELL 3 output should show: `terrain clip : N building footprints` and `clipped X faces`
+4. CELL DIAG: path counts at 167m should jump to >5,000
+5. If RMSE still high → check scat_keep_prob correction and antenna pattern
 
