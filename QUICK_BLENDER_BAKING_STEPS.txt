@@ -1,0 +1,306 @@
+═══════════════════════════════════════════════════════════════════════════════
+QUICK BLENDER → SIONNA 2.0 BAKING CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+Your Project:
+  Blender File: /home/georgeskai/Documents/FYP2026/nottingham900/Nottingham
+  Goal: Convert to Sionna 2.0 scene (keep original intact)
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 1: PRESERVE ORIGINAL (5 min)
+═══════════════════════════════════════════════════════════════════════════════
+
+In terminal:
+```bash
+cd /home/georgeskai/Documents/FYP2026/nottingham900/
+
+# Backup original
+cp -r Nottingham Nottingham_ORIGINAL_BACKUP
+
+# Create working copy for Sionna 2.0
+cp -r Nottingham Nottingham_Sionna2_v1
+cd Nottingham_Sionna2_v1
+```
+
+✓ Original untouched at: Nottingham_ORIGINAL_BACKUP/
+✓ Working copy at: Nottingham_Sionna2_v1/
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 2: PREPARE BLENDER FILE (10-15 min)
+═══════════════════════════════════════════════════════════════════════════════
+
+Open Blender: /home/georgeskai/Documents/FYP2026/nottingham900/Nottingham_Sionna2_v1/Nottingham.blend
+
+Action 2.1: Check and Rename Unsupported Materials
+  - Go to Shading workspace
+  - Look for these materials (SIONNA 2.0 DOESN'T SUPPORT):
+    ✗ itu_asphalt     → Rename to: mat-itu_concrete
+    ✗ itu_water       → Rename to: mat-itu_wet_ground
+    ✗ itu_vegetation  → Rename to: mat-itu_concrete
+
+  In Material Properties:
+  1. Select material in dropdown
+  2. Click pencil icon to rename
+  3. Type new name
+  4. Press Enter
+
+Action 2.2: Standardize All Material Names
+  All materials should be named as:
+    mat-itu_brick
+    mat-itu_concrete
+    mat-itu_glass
+    mat-itu_metal
+    mat-itu_wood
+    mat-itu_wet_ground
+    mat-itu_marble
+    mat-itu_plasterboard
+    mat-itu_ceiling_board
+    mat-itu_chipboard
+    mat-itu_floorboard
+    mat-itu_plywood
+
+  Or use color names that auto-map:
+    brick, concrete, glass, wood, metal
+    red, brown, grey, white, green, blue, etc.
+
+Action 2.3: Clean Up
+  File → Clean Up → Remove unused materials/meshes
+  Object → Apply All Transforms (for all geometry)
+  Mesh → Validate Geometry (check for errors)
+
+Action 2.4: Save
+  File → Save (Ctrl+S)
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 3: EXPORT PLY FILES (10-20 min)
+═══════════════════════════════════════════════════════════════════════════════
+
+Create meshes directory:
+```bash
+mkdir -p /home/georgeskai/Documents/FYP2026/nottingham900/Nottingham_Sionna2_v1/meshes
+```
+
+In Blender:
+  1. Select object(s) with same material
+  2. File → Export → Export as PLY (.ply)
+  3. Name: {material_name}.ply
+     Examples: mat-itu_brick.ply, mat-itu_concrete.ply
+  4. Save to: .../Nottingham_Sionna2_v1/meshes/
+  5. Repeat for each material
+
+Or use Python script in Blender Python console:
+```python
+import bpy, os
+export_dir = "/home/georgeskai/Documents/FYP2026/nottingham900/Nottingham_Sionna2_v1/meshes"
+os.makedirs(export_dir, exist_ok=True)
+for obj in bpy.context.scene.objects:
+    if obj.type == 'MESH':
+        bpy.context.view_layer.objects.active = obj
+        obj.select_set(True)
+        mat_name = obj.data.materials[0].name if obj.data.materials else "default"
+        ply_path = os.path.join(export_dir, f"{mat_name}.ply")
+        bpy.ops.export_mesh.ply(filepath=ply_path)
+        obj.select_set(False)
+```
+
+Verify:
+```bash
+ls -lh /home/georgeskai/Documents/FYP2026/nottingham900/Nottingham_Sionna2_v1/meshes/
+# Should see: mat-itu_brick.ply, mat-itu_concrete.ply, etc.
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 4: EXPORT MITSUBA XML (5 min)
+═══════════════════════════════════════════════════════════════════════════════
+
+In Blender:
+  Requires: Mitsuba exporter addon
+  If not installed: pip install blender-mitsuba-exporter
+
+  File → Export → Mitsuba (.xml)
+  Save as: scene_from_blender.xml
+  Location: /home/georgeskai/Documents/FYP2026/nottingham900/Nottingham_Sionna2_v1/
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 5: CONVERT TO SIONNA 2.0 FORMAT (5 min)
+═══════════════════════════════════════════════════════════════════════════════
+
+Using Python converter script:
+
+```bash
+cd /home/user/Ray-Tracing---Sionna-RT
+
+python3 blender_to_sionna2_converter.py \
+  --input /home/georgeskai/Documents/FYP2026/nottingham900/Nottingham_Sionna2_v1/scene_from_blender.xml \
+  --output /home/georgeskai/Documents/FYP2026/nottingham900/Nottingham_Sionna2_v1/scene_sionna2.xml \
+  --meshes-dir /home/georgeskai/Documents/FYP2026/nottingham900/Nottingham_Sionna2_v1/meshes/
+```
+
+Expected output:
+```
+======================================================================
+BLENDER → SIONNA 2.0 CONVERTER
+======================================================================
+Input:  .../scene_from_blender.xml
+Output: .../scene_sionna2.xml
+
+Found N materials in input:
+  - mat-itu_brick
+  - mat-itu_concrete
+  - ...
+
+Wrote: .../scene_sionna2.xml
+
+Conversion Summary:
+  Input materials  : N
+  Output materials : N
+  Remappings       : 0
+  Shapes           : NNN
+  BSDF Type        : twosided (Sionna 2.0 standard)
+
+✓ Conversion completed successfully!
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 6: VERIFY OUTPUT (5 min)
+═══════════════════════════════════════════════════════════════════════════════
+
+Check files exist:
+```bash
+cd /home/georgeskai/Documents/FYP2026/nottingham900/Nottingham_Sionna2_v1/
+
+ls -lh scene_sionna2.xml
+ls -lh meshes/*.ply  # Should see all PLY files
+```
+
+Check XML format:
+```bash
+head -50 scene_sionna2.xml
+```
+
+Should see:
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<scene version="2.1.0">
+  <!-- ── ITU-R P.2040-2 Materials (Sionna 2.0) ────────── -->
+  <bsdf type="twosided" id="mat-itu_brick">
+    <float name="eta" value="3.75"/>
+    <float name="k" value="0.038"/>
+    <spectrum name="theta_0" value="400:0.04 700:0.04"/>
+    <rgb name="diffuse_reflectance" value="1.0 0.498 0.055"/>
+  </bsdf>
+  ...
+  <shape type="ply">
+    <string name="filename" value="meshes/mat-itu_brick.ply"/>
+    <ref id="mat-itu_brick" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  ...
+</scene>
+```
+
+Test load in Sionna Python:
+```python
+import mitsuba as mi
+mi.set_variant('scalar_rgb')
+
+scene = mi.load_file("/home/georgeskai/Documents/FYP2026/nottingham900/Nottingham_Sionna2_v1/scene_sionna2.xml")
+print("✓ Scene loaded successfully!")
+print(f"BBox: {scene.bbox()}")
+print(f"Num meshes: {len(list(scene.shapes()))}")
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 7: ORGANIZE & DOCUMENT (5 min)
+═══════════════════════════════════════════════════════════════════════════════
+
+Final structure:
+```
+Nottingham_Sionna2_v1/
+├── Nottingham.blend              # Blender file (updated)
+├── scene_from_blender.xml        # Blender XML export
+├── scene_sionna2.xml             # ← MAIN SCENE FILE (use this!)
+├── meshes/
+│   ├── mat-itu_brick.ply
+│   ├── mat-itu_concrete.ply
+│   ├── mat-itu_glass.ply
+│   ├── mat-itu_wood.ply
+│   ├── mat-itu_metal.ply
+│   ├── mat-itu_wet_ground.ply
+│   └── ... (other materials)
+└── README.txt                    # Document material mappings
+```
+
+Create README:
+```bash
+cat > /home/georgeskai/Documents/FYP2026/nottingham900/Nottingham_Sionna2_v1/README.txt << 'EOF'
+# Nottingham Sionna 2.0 Scene
+
+Generated from: Nottingham.blend
+Format: Sionna 2.0 (mat-itu_* materials, twosided BSDF)
+Scene file: scene_sionna2.xml
+
+## Sionna 2.0 ITU Materials (14 total)
+- mat-itu_brick, mat-itu_concrete, mat-itu_glass, mat-itu_metal, mat-itu_wood
+- mat-itu_wet_ground, mat-itu_medium_dry_ground, mat-itu_very_dry_ground
+- mat-itu_marble, mat-itu_plasterboard, mat-itu_ceiling_board
+- mat-itu_chipboard, mat-itu_floorboard, mat-itu_plywood
+
+## Material Remappings (Sionna 2.0 compatibility)
+Sionna 2.0 does NOT support: asphalt, water, vegetation
+- asphalt → mat-itu_concrete
+- water → mat-itu_wet_ground
+- vegetation → mat-itu_concrete
+
+## Usage
+Load in Sionna 2.0:
+  import mitsuba as mi
+  scene = mi.load_file("scene_sionna2.xml")
+
+## Original Backup
+Preserved at: ../Nottingham_ORIGINAL_BACKUP/
+EOF
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+✓ Original file preserved: Nottingham_ORIGINAL_BACKUP/Nottingham.blend
+✓ Sionna 2.0 scene ready: Nottingham_Sionna2_v1/scene_sionna2.xml
+✓ All meshes in: Nottingham_Sionna2_v1/meshes/
+✓ Material mapping complete with Sionna 2.0 compatibility
+✓ Can use with sionna_2_main_simulation.ipynb
+
+Next:
+  1. Copy scene_sionna2.xml to simulation directory
+  2. Update notebook paths to point to Nottingham_Sionna2_v1/
+  3. Run propagation simulation
+
+═══════════════════════════════════════════════════════════════════════════════
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════════
+
+Problem: "Material 'itu_asphalt' not found in Sionna 2.0"
+Solution: Rename to mat-itu_concrete in Blender BEFORE exporting
+  In Material Properties: Click name → Type new name → Enter
+
+Problem: PLY files not found (shape references missing)
+Solution: Ensure PLY files are in meshes/ and XML references are correct
+  grep "filename value=" scene_sionna2.xml
+  Should show: meshes/mat-itu_*.ply
+
+Problem: Scene won't load in Mitsuba
+Solution: Check XML structure with xmllint
+  xmllint scene_sionna2.xml
+  Should show no errors
+
+Problem: Materials look wrong visually
+Solution: Verify RGB colors in scene_sionna2.xml
+  grep "diffuse_reflectance" scene_sionna2.xml
+  mat-itu_brick should be: "1.0 0.498 0.055"
+  mat-itu_concrete should be: "0.539 0.539 0.539"
+
+═══════════════════════════════════════════════════════════════════════════════
+TOTAL TIME: ~60 minutes
+═══════════════════════════════════════════════════════════════════════════════
