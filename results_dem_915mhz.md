@@ -362,7 +362,78 @@ Compares measured RSSI against theoretical FSPL (upper bound — assumes no obst
 
 ---
 
-## 8. Pending Results
+## 8. Main PathSolver Results (CELL 7)
+
+**Run:** 2026-06-08 23:31 | Time: 912.6s (~15 min) | Errors: 0  
+**Config:** 30M samples/batch | batch=5 | max_depth=15 | all mechanisms ON
+
+### Solver Coverage
+
+| Metric | Value |
+|---|---|
+| Receivers attempted | 1,200 |
+| **Receivers resolved** | **870 (72.5%)** |
+| Zero-path (NaN) | **330 (27.5%)** |
+| Total rays logged | 87,938 |
+| NaN distance range | 1,027 – 9,342 m |
+| **NaN mean distance** | **7,610 m** — far-field, deep NLOS |
+
+> 330 receivers returned no paths despite 30M samples and max_depth=15.  
+> These are predominantly far-field receivers (mean 7.6 km) in deep NLOS  
+> where no viable ray path could be found within the sample budget.
+
+### RSSI and Path Loss Summary (Scatter ON, N=870)
+
+| Metric | Best | Incoherent | Coherent |
+|---|---|---|---|
+| RSSI mean (dBm) | −92.4 | −89.8 | −86.7 |
+| RSSI std (dB) | 28.3 | 27.2 | 27.5 |
+| RSSI min (dBm) | −155.7 | −153.6 | −150.6 |
+| RSSI max (dBm) | −11.4 | −10.6 | −7.8 |
+| PL mean (dB) | 141.4 | 138.8 | 135.7 |
+| PL std (dB) | 28.3 | 27.2 | 27.5 |
+
+### Sim vs Measured — Overall Accuracy (Incoherent combining, N=870)
+
+| Metric | RSSI | Path Loss |
+|---|---|---|
+| **Bias** | **−6.49 dB** | **−0.71 dB** |
+| **RMSE** | **20.550 dB** | **19.513 dB** |
+| **STD** | 19.511 dB | 19.511 dB |
+| **R²** | −1.085 | −0.880 |
+
+**Sign convention:** error = sim − measured. Negative = sim under-predicts.
+
+**Key insight — PL bias near zero:**
+- RSSI bias = −6.49 dB (Sionna under-predicts RSSI using TX_CONDUCTED=49.0 dBm)  
+- PL bias = −0.71 dB ≈ 0 (near-perfect when using EIRP=56.2 dBm for PL_meas)  
+- The 7.2 dB offset (56.2 − 49.0) accounts for TX antenna gain — the reference planes cancel
+
+**R² is negative** because the model variance (std=19.5 dB) exceeds the measurement variance — Sionna predicts a wider spread of path loss than the Ofcom data. This is expected for dense urban NLOS with 27.5% zero-path receivers.
+
+### Path Loss Error by Distance Band
+
+| Band | N | Bias (dB) | RMSE (dB) | STD (dB) | R² |
+|---|---|---|---|---|---|
+| 0–500m | 44 | −15.63 | 17.367 | 7.655 | −1.816 |
+| 500m–1km | 43 | +2.77 | 14.311 | 14.206 | −6.591 |
+| 1–2km | 252 | −8.70 | 22.525 | 20.817 | −23.17 |
+| 2–4km | 262 | −3.67 | 17.657 | 17.305 | −7.095 |
+| **>4km** | **269** | **+11.52** | **19.245** | **15.441** | **−9.985** |
+
+**Distance-band observations:**
+
+| Band | Behaviour | Likely cause |
+|---|---|---|
+| 0–500m | Bias −15.6 dB (sim over-predicts RSSI by 15 dB) | Near-TX receivers — high path count, possible multi-bounce artefacts |
+| 500m–1km | Bias +2.8 dB (near-zero) | Best-performing band — balanced NLOS |
+| 1–2km | Bias −8.7 dB | Dense urban NLOS — excessive multipath |
+| 2–4km | Bias −3.7 dB | Good performance, moderate NLOS |
+| >4km | Bias +11.5 dB (sim under-predicts RSSI) | Far-field — insufficient samples, 30M not enough at this depth |
+
+---
+
+## 9. Pending Results
 
 | Cell | Description | Status |
 |---|---|---|
