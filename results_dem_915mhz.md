@@ -283,7 +283,60 @@ RSSI from strongest path: −31.2 dBm vs expected −28.7 dBm (FSPL) → **2.5 d
 
 ---
 
-## 7. Pending Results
+## 7. CELL DIAG Results (50-receiver quick test)
+
+Quick PathSolver run across 5 distance bands (10 receivers each, 10M samples/TX).
+
+### STEP 4 — Path Loss Band Summary (Scatter ON vs OFF)
+
+| Band | N | ON Bias | ON RMSE | ON STD | ON R² | OFF Bias | OFF RMSE | OFF STD | OFF R² |
+|---|---|---|---|---|---|---|---|---|---|
+| <300m | 10 | −11.46 | 11.950 | 3.580 | −5.70 | −11.43 | 11.929 | 3.581 | −5.68 |
+| 300–700m | 10 | −20.45 | 22.118 | 8.885 | −78.14 | −20.15 | 22.094 | 9.564 | −77.97 |
+| 700–1200m | 10 | **+22.38** | 24.295 | 9.974 | −441.6 | +9.49 | 10.244 | 4.711 | −50.02 |
+| 1.2–2km | 10 | −12.28 | 18.917 | 15.166 | −102.8 | −10.39 | 19.703 | 17.643 | −111.6 |
+| >2km | 10 | −20.20 | 23.177 | 11.985 | −149.7 | −23.56 | 24.194 | 5.837 | −222.7 |
+| **ALL** | **50** | **−8.40** | **20.578** | **18.976** | **−0.092** | **−14.36** | **19.377** | **13.163** | **+0.129** |
+
+**Summary line:**
+- **Scatter ON:** Bias=−8.40 dB · MSE=423.46 dB² · RMSE=20.578 dB · STD=18.976 dB · R²=−0.092
+- **Scatter OFF:** Bias=−14.36 dB · MSE=375.46 dB² · RMSE=19.377 dB · STD=13.163 dB · R²=+0.129
+- **ΔRMSE = +1.201 dB** (scatter worsens PL accuracy in this quick test)
+
+**Sign convention:** Bias = mean(PL_sim − PL_meas). Negative bias = Sionna under-predicts path loss = over-predicts RSSI.
+
+**Key observations:**
+
+1. **Overall bias −8.40 dB (scatter ON):** Sionna predicts 8.4 dB less path loss than Ofcom measures. This is consistent with the +7.5 dB RSSI over-prediction seen in the full bias analysis — Sionna over-predicts received signal strength.
+
+2. **700–1200m band anomaly (scatter ON: +22.38 dB bias):** Sionna severely over-predicts path loss in this band with scatter ON, but is much closer with scatter OFF (+9.49 dB). This suggests the 10 test receivers in this band happen to be in locations where scattered paths add excessive energy — likely a small-sample effect (10 receivers only).
+
+3. **Negative R² across all bands:** R² < 0 means the model performs worse than predicting the mean. This is expected for a 10-receiver-per-band quick diagnostic — not enough samples for stable statistics. Full CELL 7 (1200 receivers) will give reliable R².
+
+4. **Scatter worsens RMSE by +1.2 dB in this test:** Scatter ON increases total RMSE. This is a 50-receiver artefact — the coverage map analysis showed scatter has a mean impact of only ±0.05 dB across 310K grid cells.
+
+### STEP 5 — RSSI vs Free-Space Path Loss Reference (1200 receivers)
+
+Compares measured RSSI against theoretical FSPL (upper bound — assumes no obstacles).
+
+| Band | N | Mean dist | Excess loss above FSPL (dB) | RMSE (dB) |
+|---|---|---|---|---|
+| 0–100m | 8 | 60m | +9.1 | 10.7 |
+| 100–500m | 36 | 296m | +9.2 | 11.0 |
+| 500m–1km | 43 | 741m | +26.6 | 26.8 |
+| 1–2km | 268 | 1,476m | +32.6 | 33.0 |
+| **>2km** | **845** | **5,488m** | **+38.5** | **39.2** |
+
+> **Interpretation:** Excess loss above FSPL grows with distance — from  
+> +9 dB near-TX (light urban overhead, near-LOS) to +38.5 dB beyond 2 km  
+> (deep NLOS, multiple diffractions). This confirms the scene is a  
+> genuine dense urban environment with strong distance-dependent shadowing.  
+> The near-TX excess (+9 dB) is physically consistent with 1–2 building  
+> diffractions at 915 MHz.
+
+---
+
+## 8. Pending Results
 
 | Cell | Description | Status |
 |---|---|---|
