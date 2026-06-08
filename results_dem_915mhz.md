@@ -83,6 +83,27 @@ The 36 LOS receivers are the **first sequential receivers** in the drive route (
 > scattering are the primary propagation mechanisms for the  
 > vast majority of measurement points.
 
+### Building Interior Check (CELL 5g)
+
+3D top-down ray cast from each RX upward against building mesh (1,289,969 faces).
+
+| Property | Value |
+|---|---|
+| Inside building | **20 (1.7%)** |
+| Clear / open sky | 1,180 (98.3%) |
+| Mesh faces loaded | 1,289,969 |
+| itu_brick | 27,710 faces |
+| itu_concrete | 17,471 faces |
+| itu_glass | 832,245 faces |
+| itu_metal | 412,481 faces |
+| itu_wood | 62 faces |
+
+> 20 receivers (1.7%) are positioned inside or directly under a building  
+> roof. These may show anomalously low simulated RSSI as Sionna will  
+> compute paths through building walls, while the Ofcom measurement was  
+> taken on a public road (likely a GPS positioning error placing the  
+> receiver inside a building footprint).
+
 ---
 
 ## 4. Coverage Map Results (CELL 9)
