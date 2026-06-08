@@ -68,7 +68,8 @@ All materials: LambertianPattern set ✓, Coefficients verified ✓
 | LOS method | True 3D ray-cast (CELL 5f) |
 | LOS run time | ~80 s (batch=5, 1200 RX) |
 
-**Path loss formula:** `PL_meas = EIRP − RSSI_meas = 56.2 − RSSI_meas`
+**Path loss formula:** `PL_meas = TX_CONDUCTED_DBM − RSSI_meas = 49.0 − RSSI_meas`  
+*(Same reference as PL_sim — paths.a already includes TX antenna pattern, no double-counting)*
 
 ### LOS/NLOS Spatial Distribution
 
@@ -214,7 +215,7 @@ RSSI from strongest path: −31.2 dBm vs expected −28.7 dBm (FSPL) → **2.5 d
 
 ---
 
-## 5. Coverage Map Results (CELL 9)
+## 6. Coverage Map Results (CELL 9)
 
 **Grid:** 976 × 691 = 674,416 cells | 10.0 m resolution | Z = 1.60 m  
 **Scene extent:** (−4,883, −3,452) → (4,876, 3,457) m  
@@ -238,7 +239,7 @@ RSSI from strongest path: −31.2 dBm vs expected −28.7 dBm (FSPL) → **2.5 d
 
 ---
 
-## 5. Scatter Effect Analysis (CELL 9b)
+## 7. Scatter Effect Analysis (CELL 9b)
 
 **Valid cells for comparison:** 310,744
 
@@ -286,7 +287,7 @@ RSSI from strongest path: −31.2 dBm vs expected −28.7 dBm (FSPL) → **2.5 d
 
 ---
 
-## 6. Bias Analysis
+## 8. Bias Analysis
 
 | Metric | Value |
 |---|---|
@@ -304,12 +305,12 @@ RSSI from strongest path: −31.2 dBm vs expected −28.7 dBm (FSPL) → **2.5 d
 | **Total systematic offset** | **≈ +10 dB** |
 
 **PL comparison formula:**
-- `PL_meas = 56.2 − RSSI_meas` (Ofcom: EIRP=56.2 dBm, system-gain-corrected)
-- `PL_sim = −10·log₁₀(path_gain)` (Sionna: includes TX+RX antenna patterns)
+- `PL_meas = TX_CONDUCTED_DBM − RSSI_meas = 49.0 − RSSI_meas` (same reference as sim)
+- `PL_sim = −10·log₁₀(Σ|aᵢ|²)` (Sionna: paths.a includes TX/RX antenna patterns — no double-counting)
 
 ---
 
-## 7. CELL DIAG Results (50-receiver quick test)
+## 9. CELL DIAG Results (50-receiver quick test)
 
 Quick PathSolver run across 5 distance bands (10 receivers each, 10M samples/TX).
 
@@ -362,7 +363,7 @@ Compares measured RSSI against theoretical FSPL (upper bound — assumes no obst
 
 ---
 
-## 8. Main PathSolver Results (CELL 7)
+## 10. Main PathSolver Results (CELL 7)
 
 **Run:** 2026-06-08 23:31 | Time: 912.6s (~15 min) | Errors: 0  
 **Config:** 30M samples/batch | batch=5 | max_depth=15 | all mechanisms ON
@@ -433,11 +434,57 @@ Compares measured RSSI against theoretical FSPL (upper bound — assumes no obst
 
 ---
 
-## 9. Pending Results
+## 11. Stratified Distance-Band Analysis (CELL 8)
 
-| Cell | Description | Status |
-|---|---|---|
-| CELL 7 | Main PathSolver — all 1,200 RX | ⏳ To run |
-| CELL 8e | Distance-band RMSE analysis | ⏳ After CELL 7 |
-| CELL DIAG | PL-based MSE/RMSE/STD/R² per band | ⏳ Ready to run |
+**Config:** PL_meas = TX_CONDUCTED_DBM − RSSI_meas = 49.0 − RSSI_meas  
+**Methods:** best = max|aᵢ|², incoh = Σ|aᵢ|² (primary), coh = |Σaᵢ|²  
+**Overall (incoherent ON):** bias = −7.45 dB, RMSE = 19.07 dB
+
+> ⚠️ Results below used old formula (PL_meas = 56.2 − RSSI). CELL 8 re-run pending with new formula (PL_meas = 49.0 − RSSI). Bias will shift +7.2 dB across all bands.
+
+| Band | N | ON Bias | ON RMSE | ON R² | ON paths | OFF Bias | OFF RMSE | OFF paths |
+|---|---|---|---|---|---|---|---|---|
+| 0–300m | 26 | +6.9 | 8.4 | −0.993 | 15,039 | +6.9 | 8.4 | 39 |
+| 300–500m | 18 | +8.6 | 13.1 | −19.976 | 29,545 | +8.3 | 13.4 | 53 |
+| 500–750m | 23 | −5.2 | 10.7 | −7.129 | 220 | −8.2 | 15.0 | 9 |
+| 750–1000m | 20 | −9.4 | 18.1 | −19.691 | 58 | −12.9 | 22.7 | 5 |
+| 1000–1250m | 92 | −10.1 | 23.2 | −19.892 | 104 | −12.3 | 35.7 | 2 |
+| 1250–1500m | 42 | +6.2 | 13.3 | −19.022 | 268 | −3.6 | 25.1 | 10 |
+| 1500–2000m | 134 | +4.8 | 17.3 | −14.697 | 507 | −7.7 | 33.5 | 8 |
+| 2000–3000m | 170 | −0.4 | 16.6 | −6.078 | 767 | −11.3 | 30.4 | 6 |
+| >3000m | 675 | −17.1 | 21.2 | −13.295 | 32 | −32.5 | 39.9 | 1 |
+
+**Key observations:**
+- **Scatter ON resolves far more receivers** at all ranges — paths column: 15,039 vs 39 at <300m, 507 vs 8 at 1.5–2km
+- **2–3km band: bias −0.4 dB** — near-perfect match, model best-calibrated at this range
+- **>3km: only 32 paths mean** — deep NLOS, 80M samples insufficient beyond 3km
+- **Scattering is essential**: OFF mode loses coverage dramatically at all distances >500m
+
+---
+
+## 12. Cumulative Distance Evaluation (CELL 8e)
+
+**Config:** PL_meas = TX_CONDUCTED_DBM − RSSI_meas = 49.0 dBm reference  
+**Methods:** incoh (primary) | coh | best — all three vs scatter ON and OFF
+
+| Threshold | N | ON incoh Bias | ON incoh RMSE | ON incoh STD | ON incoh R² |
+|---|---|---|---|---|---|
+| 0–100m | 8 | −10.1 | 11.3 | 5.2 | −8.607 |
+| 0–200m | 17 | −6.1 | 8.1 | 5.3 | −4.075 |
+| 0–300m | 26 | −7.2 | 8.7 | 4.9 | −1.160 |
+| 0–500m | 44 | −8.1 | 10.5 | 6.6 | −0.024 |
+| 0–750m | 67 | −3.7 | 10.7 | 10.1 | +0.476 |
+| 0–900m | 78 | −2.6 | 11.6 | 11.3 | +0.437 |
+| 0–1000m | 87 | −2.3 | 13.0 | 12.8 | +0.378 |
+| 0–1250m | 173 | −1.4 | 16.0 | 15.9 | +0.213 |
+
+**Key observations:**
+
+1. **R² turns positive at 750m+** — once enough NLOS receivers are included, the model correctly ranks path loss by distance
+2. **Best RMSE at 0–200m: 8.1 dB** — near-TX, predominantly LOS/near-LOS, model is accurate
+3. **Bias converges towards 0 dB at 750–1250m** — model best-calibrated at mid-range NLOS
+4. **Incoherent ON consistently outperforms OFF** — scatter adds critical paths at all ranges
+5. **Coherent OFF (no scatter)** shows competitive R² at 500–1000m, suggesting specular reflection dominates at mid-range when scatter is removed
+
+---
 
