@@ -152,7 +152,33 @@ The 36 LOS receivers are the **first sequential receivers** in the drive route (
 
 ---
 
-## 4. Amplitude Normalization Validation (CELL A)
+## 4. Scene Visualisation (CELL 6b)
+
+### DEM Terrain + TX/RX Layout
+
+- **TX** (red star): local position (−4208, 1365, 96.1 m) — northwest of scene centre, elevated on hill
+- **Drive route** (white line): starts near TX, moves east/south-east across lower terrain
+- **Terrain range**: 0–170 m (local datum, z=0 = 50.5 m ASL) — strong relief visible (brown hills to north/south)
+- **Scene size**: ~20 × 20 km shown; simulation bbox ~9.7 × 6.9 km
+
+### RX Height Distribution
+
+- RX heights span **−30 to +85 m** (local datum) — receivers placed at terrain_z + 1.5 m AGL
+- **Negative Z receivers**: terrain below local datum (z=0 = 50.5 m ASL) — not underground, simply lower-lying areas (~25 m ASL)
+- Bimodal distribution: cluster at −25 to −5 m (flat lower Nottingham) and +20 to +35 m (mid-elevation suburbs)
+- No receivers flagged underground — DEM height sampling confirmed correct
+
+### Near-TX Route (First 50 Receivers)
+
+- First 50 receivers (RX_000000–RX_000049) start directly south of TX and travel north along residential streets
+- RSSI range −59 to −23 dBm across first 50 receivers
+- **RX_000001–RX_000013** (near TX, <200 m): RSSI −23 to −35 dBm (green) — LOS/near-LOS
+- **RX_000030–RX_000050** (~400–700 m): RSSI −45 to −59 dBm (orange/red) — entering NLOS
+- Route consistent with Ofcom drive test beginning near base station and expanding outward
+
+---
+
+## 5. Amplitude Normalization Validation (CELL A)
 
 Verifies `paths.a` normalization against Free-Space Path Loss (FSPL) at 5 known distances before the main simulation.
 
