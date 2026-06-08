@@ -104,6 +104,40 @@ The 36 LOS receivers are the **first sequential receivers** in the drive route (
 > taken on a public road (likely a GPS positioning error placing the  
 > receiver inside a building footprint).
 
+### Route Characterisation (CELL 5e)
+
+| Property | Value |
+|---|---|
+| Total receivers | 1,200 |
+| Unique locations | 1,184 (rounded to 4 d.p. ≈ 11 m grid) |
+| Duplicate positions | 16 (1.3%) |
+| Route start | Near TX (lat 52.988, lon −1.26) |
+| Route end | ~9 km south-east (lat 52.95, lon −1.14) |
+| Max distance | ~9,000 m |
+
+**RSSI by distance band:**
+
+| Band (m) | N | Mean RSSI (dBm) | Std (dB) |
+|---|---|---|---|
+| 0–100 | 8 | −26.6 | 3.9 |
+| 100–200 | 9 | −27.2 | 3.7 |
+| 200–300 | 10 | −38.0 | 4.4 |
+| 300–500 | 18 | −49.3 | 3.0 |
+| 500–750 | 22 | −63.7 | 3.2 |
+| 750–1k | 20 | −70.2 | 4.1 |
+| 1k–1.25k | 92 | −79.0 | 5.2 |
+| 1.25k–1.5k | 43 | −75.4 | 3.0 |
+| 1.5k–2k | 135 | −79.2 | 4.4 |
+| 2k–2.5k | 126 | −83.6 | 5.9 |
+| 2.5k–3k | 43 | −91.7 | 1.6 |
+| **>3k** | **674** | **−97.5** | 8.2 |
+
+> **56% of receivers (674/1200) are beyond 3 km.** The drive route travels  
+> south-east from the TX, covering a wide range of urban propagation  
+> conditions. RSSI decays monotonically with distance, consistent with  
+> increasing NLOS depth. The low std at each band (1.6–8.2 dB) indicates  
+> consistent propagation conditions within each distance band.
+
 ### Receiver Filter Summary (CELL 5h)
 
 | Category | Count | % | Action |
