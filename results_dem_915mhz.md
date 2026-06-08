@@ -104,6 +104,18 @@ The 36 LOS receivers are the **first sequential receivers** in the drive route (
 > taken on a public road (likely a GPS positioning error placing the  
 > receiver inside a building footprint).
 
+### Receiver Filter Summary (CELL 5h)
+
+| Category | Count | % | Action |
+|---|---|---|---|
+| Inside building | 20 | 1.7% | Informational — kept |
+| Beyond 4 km | 581 | 48.4% | Informational — kept |
+| **Total kept for CELL 8** | **1,200** | **100%** | All receivers retained |
+
+> No receivers are filtered out. The 20 indoor and 581 far-field  
+> receivers are flagged for diagnostic purposes only. All 1,200  
+> are passed to the PathSolver in CELL 7/8.
+
 ---
 
 ## 4. Coverage Map Results (CELL 9)
