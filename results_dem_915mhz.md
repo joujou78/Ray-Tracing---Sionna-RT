@@ -61,12 +61,27 @@ All materials: LambertianPattern set ✓, Coefficients verified ✓
 |---|---|
 | Total Ofcom measurements | 94,791 |
 | Receivers selected | **1,200** (first sequential) |
-| LOS receivers | 36 (3%) |
-| NLOS receivers | 1,164 (97%) |
+| LOS receivers | **36 (3.0%)** |
+| NLOS receivers | **1,164 (97.0%)** |
 | RSSI range | −123.3 to −18.3 dBm |
 | PL range (56.2 − RSSI) | 74.5 to 179.5 dB |
+| LOS method | True 3D ray-cast (CELL 5f) |
+| LOS run time | ~80 s (batch=5, 1200 RX) |
 
 **Path loss formula:** `PL_meas = EIRP − RSSI_meas = 56.2 − RSSI_meas`
+
+### LOS/NLOS Spatial Distribution
+
+The 36 LOS receivers are the **first sequential receivers** in the drive route (RX_000000–RX_000035), all within ~200 m of the TX site. This is consistent with the drive route starting near the base station and moving outward into dense urban NLOS.
+
+| Distance Band | LOS | NLOS | Notes |
+|---|---|---|---|
+| 0–200 m | 36 (100%) | 0 | Near-TX, all clear |
+| >200 m | 0 (0%) | 1,164 (100%) | Dense urban blockage |
+
+> **97% NLOS confirms a dense urban scenario.** Diffraction and  
+> scattering are the primary propagation mechanisms for the  
+> vast majority of measurement points.
 
 ---
 
