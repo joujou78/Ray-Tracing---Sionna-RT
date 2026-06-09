@@ -25,3 +25,21 @@
 - Record overall RMSE
 - Rebuild scene with full roads (274k verts, already built)
 - Run differentiable RT calibration
+
+### Full CELL 8e Results — Run 3 (DEM + Limited Roads)
+
+| Threshold | Method | N | RMSE | Bias | R² |
+|-----------|--------|---|------|------|----|
+| 0–900m | ON incoh | 78 | 7.7 dB | −4.8 | +0.750 |
+| 0–1000m | ON incoh | 87 | 7.9 dB | −5.1 | +0.769 ← peak R² |
+| 0–1250m | ON incoh | 179 | 11.5 dB | −8.2 | +0.593 |
+| 0–1500m | ON incoh | 221 | 11.6 dB | −8.5 | +0.522 |
+| 0–1750m | ON incoh | 289 | 13.4 dB | −10.2 | +0.222 |
+| 0–2000m | ON incoh | 355 | 14.1 dB | −11.0 | +0.067 |
+| 0–2250m | ON incoh | 448 | 14.5 dB | −11.6 | −0.107 |
+| 0–2500m | ON incoh | 482 | 15.2 dB | −12.3 | −0.215 |
+
+**Key finding:** Systematic negative bias worsening with distance (−5 → −12 dB)
+→ scatter too low at long range (per-material S: concrete=0.20, brick=0.25)
+→ Fix: run differentiable RT calibration to find optimal S per material
+→ Expected fix: SCATTER_OVERRIDE ~0.50 or calibrated per-material values
