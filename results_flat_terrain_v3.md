@@ -98,13 +98,46 @@ Three combining methods evaluated per distance threshold:
 
 ## CELL P.833 — Vegetation Excess Loss
 
-> **Status: Pending — OSM tag fix required.**  
-> Current notebook uses overly broad OSM tags that include parks, gardens, meadows and grassland, causing the mean vegetation depth to be ~140 m and mean Weissberger loss ~21 dB (physically unrealistic for urban Nottingham).  
-> The corrected notebook restricts tags to dense woodland only (`landuse=forest/wood`, `natural=wood`).  
-> Steps to re-run:
-> 1. Pull latest notebook from branch `claude/cool-cori-rrWbY`
-> 2. Delete `scene/veg_polygons.geojson`
-> 3. Re-run CELL P.833
+**OSM tags:** `landuse=forest/wood`, `natural=wood` (dense woodland only — parks/gardens/meadow excluded)  
+**Downloaded:** 273 features → 271 UTM polygons  
+**Frequency:** 0.9160 GHz
+
+### Raw output
+
+| Band | N | Mean veg loss (dB) | Max veg loss (dB) | N_veg% |
+|------|---|-------------------|------------------|--------|
+| 0–300 m | 26 | 0.00 | 0.00 | 0.0% |
+| 300–500 m | 18 | 0.00 | 0.00 | 0.0% |
+| 500–750 m | 23 | 0.00 | 0.00 | 0.0% |
+| 750–1000 m | 20 | 3.32 | 7.33 | 50.0% |
+| 1000–1250 m | 92 | 12.79 | 25.27 | 97.8% |
+| 1250–1500 m | 42 | 21.66 | 30.77 | 100.0% |
+| 1500–2000 m | 134 | 27.10 | 58.92 | 100.0% |
+| 2000–3000 m | 170 | 27.67 | 55.45 | 100.0% |
+| 3000–9999 m | 675 | 22.17 | 67.33 | 100.0% |
+
+**Receivers with woodland depth > 0:** 1121 / 1200  
+**Mean veg depth (all RX):** 140.6 m  
+**Max veg depth:** 826.1 m  
+**Mean Weissberger loss:** 21.21 dB  
+**Max Weissberger loss:** 67.33 dB
+
+### Assessment
+
+The tags are correct and the download is fresh (woodland only). The results reflect real woodland in Nottingham's outskirts — Sherwood Forest edge, country parks and woodland belts that OSM correctly maps as `forest/wood`. The 675 receivers at 3–10 km all have 100% woodland hit, pulling the scene-wide mean up to 140.6 m depth.
+
+However the correction is **not applicable** for this scenario for two reasons:
+
+1. **Straight-line assumption breaks at long range.** Real rays diffract over and around woodland rather than cutting straight through 140 m of canopy. The straight-line depth severely overestimates actual attenuation at >1 km.
+2. **The evaluation range is unaffected.** At 0–750 m (the range where coh OFF achieves RMSE = 6.7 dB and R² = 0.58) woodland coverage is 0% — P.833 has zero effect on these results.
+
+| Range | P.833 effect | Verdict |
+|-------|-------------|---------|
+| 0–750 m | 0 dB | No change — correction not triggered |
+| 750–1000 m | 3.32 dB mean | Marginal, possibly valid |
+| >1000 m | 12–27 dB | Overcorrects — straight-line assumption invalid |
+
+**Conclusion:** P.833 is not applied for the flat terrain report. The CELL 8e results (coh OFF, 0–500 m) stand without vegetation correction.
 
 ---
 
