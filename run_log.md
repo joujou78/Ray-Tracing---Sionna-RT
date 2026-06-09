@@ -43,3 +43,20 @@
 → scatter too low at long range (per-material S: concrete=0.20, brick=0.25)
 → Fix: run differentiable RT calibration to find optimal S per material
 → Expected fix: SCATTER_OVERRIDE ~0.50 or calibrated per-material values
+
+### Complete Results — Run 3 (DEM + Limited Roads, 154k verts)
+
+| Range | RMSE | Bias | R² | Method |
+|-------|------|------|----|--------|
+| 0–900m | 7.7 dB | −4.8 | +0.750 | ON incoh |
+| 0–1000m | 7.9 dB | −5.1 | +0.769 ← peak | ON incoh |
+| 0–1500m | 11.6 dB | −8.5 | +0.522 | ON incoh |
+| 0–2000m | 14.1 dB | −11.0 | +0.067 | ON incoh |
+| 0–3000m | 15.1 dB | −12.4 | −0.166 | ON incoh |
+| 0–4000m | 14.3 dB | −11.4 | −0.029 | ON incoh |
+
+**Diagnosis:** Systematic bias −5→−12 dB growing with distance
+→ Per-material scatter too low (concrete S=0.20, brick S=0.25)
+→ Fix: differentiable RT calibration → expected optimal S ~0.45–0.55
+
+**Next:** Run calibration on scene_with_roads_019.xml
