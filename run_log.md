@@ -60,3 +60,47 @@
 → Fix: differentiable RT calibration → expected optimal S ~0.45–0.55
 
 **Next:** Run calibration on scene_with_roads_019.xml
+
+---
+
+## Run 4 — Full Scene (bridges + embankments + water + veg) — 2026-06-10
+
+**Scene:** scene_with_full.xml — buildings + roads + bridges + embankments + water + vegetation
+**Note:** ⚠ BAD SCENE — building material classification bug: 77k buildings wrongly as itu_glass
+**Solver:** Sionna 2 PathSolver, 1200 RX, scatter S=0.70
+**Status:** Baseline only — scene being rebuilt with correct brick/concrete classification
+
+### Overall metrics (bad glass scene — for reference only)
+
+| Method | N | RMSE | Bias | R² |
+|--------|---|------|------|----|
+| Best ON | 1199 | 19.52 dB | −13.57 | −0.635 |
+| Incoh ON | 1199 | 20.30 dB | −16.18 | −0.768 |
+| Best OFF | 1018 | 29.25 dB | −3.76 | −2.761 |
+
+### Per-band RMSE (Incoh ON, dB)
+
+| Band | RMSE |
+|------|------|
+| 0–300m | 8.83 dB |
+| 300–700m | 24.10 dB |
+| 700–1200m | 22.55 dB |
+| 1200–2000m | 26.31 dB |
+| 2000–3000m | 28.01 dB |
+| >3000m | 15.17 dB |
+
+### Ray classification (246,423 rays, 1199 RX)
+
+| Type | Count | % |
+|------|-------|---|
+| DIFFRACTION | 201,002 | 81.6% |
+| MULTI_REFLECTION | 36,867 | 15.0% |
+| LOS | 8,228 | 3.3% |
+| REFLECTION | 326 | 0.1% |
+
+**Key observation:** Diffraction-dominated (81.6%) — expected for 17m TX in dense UK urban.
+Scattering ON vs OFF: at >3km, ON=15.2 dB vs OFF=33.1 dB — scattering critical for long range.
+Bias source: glass buildings too transparent → signals 13–16 dB too strong.
+
+### Next step
+Rebuild scene with correct brick/concrete classification → re-run → expect RMSE ~8–12 dB
