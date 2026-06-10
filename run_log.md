@@ -102,5 +102,64 @@
 Scattering ON vs OFF: at >3km, ON=15.2 dB vs OFF=33.1 dB — scattering critical for long range.
 Bias source: glass buildings too transparent → signals 13–16 dB too strong.
 
+### CELL 8e — Cumulative distance bands (Incoh ON, after P.833 correction)
+
+| Range | N | Bias | RMSE | R² |
+|-------|---|------|------|----|
+| 0–100m | 8 | −9.9 dB | 11.2 dB | −8.444 |
+| 0–200m | 17 | −6.2 dB | 8.1 dB | −4.127 |
+| 0–300m | 26 | −7.3 dB | 8.8 dB | −1.172 |
+| 0–500m | 44 | −11.8 dB | 13.6 dB | −0.739 |
+| 0–750m | 67 | −17.0 dB | 19.5 dB | −0.731 |
+| 0–1000m | 87 | −15.9 dB | 19.1 dB | −0.353 |
+| 0–1250m | 179 | −16.7 dB | 20.0 dB | −0.231 |
+| 0–1500m | 221 | −17.5 dB | 20.6 dB | −0.521 |
+| 0–1750m | 289 | −19.4 dB | 22.2 dB | −1.116 |
+| 0–2000m | 355 | −20.5 dB | 23.2 dB | −1.540 |
+| 0–2250m | 448 | −21.4 dB | 23.9 dB | −2.029 |
+| 0–2500m | 482 | −22.2 dB | 24.6 dB | −2.178 |
+
+Avg rays: ON=~50k–117k / OFF=~35–126 (scattering spawning orders of magnitude more paths from glass surfaces)
+
+### P.833 Vegetation Correction Summary
+
+| Metric | Value |
+|--------|-------|
+| Vegetation polygons | 2,187 (16.86 km²) |
+| RX with veg on path | 1,121 / 1,200 (93.4%) |
+| Mean veg depth | 140.6 m |
+| Max veg depth | 826.1 m |
+| Mean Weissberger loss | 21.21 dB |
+| Max Weissberger loss | 67.33 dB |
+
+| Band | N | Mean veg loss | % affected |
+|------|---|---------------|------------|
+| 0–300m | 26 | 0.00 dB | 0.0% |
+| 300–500m | 18 | 0.00 dB | 0.0% |
+| 500–750m | 23 | 0.00 dB | 0.0% |
+| 750–1000m | 20 | 3.32 dB | 50.0% |
+| 1000–1250m | 92 | 12.79 dB | 97.8% |
+| 1250–1500m | 42 | 21.66 dB | 100.0% |
+| 1500–2000m | 134 | 27.10 dB | 100.0% |
+| 2000–3000m | 170 | 27.67 dB | 100.0% |
+| 3000–9999m | 675 | 22.17 dB | 100.0% |
+
+### Failure mode analysis (bad glass scene)
+
+- **Bias grows −7 dB → −22 dB with distance**: path loss exponent too shallow — glass reflections sustain energy at long range
+- **Scattering ON ≈ OFF**: glass specular reflections already carry most energy; diffuse scattering adds noise only
+- **Coherent combining worst** (−27 dB bias): random phases in real scene make coherent meaningless
+- **OFF coherent best at <500m** (R²=+0.025): only positive R² in entire table — collapses beyond 750m
+- **R² uniformly negative**: model worse than predicting the mean at every distance band
+- **Root cause confirmed**: 1,664,481 glass verts → near-perfect reflectors → 15–22 dB excess power at all ranges
+
+### Scene material comparison
+
+| Material | Run 4 (bad — glass bug) | Run 5 (fixed) |
+|----------|------------------------|---------------|
+| itu_glass | 1,664,481 verts | 52,329 verts (−97%) |
+| itu_brick | 0 verts | 1,626,924 verts |
+| itu_concrete | ~60k verts | 61,985 verts |
+
 ### Next step
-Rebuild scene with correct brick/concrete classification → re-run → expect RMSE ~8–12 dB
+Rebuild scene with correct brick/concrete classification → re-run → expect RMSE ~8–12 dB, bias ~−5 dB
