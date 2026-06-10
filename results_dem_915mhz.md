@@ -322,7 +322,7 @@ The DEM terrain adds **+0.637 R²** overall and improves R² from −0.3 to +0.7
 
 ---
 
-## 10. Vegetation Loss (ITU-R P.833) — Assessment
+## 11. Vegetation Loss (ITU-R P.833) — Assessment
 
 P.833 is **not applied**:
 1. Straight-line path depth overestimates attenuation — real paths diffract around woodland.
