@@ -220,8 +220,50 @@ Rebuild scene with correct brick/concrete classification → re-run → expect R
 - **Paths per RX:** ~100k at <200m dropping to ~100 at 6–9km — correct distance attenuation ✓
 - Notable dip in paths at ~6–7km — terrain shadow / urban canyon effect
 
+### CELL 7c — Overall Metrics vs Ofcom
+
+| Method | N | Bias | RMSE | MAE | STD | R² |
+|--------|---|------|------|-----|-----|----|
+| Best ON | 1199 | −12.10 dB | 17.62 dB | 14.57 | 12.81 | −0.333 |
+| Incoh ON | 1199 | −16.10 dB | 19.22 dB | 16.78 | 10.49 | −0.585 |
+| Best OFF | 1064 | −6.07 dB | 24.02 dB | 20.41 | 23.24 | −1.643 |
+| FSPL ref | 1200 | −35.69 dB | 36.78 dB | 35.69 | 8.92 | −4.812 |
+
+### Per-band RMSE (dB)
+
+| Band | Best ON | Incoh ON | FSPL ref |
+|------|---------|----------|----------|
+| 0–300m | **8.35** | 8.35 | 7.20 |
+| 300–700m | 21.65 | 23.87 | 19.96 |
+| 700–1200m | 21.90 | 22.54 | 34.69 |
+| 1200–2000m | 21.93 | 22.63 | 31.26 |
+| 2000–3000m | 21.49 | 22.32 | 36.10 |
+| >3000m | **14.12** | 16.62 | 39.90 |
+
+### Run 4 vs Run 5 improvement
+
+| Metric | Run 4 (glass) | Run 5 (brick) | Delta |
+|--------|--------------|---------------|-------|
+| RMSE Best ON | 19.52 dB | **17.62 dB** | −1.9 dB |
+| Bias Best ON | −13.57 dB | **−12.10 dB** | +1.5 dB |
+| R² Best ON | −0.635 | **−0.333** | +0.302 |
+
+### Model position vs FSPL and measurements
+
+- FSPL bias = −35.7 dB (free space 35.7 dB too optimistic vs measurements)
+- Sim bias = −12.1 dB (sim 12.1 dB too optimistic)
+- **Model captures 23.6 dB / 35.7 dB = 66% of urban excess attenuation** ← good starting point
+- Remaining 12.1 dB gap = target for differentiable RT calibration
+
+### Why R² is still negative
+
+1. **No calibration** — ITU default S=0.25 (brick), S=0.20 (concrete) too low → model falls off too quickly at 300–700m transition zone
+2. **Flat RMSE 21–23 dB from 300m to 3000m** — systematic under-prediction of attenuation in the near-to-mid urban range; not a slope error but a material absorption error
+3. **P.833 will over-correct** — Weissberger mean loss = 21.21 dB >> 12.1 dB bias → projected post-P.833 bias = **+9.1 dB** (flip sign); P.833 Weissberger is too aggressive for dense urban
+4. **Best ON < Incoh ON** — coherent sum over-estimates where phases partially align
+
 ### Next steps
-- CELL 7c — compute RMSE/Bias/R² vs Ofcom measurements
-- CELL P833 — apply vegetation attenuation
+- ~~CELL 7c~~ ✓
+- CELL P833 — run but expect over-correction; use as diagnostic not correction
 - CELL 8e — distance-band metrics
-- Differentiable RT calibration on `scene_with_full_019.xml`
+- **Differentiable RT calibration** — primary fix for remaining 12 dB bias
