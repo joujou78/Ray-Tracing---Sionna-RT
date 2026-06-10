@@ -163,3 +163,65 @@ Avg rays: ON=~50k–117k / OFF=~35–126 (scattering spawning orders of magnitud
 
 ### Next step
 Rebuild scene with correct brick/concrete classification → re-run → expect RMSE ~8–12 dB, bias ~−5 dB
+
+---
+
+## Run 5 — Full Scene, Correct Materials (brick/concrete) — 2026-06-10
+
+**Scene:** `scene_with_full.xml` — buildings (brick dominant) + roads + bridges + embankments + water + vegetation
+**Material fix:** commercial/retail buildings → `itu_brick` (was `itu_glass` in Run 4)
+**Solver:** Sionna 2 PathSolver, 1200 RX, scatter ON
+**Status:** CELL 7 complete — awaiting CELL 7c metrics + CELL P833 + CELL 8e
+
+### Scene materials (meshes_full/)
+
+| File | Size | Verts |
+|------|------|-------|
+| bld_itu_brick.ply | 30.10 MB | ~1,626,924 (dominant) |
+| bld_itu_metal.ply | 11.19 MB | ~485,647 |
+| bld_itu_concrete.ply | 1.24 MB | ~61,985 |
+| bld_itu_glass.ply | 0.97 MB | ~52,329 |
+
+### CELL 7 — Path Solver Results
+
+**Config:** max_depth=15, los=True, specular+diffuse reflection, diffraction, edge_diffraction
+**Batch:** 5 RX/batch, 80M samples, total time 1522.3s (25.4 min)
+
+| Metric | Scatter ON | Scatter OFF |
+|--------|-----------|-------------|
+| Receivers solved | 1199/1200 (99.9%) | 1064/1200 |
+| Total rays | **307,433** | — |
+| RSSI Best (mean) | −76.1 dBm | −80.1 dBm |
+| RSSI Incoherent (mean) | −72.1 dBm | −78.9 dBm |
+| PL Best (mean) | 125.1 dB | 129.1 dB |
+| PL Incoherent (mean) | 121.1 dB | 127.9 dB |
+| PL std | 19.4 dB | 31.7 dB |
+
+**vs Run 4 (glass):** PL mean 121.1 vs ~105 dB (+16 dB — brick absorbs significantly more than glass)
+**Rays:** 307,433 vs 246,423 in Run 4 (+25% — more diffraction/scattering off brick surfaces)
+
+### Per-band PL (Incoherent ON)
+
+| Band | N | Mean PL | Std | Min | Max |
+|------|---|---------|-----|-----|-----|
+| 0–300m | 26 | 72.5 dB | 5.3 | 60.4 | 79.2 |
+| 300–700m | 36 | 81.5 dB | 1.9 | 79.5 | 86.7 |
+| 700–1200m | 111 | 106.0 dB | 9.5 | 86.8 | 126.1 |
+| 1200–2000m | 181 | 106.0 dB | 7.8 | 94.4 | 128.6 |
+| 2000–3000m | 171 | 114.6 dB | 9.7 | 97.7 | 132.5 |
+| >3000m | 674 | 133.4 dB | 13.4 | 99.6 | 162.4 |
+
+**RSSI range:** −113.4 to −11.4 dBm  |  mean = −72.1 dBm
+**Paths per RX:** mean=19,404  max=232,321 (short range)  drops to ~100–1000 at >5km
+
+### Visual diagnostics (CELL 7c plots)
+- **PL vs distance:** points follow expected urban trend above FSPL — physically reasonable ✓
+- **RSSI histogram:** bimodal distribution centred −60 to −80 dBm — normal urban spread ✓
+- **Paths per RX:** ~100k at <200m dropping to ~100 at 6–9km — correct distance attenuation ✓
+- Notable dip in paths at ~6–7km — terrain shadow / urban canyon effect
+
+### Next steps
+- CELL 7c — compute RMSE/Bias/R² vs Ofcom measurements
+- CELL P833 — apply vegetation attenuation
+- CELL 8e — distance-band metrics
+- Differentiable RT calibration on `scene_with_full_019.xml`
