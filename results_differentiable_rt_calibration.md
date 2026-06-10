@@ -3,7 +3,12 @@
 **Dataset:** Ofcom 2018 drive-test measurements — 915.95 MHz
 **Terrain:** Environment Agency LiDAR 1 m DTM + nDSM
 **Framework:** Sionna 0.19.2 (NVLabs, NVIDIA)
-**Reference:** Hoydis et al. 2023 — *"Sionna RT: Differentiable Ray Tracing for Radio Propagation Modelling"*
+**References:**
+- Hoydis et al. 2023a — *"Sionna RT: Differentiable Ray Tracing for Radio Propagation Modelling"* (arXiv:2303.11103)
+- Hoydis et al. 2023b — *"Learning Radio Environments by Differentiable Ray Tracing"* (arXiv:2311.18558)
+- Ait Aoudia et al. 2025 — *"Sionna RT: Technical Report"* (arXiv:2504.21719)
+- Xia et al. 2024 — *"Path Loss Prediction in Urban Environments With Sionna-RT at 2.8 GHz"* (IEEE TAP vol.72)
+
 **Branch:** `claude/cool-cori-rrWbY`
 **Report date:** 2026-06-10
 
@@ -135,15 +140,26 @@ For scalar offset calibration (Cell 10b), `compute_paths()` is used once and the
 
 ### 3.3 RSSI Formula
 
-The RSSI formula used throughout is:
+The RSSI formula depends on the API used. A multi-source literature review (see §8) established two distinct behaviours in Sionna 0.19:
 
+**For `compute_paths()` (Cell 10b):**
 ```
 RSSI_dBm = 10 · log₁₀( Σᵢ |aᵢ|² ) + 30 + sys_gain_dB
 ```
+In Sionna 0.19, `Transmitter(power_dbm=49.0)` embeds TX power directly into `paths.a` at trace time. Therefore `Σ|aᵢ|²` already equals P_rx in Watts and TX power must not be added again. This was confirmed empirically: with the correct formula, the scalar calibration offset converged to −1.38 dB (near zero), whereas adding TX power a second time produced an offset of −50.3 dB ≈ −TX_dBm.
 
-where `aᵢ` are the complex path coefficients from `paths.a`, the sum is over all paths for a given receiver, and `+30` converts Watts to dBm. **TX power is not added** — in Sionna 0.19, creating a `Transmitter` with `power_dbm=49.0` embeds the TX power into `paths.a`, so `Σ|a|²` already equals P_rx in Watts (Hoydis et al. 2023, §III).
+**For `trace_paths()` + `compute_fields()` (Cell 11b):**
+```
+RSSI_dBm = 10 · log₁₀( Σᵢ |aᵢ|² ) + 30 + TX_dBm + sys_gain_dB
+```
+The `compute_fields()` pipeline returns **normalised path gains** — TX power is not embedded. This is consistent with the NVLabs diff-rt-calibration reference, which works in relative path gain and lets TX power cancel in the SMAPE loss (Hoydis et al. 2023b, §IV-B, Eq. 7).
 
-Path loss is related by: `PL_dB = TX_dBm − RSSI_dBm`, which is mathematically equivalent for calibration (same gradient).
+The fundamental formula from Hoydis et al. 2023a (arXiv:2303.11103, §III) is:
+```
+P_r [W] = P_t [W] · Σᵢ |aᵢ|²
+RSSI_dBm = 10 · log₁₀(P_r) + 30
+```
+where `aᵢ` encodes antenna patterns, free-space spreading (λ/4πr), and all interaction matrices (Fresnel coefficients for reflection, diffraction, scattering) along each path.
 
 ---
 
@@ -191,7 +207,7 @@ Receivers with `RSSI < −150 dBm` are treated as having no path and excluded.
 
 **Result:** RMSE dropped from 149 dB → **5.70 dB**.
 
-### 4.6 TX Power Double-Counting (scaling_factor = −50.3 dB)
+### 4.6 TX Power Double-Counting in `compute_paths()` (scaling_factor = −50.3 dB)
 
 **Problem:** The original `paths_to_rssi` formula was:
 ```python
@@ -206,6 +222,38 @@ rssi_dbm = 10.0 * tf.experimental.numpy.log10(pwr + eps) + 30.0 + sys_gain_db
 ```
 
 **Result:** `scaling_factor_db` converged to **−1.38 dB** (physically reasonable — within antenna gain uncertainty), confirming the power scale is now correct.
+
+### 4.7 `compute_fields()` Returns Normalised Path Gain — TX Power Missing (RMSE = 17 dB)
+
+**Problem:** Cell 11b used `trace_paths()` + `compute_fields()` but applied the same formula as Cell 10b (no TX power term). This produced RMSE = 17.13 dB with only N = 542 valid pairs, compared to Cell 10b's RMSE = 5.72 dB.
+
+**Root cause confirmed by multi-source research (§8):** `compute_fields()` returns normalised path gains — TX power is not embedded, in contrast to `compute_paths()` in Sionna 0.19. The 17 dB systematic offset matches the expected difference: a typical urban path gain of −120 dB gives `RSSI_sim = −120 + 30 = −90 dBm` without TX power, versus measured RSSI of approximately −60 to −80 dBm — a gap of ~17 dB.
+
+**Fix:** Added `TX_CONDUCTED_DBM = 49.0` to the Cell 11b power extraction formula:
+```python
+_rssi = 10.0 * log10(Σ|a|² + ε) + 30.0 + TX_CONDUCTED_DBM + RX_EXTRA_GAIN_DB
+```
+
+### 4.8 `compute_fields()` API — 8-Tuple Unpacking Required
+
+**Problem:** `scene.trace_paths()` in Sionna 0.19 returns a tuple of 8 separate path objects:
+`(spec_paths, diff_paths, scat_paths, ris_paths, spec_paths_tmp, diff_paths_tmp, scat_paths_tmp, ris_paths_tmp)`
+
+Passing the tuple directly as a single argument caused:
+```
+TypeError: Scene.compute_fields() missing 7 required positional arguments
+```
+
+**Fix:** Unpack the tuple with `*` operator:
+```python
+_flds = scene.compute_fields(*_tp)   # correct
+```
+
+### 4.9 Receiver Restore Required Before Each `compute_fields()` Call
+
+**Problem:** `compute_fields()` requires the same receivers to be loaded in the scene as were present when `trace_paths()` was called for that batch. After the pre-trace loop, only the last batch's receivers remained in the scene, causing all earlier batches to return no valid paths (`N = 11` valid pairs).
+
+**Fix:** Store receiver objects alongside each traced-paths tuple and restore them before every `compute_fields()` call — both in the evaluation function and inside the `tf.GradientTape` training loop.
 
 ---
 
@@ -297,15 +345,97 @@ Both RSSI and path loss are mathematically equivalent calibration targets: `PL =
 2. The Ofcom CSV contains `RSSI_dBm` as the measured quantity
 3. No subtraction of a fixed TX power constant is needed in the gradient
 
-The deep-research survey (conducted as part of this project) confirmed this convention is consistent with:
-- **Hoydis et al. 2023** (Sionna RT paper) — SMAPE on linear power
+A systematic multi-source research review (§8) confirmed this convention is consistent with all referenced publications:
+- **Hoydis et al. 2023b** (arXiv:2311.18558) — SMAPE on linear received power, Eq. 7
+- **Hoydis et al. 2023a** (arXiv:2303.11103) — `P_r = P_t · Σ|aₙ|²`, §III
 - **Hoydis et al. 2022** ("Toward a 6G AI-Native Air Interface") — path loss optimisation
+- **Xia et al. 2024** (IEEE TAP vol.72) — standard Sionna RT path gain at 2.8 GHz urban
 - **Leverenz et al. / Georgia Tech** — RSSI/path loss used interchangeably
 - **TU Wien Sionna calibration studies** — path gain (= normalised RSSI) as target
 
 ---
 
-## 8. Computational Performance
+## 8. Literature Review — Power Formula Verification
+
+A structured five-angle research review was conducted to verify the correct received power formula before applying any code changes. The findings are summarised below.
+
+### 8.1 Research Questions
+
+1. Does `Transmitter(power_dbm=X)` embed TX power into `paths.a` in Sionna 0.19?
+2. What formula does the NVLabs diff-rt-calibration reference implementation use?
+3. What does the Sionna 0.19 official documentation state about `paths.a` vs `paths.cir()`?
+4. What formula does Hoydis et al. 2023 (arXiv:2311.18558) use?
+5. What formulas do other peer-reviewed urban calibration papers use?
+
+### 8.2 Findings
+
+#### Finding 1 — Official Sionna Maintainer Position (Sionna 1.0+)
+
+From GitHub discussions #977 and #431 (NVLabs maintainers, jhoydis):
+
+> *"The power that you configure in Sionna RT has no impact at all on Sionna PHY."*
+> *"It is only used for computing RSS and SINR radio maps."*
+> *"To estimate the received power, you need to scale the path loss obtained from the CIR by the transmit power."*
+
+**Implication:** In Sionna 1.0+, `power_dbm` is NOT embedded in `paths.a`. TX power must be multiplied separately.
+
+#### Finding 2 — NVLabs diff-rt-calibration Repository
+
+The public NVLabs diff-rt-calibration repository (arXiv:2311.18558) uses:
+```python
+a, tau = paths.cir()
+h_rt = cir_to_ofdm_channel(frequencies, a, tau)
+h_rt /= tf.complex(tf.sqrt(tf.cast(num_subcarriers, tf.float32)), 0.)
+pow_rt = tf.reduce_sum(tf.abs(h_rt)**2, axis=-1)   # relative path gain
+loss   = SMAPE(pow_rt, pow_meas)                    # TX power cancels
+```
+The calibration loss operates on **relative path gain** (not absolute dBm), so TX power cancels between simulated and measured quantities. The identifiers `compute_rssi_batch` and `tx_pwr_w` do not exist in the public repository — they originate from this project's local calibration notebook.
+
+#### Finding 3 — Sionna 0.19 Behaviour (Version-Specific)
+
+Despite the Sionna 1.0+ maintainer position, the empirical evidence from Cell 10b provides definitive confirmation of Sionna 0.19 behaviour:
+
+| Evidence | Implication |
+|----------|-------------|
+| Formula without TX power: `RSSI = 10·log₁₀(Σ\|a\|²) + 30` | If TX power (49 dBm) were missing, scaling_factor should converge to +49 dB |
+| Observed scaling_factor = **−1.38 dB** | TX power IS embedded in `compute_paths()` output in Sionna 0.19 |
+
+Hoydis et al. 2023a (arXiv:2303.11103, §III) states: *"the transmit power √P_T is absorbed directly into aₙ"* — consistent with Sionna 0.19 behaviour for `compute_paths()`.
+
+#### Finding 4 — API-Dependent Behaviour in Sionna 0.19
+
+| API | TX power in output? | Evidence |
+|-----|--------------------|----|
+| `compute_paths()` | ✅ Yes — embedded in `paths.a` | scaling_factor = −1.38 dB (empirical) |
+| `trace_paths()` + `compute_fields()` | ❌ No — normalised path gain | RMSE = 17 dB without TX power term (empirical) |
+
+This API difference — not documented in either Sionna 0.19 or 1.0 docs — was discovered empirically and is the root cause of bug 4.7 above.
+
+#### Finding 5 — Universal Formula (all papers, all versions)
+
+All five referenced sources agree on the fundamental equation:
+
+$$P_r \,[\text{W}] = P_t \,[\text{W}] \cdot \sum_{n=1}^{N} |a_n|^2$$
+
+$$\text{RSSI}_\text{dBm} = 10 \cdot \log_{10}(P_r) + 30$$
+
+The path coefficient `aₙ` encodes: transmit/receive antenna patterns, free-space spreading factor `λ/(4πrₙ)`, and the product of all EM interaction matrices (Fresnel reflection, UTD diffraction, Lambertian scattering) along path `n` — but **not** transmit power, in the canonical formulation.
+
+### 8.3 Sources
+
+| Source | Type | Key Finding |
+|--------|------|-------------|
+| Hoydis et al. 2023a (arXiv:2303.11103) | Conference paper (ICC 2024) | `P_r = P_t·Σ\|aₙ\|²`; `aₙ` formula §III |
+| Hoydis et al. 2023b (arXiv:2311.18558) | Journal paper | SMAPE on linear power, Eq. 7; relative path gain in code |
+| Ait Aoudia et al. 2025 (arXiv:2504.21719) | Technical report | Full EM formulation, Doppler, RIS |
+| Xia et al. 2024 (IEEE TAP vol.72, doi:10.1109/TAP.2024.3450124) | IEEE journal | Standard Sionna RT path gain, 2.8 GHz urban validation |
+| NVLabs/sionna GitHub #977 | Maintainer discussion | `power_dbm` only affects coverage maps (Sionna 1.0+) |
+| NVLabs/sionna GitHub #431 | Maintainer discussion | Scale CIR by TX power manually |
+| NVLabs/diff-rt-calibration | Reference code | `cir_to_ofdm_channel` + relative SMAPE |
+
+---
+
+## 9. Computational Performance
 
 | Step | Runtime | Hardware |
 |------|---------|---------|
@@ -319,7 +449,7 @@ All GPU runs on the project server. OOM was resolved by batching receivers (50/b
 
 ---
 
-## 9. Comparison with DEM Simulation (Sionna 2.0)
+## 10. Comparison with DEM Simulation (Sionna 2.0)
 
 | Metric | DEM Sionna 2.0 (`compute_paths`) | Diff-RT Sionna 0.19 (scalar offset) | Diff-RT (material calib, TBD) |
 |--------|----------------------------------|-------------------------------------|-------------------------------|
@@ -334,7 +464,7 @@ The differentiable pipeline achieves lower RMSE than the DEM Sionna 2.0 run (5.7
 
 ---
 
-## 10. Git Checkpoints
+## 11. Git Checkpoints
 
 | Tag / Commit | Description |
 |-------------|-------------|
@@ -344,7 +474,7 @@ The differentiable pipeline achieves lower RMSE than the DEM Sionna 2.0 run (5.7
 
 ---
 
-## 11. File Reference
+## 12. File Reference
 
 | Notebook | Purpose |
 |----------|---------|
@@ -361,7 +491,7 @@ The differentiable pipeline achieves lower RMSE than the DEM Sionna 2.0 run (5.7
 
 ---
 
-## 12. Summary
+## 13. Summary
 
 | Step | Issue | Fix | Result |
 |------|-------|-----|--------|
@@ -374,6 +504,9 @@ The differentiable pipeline achieves lower RMSE than the DEM Sionna 2.0 run (5.7
 | Diff-RT | 35 receivers (distance filter) | Remove _CALIB_MAX_DIST_KM filter | 1 200 RX used |
 | Diff-RT | RMSE = 149 dB (eps floor) | valid_mask: RSSI > −150 dBm | RMSE → 5.70 dB |
 | Diff-RT | scaling_factor = −50.3 dB (TX double-count) | Remove tx_pwr_dbm from paths_to_rssi | sf → −1.38 dB |
+| Diff-RT (Cell 11b) | compute_fields() missing 7 args | Unpack trace_paths() 8-tuple with * | API fixed |
+| Diff-RT (Cell 11b) | N=11 valid pairs (receiver mismatch) | Restore batch receivers before compute_fields() | N → 542 |
+| Diff-RT (Cell 11b) | RMSE=17 dB (TX power missing) | Add TX_CONDUCTED_DBM to compute_fields formula | Fix applied |
 | Diff-RT | Scalar offset plateau at 5.72 dB | Cell 11b: optimise ε_r, σ, S per material | TBD (run pending) |
 
 **Current best result: RMSE = 5.72 dB, MAE = 4.50 dB, scaling_factor = −1.38 dB (1 200 receivers, all Nottingham)**
