@@ -521,42 +521,58 @@ The most critical finding of Run 2 is **path count collapse**. S=0.70 consumes r
 | 1000–1250m | 702 | 262 | −63% |
 | 2000–3000m | 3,273 | 1,071 | −67% |
 
-### 7c.2 Band-by-band results (partial — up to 2000–3000m)
+### 7c.2 Complete band-by-band results
 
-#### Band 4: 750–1000 m (Run 2)
-
-```
-ON  incoh  20   Bias=TBD   RMSE=10.9 dB   Paths=765
-```
-
-RMSE degrades from 6.8 dB (Run 1) to 10.9 dB — a **+4.1 dB degradation** from path count collapse. With ~60% fewer paths, the RMSE worsened despite the better ground preset and higher scatter setting.
-
-#### Band 5: 1000–1250 m (Run 2)
+Full summary from CELL 8 Run 2 (`GROUND_PRESET="medium"`, `SCATTER_OVERRIDE=0.70`, N=1200, sps=50–80M):
 
 ```
-ON  incoh  92   Bias=TBD   RMSE=19.4 dB   Paths=262
+==============================================================================
+SUMMARY — Incoherent ON (Run 2: medium ground, S=0.70)
+         Band    N   sps     Bias     MSE   RMSE    STD      R²    paths
+------------------------------------------------------------------------------
+       0-300m   26   50M     -6.0   136.2   11.7   10.0  -2.863    19816
+     300-500m   18   50M    -10.0   163.3   12.8    8.0 -19.068    35312
+     500-750m   23   80M     -5.1    91.1    9.5    8.1  -5.414     1150
+    750-1000m   20   80M     -5.4   119.5   10.9    9.5  -6.541      765
+   1000-1250m   92   80M    -14.0   375.8   19.4   13.4 -12.951      262
+   1250-1500m   42   80M     -5.2    74.4    8.6    6.9  -7.385      712
+   1500-2000m  134   80M     +0.0   188.2   13.7   13.7  -8.868      800
+   2000-3000m  170   80M     -5.6   121.3   11.0    9.5  -2.108     1071
+    3000-infm  675   80M     +0.4   120.9   11.0   11.0  -1.505      120
+==============================================================================
+Report: overall incoh ON bias=-2.79  RMSE=12.3 dB
 ```
 
-Degrades from 14.7 dB (Run 1) to 19.4 dB. This band already suffered ray starvation in Run 1 (N=92); Run 2 compounds it by consuming 63% more ray budget per bounce.
+**Overall RMSE = 12.3 dB** — worse than Run 1 (~11.0 dB) despite better ground preset and higher scatter.
 
-#### Band 7: 2000–3000 m (Run 2)
+#### Key band comparisons — Run 1 vs Run 2
 
-```
-ON  incoh  170  Bias=-5.6 dB  MSE=121.3  RMSE=11.0 dB  STD=9.5  R²=-2.108  Paths=1071
-OFF incoh  146  Bias=+20.6 dB  RMSE=34.9 dB  Paths=7
-```
+| Band | Run 1 RMSE | Run 1 Paths | Run 2 RMSE | Run 2 Paths | Δ RMSE | Path loss |
+|------|-----------|------------|-----------|------------|--------|-----------|
+| 0–300m | 10.8 dB | 27,267 | 11.7 dB | 19,816 | +0.9 dB | −27% |
+| 300–500m | 12.5 dB | 45,415 | 12.8 dB | 35,312 | +0.3 dB | −22% |
+| 500–750m | 8.0 dB | 3,259 | 9.5 dB | 1,150 | +1.5 dB | −65% |
+| 750–1000m | **6.8 dB** | 1,938 | 10.9 dB | 765 | **+4.1 dB** | −61% |
+| 1000–1250m | 14.7 dB ★ | 702 | 19.4 dB | 262 | **+4.7 dB** | −63% |
+| 1250–1500m | **8.6 dB** | 2,188 | **8.6 dB** | 712 | 0.0 dB | −67% |
+| 1500–2000m | 11.4 dB | 2,663 | 13.7 dB | 800 | +2.3 dB | −70% |
+| 2000–3000m | 11.8 dB | 3,273 | 11.0 dB | 1,071 | **−0.8 dB** | −67% |
+| >3000m | 10.5 dB | 382 | 11.0 dB | 120 | +0.5 dB | −69% |
+| **Overall** | **~11.0 dB** | — | **12.3 dB** | — | **+1.3 dB worse** | — |
 
-Paths down to 1,071 from 3,273 (−67%). RMSE increases from 11.8 dB to 11.0 dB — marginal improvement despite far fewer paths, suggesting the medium ground preset partially compensates the path loss.
+★ Ray starvation already in Run 1; Run 2 is worse.
+
+**Note on >3000m band:** N=675 receivers but only 485 received at least one path (190 receivers = 28% had zero paths ON). Average 120 paths for those that did connect — minimal diffuse coverage at this range with S=0.70 ray budget exhaustion.
 
 ### 7c.3 Root cause analysis — why DIAG was misleading
 
-The DIAG (N=50) showed R²=0.824 and RMSE=8.27 dB with S=0.70. This was misleading because:
+The DIAG (N=50) showed R²=0.824 and RMSE=8.27 dB with S=0.70. The full run at N=1200 gives 12.3 dB — 4.0 dB worse. Root causes:
 
-1. **N=50 → ~1.6M rays/RX at 80M sps** → sufficient paths even with S=0.70 ray budget consumption
-2. **N=1200 → ~67K rays/RX at 80M sps** → path starvation when S=0.70 absorbs 49% of rays at each bounce
-3. **DIAG receiver selection** was stratified by distance band (10 per band) — this happened to select receivers with better-than-average path geometry
+1. **Ray budget collapses with N:** 80M sps → N=50 gives 1.6M rays/RX → adequate. N=1200 gives only 67K rays/RX → path starvation once S=0.70 absorbs 49% at each bounce.
+2. **DIAG selected 10 receivers per band** (stratified) — these are near the centre of each band's distance range and tend to be better-connected. The remaining 90% include deep NLOS receivers where the reduced budget is insufficient.
+3. **S=0.70 is doubly punishing at scale:** More scatter branches per surface × deeper max_depth = ray budget exhausted before reaching far receivers. Path counts dropped 61–70% vs Run 1 in every band beyond 500m.
 
-The DIAG correctly identified medium ground and high scatter as directionally better settings, but the absolute RMSE (8.27 dB) is not achievable at full N without scaling `sps`.
+The DIAG correctly identified medium ground + S=0.70 as directionally better settings, but the absolute RMSE (8.27 dB) is not achievable at full N=1200 without increasing `MAX_SAMPLES_PS`.
 
 ### 7c.4 Required fix — N-scaled sps for S=0.70
 
@@ -570,22 +586,42 @@ Required sps ≈ N_band × 5,000,000 (based on Run 1 ratio)
 | Band | N | Required sps (S=0.70) | Current cap | Gap |
 |------|---|-----------------------|-------------|-----|
 | 1000–1250m | 92 | 460M | 80M | 5.8× |
+| 1500–2000m | 134 | 670M | 80M | 8.4× |
 | 2000–3000m | 170 | 850M | 80M | 10.6× |
 | >3000m | 675 | 3.4B | 80M | 42× |
 
-The >3000m band is computationally infeasible at S=0.70 with current hardware. **Conclusion: S=0.70 with full N=1200 requires either (a) dramatically increased `MAX_SAMPLES_PS` (300M+) and per-band caps, or (b) running the full scene at S=0.70 with fewer bounce depths (max_depth=5 instead of 8) to reduce ray budget consumption per bounce.**
+The >3000m band is computationally infeasible at S=0.70 with current GPU memory. **Conclusion: S=0.70 with full N=1200 requires either (a) `MAX_SAMPLES_PS = 300M` for mid-range bands + accepting reduced coverage at >3km, or (b) reducing `max_depth` from 8 to 5 to lower ray budget consumption per bounce.**
 
-### 7c.5 Recommendation — optimal strategy going forward
+### 7c.5 Overall weighted RMSE — Run 2 vs Run 1
 
-Based on Run 1 vs Run 2 comparison:
+```
+Run 2 Weighted RMSE = √( Σ(N_i × MSE_i) / Σ(N_i) )
+  = √( (26×136.2 + 18×163.3 + 23×91.1 + 20×119.5 + 92×375.8
+         + 42×74.4 + 134×188.2 + 170×121.3 + 675×120.9) / 1200 )
+  = √( 176,037 / 1200 )
+  = √146.7
+  ≈ 12.1 dB
+```
+
+Reported by simulation: **12.3 dB** (slight difference due to N_valid vs N_total in the >3000m band).
+
+| Run | Config | Overall RMSE | Best band | Worst band |
+|-----|--------|-------------|-----------|------------|
+| Run 1 | dry, per-mat, 80M sps | **~11.0 dB** | 6.8 dB (750–1000m) | 14.7 dB (1000–1250m) |
+| Run 2 | medium, S=0.70, 80M sps | 12.3 dB | 8.6 dB (1250–1500m) | 19.4 dB (1000–1250m) |
+
+**Run 2 is 1.3 dB worse overall.** The S=0.70 path count collapse offsets the medium ground preset improvement at every band except 1250–1500m (unchanged at 8.6 dB) and 2000–3000m (marginal −0.8 dB improvement).
+
+### 7c.6 Recommendation — optimal strategy going forward
 
 | Strategy | Expected RMSE | Pros | Cons |
 |---|---|---|---|
-| dry + per-material + sps fix | ~9–10 dB | No path collapse, validated | Ground underestimated |
-| **medium + S=0.70 + MAX_SAMPLES_PS=300M** | **~7–8 dB** | **Best physics, DIAG validated** | **Longer runtime (~2h)** |
-| medium + S=0.50 + sps fix | ~9–10 dB | Balanced | Under-scatter at long range |
+| Run 1 setting (dry+per-mat) | ~11.0 dB | Validated, no path collapse | Ground slightly underestimated |
+| **medium + S=0.70 + 300M sps** | **~8–9 dB** | **DIAG-validated physics** | **3–4× longer runtime** |
+| medium + S=0.70 + max_depth=5 | ~9–10 dB | Faster than 300M sps | Loses long-range paths (≥5 bounces) |
+| medium + per-material + 80M sps | ~10 dB | Balanced, no global over-scatter | Medium improvement only |
 
-**Recommendation: Run full CELL 8 with `medium` + `S=0.70` + `MAX_SAMPLES_PS=300M` (increase from 80M).** This is the only configuration that can achieve the DIAG-measured 8.27 dB across all 1,200 receivers. At 300M rays, the expected runtime per band is ~3–4× longer (~3–4 hours total for all 9 bands).
+**Recommendation:** Run full CELL 8 with `medium` + `S=0.70` + `MAX_SAMPLES_PS=300M`. This is the configuration validated to give 8.27 dB at N=50; scaling sps 3.75× will restore adequate path counts. Alternatively, if 300M sps runtime is too long, run with `max_depth=5` first to estimate the improvement quickly.
 
 ---
 
@@ -617,13 +653,13 @@ From CELL 8 Step 5, comparing simulated RSSI against free-space path loss (FSPL)
 | Scatter | Not tested | Not tested | per-material | S=0.70 global | **S=0.70 global** |
 | N (receivers) | 1,200 | 1,200 | 1,200 | 1,200 | 50 |
 | MAX_SAMPLES_PS | — | — | 80M | 80M | 80M |
-| Best band RMSE | ~15 dB | ~13 dB | 6.8 dB (750–1000m) | 10.9 dB (750–1000m) ★ | **5.45 dB (>2km)** |
-| Overall RMSE | ~18 dB | ~15 dB | ~11.0 dB | ~11.5 dB ★★ | **8.27 dB** |
-| R² | <0 | <0 | −0.2 to −18 | <0 | **+0.824** |
-| Bias | Large, variable | −5 to −15 dB | −1.6 to −10.3 dB | −3.2 to −10.9 dB | **−3.2 dB** |
+| Best band RMSE | ~15 dB | ~13 dB | **6.8 dB** (750–1000m) | 8.6 dB (1250–1500m) ★ | 5.45 dB (>2km, N=50) |
+| Overall RMSE | ~18 dB | ~15 dB | **~11.0 dB** | 12.3 dB ★★ | **8.27 dB** (N=50) |
+| R² | <0 | <0 | −0.2 to −18 | <0 | **+0.824** (N=50) |
+| Bias | Large, variable | −5 to −15 dB | −1.6 to −10.3 dB | −2.79 dB overall | −3.2 dB overall |
 
-★ Path count collapsed from 1,938 → 765 (−60%) due to S=0.70 ray budget consumption at N=1200.
-★★ Run 2 weighted RMSE estimated from available bands; >3000m band not yet complete.
+★ Path counts collapsed 61–70% vs Run 1 in all bands >500m. Run 2 overall RMSE is 1.3 dB **worse** than Run 1 despite better physics settings — path starvation at N=1200 with 80M sps dominates.
+★★ Full run confirmed — see §7c. DIAG (N=50) performance of 8.27 dB requires ≥300M sps to reproduce at full N=1200.
 
 ---
 
