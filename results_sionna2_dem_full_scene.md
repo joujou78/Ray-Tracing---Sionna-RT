@@ -932,7 +932,17 @@ CELL 8 DIAG — Scatter ON vs OFF  (medium + S=0.70, scene_v2_infra)
   ON  best         78    +1.6   174.7   13.2   13.1   0.269
   OFF best         78    -0.4   151.8   12.3   12.3   0.365
 ```
-*(0–1000m through 0–4000m bands — pending, run still in progress)*
+```
+  0-1000m  N=87  avg_rays ON=56945.6 OFF=55.6  [1434s]
+  Method            N    Bias     MSE   RMSE    STD      R2  (ON | OFF)
+  ON  incoh        87    -2.7    82.9    9.1    8.7   0.693
+  OFF incoh        87    -2.5   126.7   11.3   11.0   0.531
+  ON  coh          87   -23.4   625.1   25.0    8.7  -1.314
+  OFF coh          87    -1.8   148.6   12.2   12.1   0.450
+  ON  best         87    +1.0   167.6   12.9   12.9   0.379
+  OFF best         87    -1.1   146.9   12.1   12.1   0.456
+```
+*(0–1250m through 0–4000m bands — pending, run still in progress)*
 
 ### Results — Run 6 vs Run 4 comparison (incoherent ON)
 
@@ -944,7 +954,7 @@ CELL 8 DIAG — Scatter ON vs OFF  (medium + S=0.70, scene_v2_infra)
 | 0–500m | 44 | **9.4 dB** | 9.7 dB | +0.3 | **+0.174** | +0.125 | **6.0** | 8.0 |
 | 0–750m | 67 | 8.7 dB | **9.4 dB** | +0.7 | +0.652 | **+0.598** | 7.2 | **9.2** |
 | 0–900m | 78 | 8.6 dB | **8.9 dB** | +0.3 | +0.692 | **+0.667** | 7.4 | **8.7** |
-| 0–1000m | 87 | 8.9 dB | — | — | +0.707 | — | 7.4 | — |
+| 0–1000m | 87 | 8.9 dB | **9.1 dB** | +0.2 | +0.707 | **+0.693** | 7.4 | **8.7** |
 | 0–1250m | 179 | 14.2 dB | — | — | +0.378 | — | 10.6 | — |
 | 0–1500m | 221 | 13.5 dB | — | — | +0.351 | — | 10.1 | — |
 | 0–1750m | 289 | 12.9 dB | — | — | +0.283 | — | 10.1 | — |
