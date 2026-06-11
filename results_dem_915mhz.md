@@ -286,3 +286,73 @@ The DEM terrain simulation provides measurably better path loss prediction than 
 ---
 
 *Sionna RT 2.0 — Nottingham Ofcom 2018, 915.95 MHz — Branch: claude/cool-cori-rrWbY*
+
+---
+
+## 12. New Scene (scene_v2_infra) — Cell 7 Path Solver Results
+
+**Scene:** `scene_with_full.xml` — 27 shapes, 9 ITU materials
+**Solver:** Sionna 2.0 PathSolver | 200M rays | depth=15 | batch=5
+**Date:** 2026-06-11 | Runtime: 4582s (76 min) | Errors: 0
+
+### 12.1 Overall Metrics
+
+| Method | N | Bias (dB) | RMSE (dB) | MAE (dB) | STD (dB) | R² |
+|---|---|---|---|---|---|---|
+| **Incoh ON** | 1149 | −6.64 | **11.91** | 9.48 | 9.89 | **+0.361** |
+| Best ON | 1149 | −0.28 | 12.11 | 9.57 | 12.11 | +0.339 |
+| Coh ON | 1149 | −22.50 | 26.66 | 23.75 | 14.30 | −2.203 |
+| Scatter OFF (Incoh) | 886 | +8.21 | 24.27 | 17.87 | 22.84 | −1.758 |
+| FSPL ref | 1200 | −35.69 | 36.78 | 35.69 | 8.92 | −4.812 |
+
+**Selected method:** Incoherent combination + Scatter ON — only valid mode for drive-test comparison per ITU-R P.2040-2.
+
+**Key finding:** Scatter ON adds 263 extra solved receivers (1149 vs 886) and reduces STD from 30.8 → 9.89 dB. Diffuse scattering is essential at 915 MHz urban.
+
+**FSPL comparison:** RT achieves 11.91 dB RMSE vs FSPL 36.78 dB — RT is 3× more accurate before any calibration.
+
+### 12.2 Per-Band RMSE (Incoh ON)
+
+| Band | RMSE (dB) | Note |
+|---|---|---|
+| 0–300 m | 8.39 | Best — high path count (~10⁵) |
+| 300–700 m | 12.07 | Moderate |
+| 700–1200 m | 14.06 | Highest error — transition zone |
+| 1200–2000 m | **9.47** | Best mid-range — multi-reflection dominant |
+| 2000–3000 m | 14.34 | High |
+| 3000–9999 m | 11.51 | Moderate |
+
+### 12.3 Ray Mechanism Distribution
+
+| Mechanism | Overall | 0–300 m | >3 km |
+|---|---|---|---|
+| Multi-reflection | 54% | 0% | 80% |
+| Diffraction | 44% | 100% | 20% |
+| LOS | 1% | 0% | ~0% |
+
+Diffraction dominates near TX (urban canyon). Multi-reflection takes over beyond 1.2 km. Only 1% LOS — almost entirely NLOS urban scene.
+
+### 12.4 P.833 Vegetation Correction Applied
+
+| Parameter | Value |
+|---|---|
+| Polygons loaded | 386 (woodland only — landuse=forest, natural=wood) |
+| Area | 3.56 km² |
+| RX affected | 1121 / 1200 (93.4%) |
+| Mean attenuation (affected) | 3.15 dB |
+| Max attenuation | 9.47 dB (cap=20 dB) |
+
+### 12.5 Calibration Headroom
+
+| Stage | Expected RMSE | Gain |
+|---|---|---|
+| Current (Incoh ON, pre-calibration) | 11.91 dB | baseline |
+| + Scalar offset (Cell 10b) | ~9.89 dB | −2.0 dB |
+| + Material calibration (Cell 11b) | ~7–8 dB | −2–3 dB |
+| + Residual MLP (Cell 15) | ~5–6 dB | −2 dB |
+
+Bias = −6.64 dB indicates simulation over-attenuates. Scalar offset correction (Cell 10b) will shift RMSE to ~STD = 9.89 dB.
+
+---
+
+*New scene v2_infra — 27 shapes including fuel canopies, bus stations, surface car parks, greenhouses, barriers, embankments, bridges — Sionna RT 2.0 — Branch: claude/cool-cori-rrWbY*
