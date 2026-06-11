@@ -625,7 +625,141 @@ Reported by simulation: **12.3 dB** (slight difference due to N_valid vs N_total
 
 ---
 
-## 8. Diagnostic — FSPL Reference (All 1,200 Receivers)
+## 7d. CELL 8e — Cumulative Evaluation: Medium Ground, S=0.50 (619 Receivers, 0–4km)
+
+### 7d.1 Methodology
+
+CELL 8e evaluates receivers cumulatively — all receivers within increasing distance thresholds from 100m to 4000m. This reveals how RMSE evolves as long-range (starvation-prone) receivers are added to the evaluation window. Unlike the stratified CELL 8, this is a single GPU pass at fixed 80M sps.
+
+**Config:** `GROUND_PRESET="medium"`, `SCATTER_OVERRIDE=0.50`, `MAX_SAMPLES_PS=80M`
+
+### 7d.2 Complete cumulative results
+
+```
+==============================================================================
+CELL 8e — Cumulative Incoherent ON (medium ground, S=0.50)
+  Threshold   N   avg_rays    Bias    MSE   RMSE    STD      R²
+------------------------------------------------------------------------------
+    0–100m    8   78,721    −10.4   134.2   11.6    5.2   −9.084
+    0–200m   17   73,421     −6.3    66.4    8.2    5.1   −4.149
+    0–300m   26   71,032     −6.3    68.9    8.3    5.4   −0.955
+    0–500m   44   56,263     −7.4    96.3    9.8    6.5   +0.101
+    0–750m   67   37,197     −4.6    93.9    9.7    8.5   +0.571
+    0–900m   78   32,035     −3.7    93.4    9.7    8.9   +0.609
+   0–1000m   87   28,763     −4.2    97.6    9.9    9.0   +0.639  ← peak R²
+   0–1250m  179   14,067     −7.9   214.3   14.6   12.3   +0.343
+   0–1500m  221   11,476     −7.2   194.1   13.9   12.0   +0.305
+   0–1750m  289    8,934     −6.2   185.6   13.6   12.1   +0.200
+   0–2000m  355    7,337     −5.0   202.6   14.2   13.3   +0.043
+   0–2250m  448    5,909     −7.0   234.9   15.3   13.6   −0.245
+   0–2500m  482    5,599     −7.9   249.1   15.8   13.7   −0.306
+   0–2750m  503    5,403     −7.8   244.3   15.6   13.5   −0.257
+   0–3000m  525    5,203     −7.7   236.3   15.4   13.3   −0.203
+   0–3500m  567    4,847     −6.9   220.8   14.9   13.1   −0.141
+   0–4000m  619    4,456     −6.5   208.9   14.5   12.9   −0.052
+==============================================================================
+Total runtime: 3902s (~65 min)
+CSV: cumulative_eval.csv (17 rows)
+```
+
+### 7d.3 Key findings
+
+**1. Best window: 0–1km, RMSE = 9.9 dB, R² = +0.639**
+
+The sub-1km window achieves the best performance. With 87 receivers and avg_rays = 28,763/RX, path counts are adequate. R² = 0.639 means the model explains 64% of the PL variance at this range — physically meaningful prediction.
+
+**2. avg_rays collapses with N — same starvation pattern as S=0.70:**
+
+| Threshold | N | avg_rays | RMSE |
+|---|---|---|---|
+| 0–1km | 87 | 28,763 | **9.9 dB** |
+| 0–1.5km | 221 | 11,476 | 13.9 dB |
+| 0–2km | 355 | 7,337 | 14.2 dB |
+| 0–4km | 619 | 4,456 | **14.5 dB** |
+
+Every new distant band added lowers avg_rays and raises RMSE. S=0.50 reduces this slightly vs S=0.70 (fewer diffuse branches per bounce = slightly slower ray depletion), but not enough to avoid collapse.
+
+**3. R² sign reversal at 2km:**
+
+R² is positive only up to ~2km (R²=+0.043 at 2km). Beyond that, path starvation makes the model worse than predicting the mean — negative R² across all bands. This is a numerical artefact, not a physics failure.
+
+**4. Scatter OFF catastrophically bad beyond 750m:**
+
+| Threshold | Scatter ON RMSE | Scatter OFF RMSE | ΔRMSE |
+|---|---|---|---|
+| 0–1km | 9.9 dB | 11.7 dB | −1.8 dB |
+| 0–2km | 14.2 dB | 19.1 dB | −4.9 dB |
+| 0–4km | **14.5 dB** | **21.3 dB** | **−6.8 dB** |
+
+Scatter benefit grows monotonically with distance — at 4km, scatter ON is 6.8 dB better. This confirms scatter is the dominant propagation mechanism at 915 MHz beyond 750m.
+
+**5. coh ON consistently 17–18 dB RMSE — coherent combination is meaningless:**
+
+The `coh` method (coherent field sum including phase) stays flat at 17–18 dB regardless of N or range. This is expected: drive-test measurements are incoherent averages. Coherent combination adds inter-path interference that does not exist in the measured data.
+
+### 7d.4 Run 3 vs Run 1 vs Run 2 — definitive comparison
+
+| Run | Config | 0–1km RMSE | 0–4km RMSE | avg_rays at N~600 |
+|-----|--------|-----------|-----------|------------------|
+| Run 1 | dry + per-mat + 80M | ~9 dB (750–1km) | ~11 dB (stratified) | ~382 |
+| Run 2 | medium + S=0.70 + 80M | ~10.9 dB (750–1km) | 12.3 dB (stratified) | ~120 |
+| **Run 3** | **medium + S=0.50 + 80M** | **9.9 dB** | **14.5 dB (cumul.)** | **4,456** |
+
+Run 3 has the highest avg_rays at large N (S=0.50 depletes ray budget slowest) but the worst overall RMSE because the high STD from starvation still dominates. Run 1 remains the best at full scale with 80M sps.
+
+**Definitive conclusion from all three runs: 80M sps is insufficient for N > 200 at any scatter setting.** The only path to reproducing the DIAG performance (8.27 dB) at full N is `MAX_SAMPLES_PS = 300M`.
+
+### 7d.5 CELL 8e chart analysis
+
+The 6-panel chart (`CELL 8e — Cumulative PL Evaluation`) shows:
+
+- **Bias (top-left):** incoh ON (blue) stays between −4 and −8 dB — consistent systematic over-prediction from missing obstructions. coh ON (green) shows large negative bias (−13 to −15 dB) — coherent sum amplifies TX → RX path errors.
+- **RMSE (top-centre):** incoh ON starts at 8–10 dB (0–1km) then climbs to 14.5 dB. Inflection at 1.25km = starvation onset. OFF curves at 19–21 dB confirm scatter essential.
+- **STD (top-right):** incoh ON STD grows from 5 dB (0–300m) to 13 dB (0–4km) — spatial PL variance increases with range, harder to predict.
+- **MSE (bottom-left):** mirrors RMSE² — rapid rise from 1.25km onset confirms single starvation event.
+- **R² (bottom-centre):** positive only for incoh ON up to ~2km. All other methods below zero throughout — scatter ON incoherent is the only physically correct estimator.
+- **dRMSE ON−OFF (bottom-right):** grows from ~0 dB at 300m to −6.8 dB at 4km. Monotonic increase confirms scatter dominant mechanism at sub-GHz for all urban ranges > 500m.
+
+---
+
+## 7e. Three-Run Summary and Next Step Decision
+
+### 7e.1 All runs at 80M sps — ranked by overall RMSE
+
+| Run | Ground | Scatter | sps | N | Overall RMSE | Best band | Path starvation |
+|-----|--------|---------|-----|---|-------------|-----------|----------------|
+| **Run 1** | dry | per-mat | 80M | 1,200 | **~11.0 dB** | **6.8 dB** | Moderate (Band 5) |
+| Run 2 | medium | 0.70 | 80M | 1,200 | 12.3 dB | 8.6 dB | Severe (all >500m) |
+| Run 3 | medium | 0.50 | 80M | 619 | 14.5 dB | 9.9 dB | Moderate-severe |
+
+At 80M sps, Run 1 (dry + per-material) gives the best overall RMSE because dry ground with per-material scatter avoids the ray budget collapse from high global S values.
+
+### 7e.2 Why 300M sps changes everything
+
+The DIAG (N=50, 80M sps) showed RMSE=8.27 dB, R²=0.824 with medium+S=0.70. This is achievable at full N only if avg_rays ≥ 20,000/RX at all bands. At N=1200:
+
+```
+Required sps = N × target_rays_per_rx = 1200 × 20,000 = 24,000,000,000  (24B — not feasible)
+Practical minimum: N × 5,000 = 1200 × 5,000 = 6,000,000  (need 6M rays/RX)
+At 300M sps: avg_rays ≈ 300M / 1200 = 250,000/RX for near bands
+             reduces to ~50,000/RX for far bands (5km+)
+```
+
+At 300M sps the near-band avg_rays (~250K/RX) far exceeds the DIAG avg_rays (78K/RX at N=8). Mid-range bands (1–2km) would get ~70–100K rays/RX — comparable to the DIAG conditions that produced 8.27 dB. The >3km band will still be starved, but less severely.
+
+**Expected result at 300M sps, medium+S=0.70:**
+- 0–1km: ~8–9 dB (matching DIAG)
+- 1–2km: ~9–11 dB (improved from 13.7 dB in Run 2)
+- >2km: ~10–12 dB (improved from 11–12 dB in Run 2)
+- **Overall: ~9–10 dB** — best achievable before scene additions
+
+### 7e.3 Recommended run order
+
+1. **Run scene_v2_infra CELL 8** with medium+S=0.70+80M first — test new scene features at current sps. Expected: ~9–10 dB from geometry improvements alone.
+2. **If ≥1 dB improvement confirmed** → then run 300M sps with scene_v2_infra for best possible result.
+3. **Cell 10b** scalar calibration after geometry is finalised.
+
+--- (All 1,200 Receivers)
 
 From CELL 8 Step 5, comparing simulated RSSI against free-space path loss (FSPL) upper bound across all 1,200 receivers:
 
