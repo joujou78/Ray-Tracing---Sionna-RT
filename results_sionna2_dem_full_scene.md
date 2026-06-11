@@ -908,33 +908,74 @@ Note: at 0–750m, OFF incoh R²=+0.346 in Run 5 vs +0.652 (ON incoh). Scatter s
 
 ### 9.2 scene_v2_infra — infrastructure features
 
+**Cell 4 executed 2026-06-11 — full output recorded below.**
+
+#### Cell 4 raw output (scene_v2_infra run)
+
+```
+Buildings: 77,014 exported, 109 skipped
+Materials assigned: itu_concrete, itu_metal, itu_brick, itu_glass, itu_wood
+Bridges: 34 features → bld_itu_concrete_bridges.ply (2,300 verts, 1,314 faces)
+  Geometry: solid slab 1.5 m thick, clearance baseline 5.0 m, itu_concrete
+Embankments: 374 lines → bld_itu_concrete_embankments.ply (59,994 verts, 35,249 faces)
+  Geometry: solid extrusion with 4 walls, itu_concrete
+Car parks: 4 features → infra_itu_concrete_carparks.ply (405 verts, 235 faces)
+  Geometry: multi-storey solid slab, itu_concrete
+Cooling towers: FAILED — No matching features. Check query location, tags, and log.
+  → No cooling tower features found in Nottingham OSM bbox (man_made=cooling_tower)
+  → PLY NOT generated — excluded from scene_v2_infra
+Pylons: 61 features → infra_itu_metal_pylons.ply
+Masts: 48 features → infra_itu_metal_masts.ply
+Chimneys: 10 features → infra_itu_concrete_chimneys.ply
+Water towers: 1 feature → infra_itu_metal_watertowers.ply
+Tanks: 6 features → infra_itu_metal_tanks.ply
+Stadiums: 2 features → infra_itu_metal_stadiums.ply
+Substations: 183 features → infra_itu_metal_substations.ply
+Vegetation footprints: 2,187 polygons → vegetation_footprints.geojson
+```
+
+#### PLY status table (post Cell 4 run)
+
 | Feature | PLY | Count | Material | Status |
 |---------|-----|-------|---------|--------|
-| Power pylons | `infra_itu_metal_pylons.ply` | 61 | itu_metal | ✓ On disk |
-| Telecom masts | `infra_itu_metal_masts.ply` | 48 | itu_metal | ✓ On disk |
-| Chimneys | `infra_itu_concrete_chimneys.ply` | 10 | itu_concrete | ✓ On disk |
-| Water towers | `infra_itu_metal_watertowers.ply` | 1 | itu_metal | ✓ On disk |
-| Storage tanks | `infra_itu_metal_tanks.ply` | 6 | itu_metal | ✓ On disk |
-| Stadiums | `infra_itu_metal_stadiums.ply` | 2 | itu_metal | ✓ On disk |
-| Substations | `infra_itu_metal_substations.ply` | 183 | itu_metal | ✓ On disk |
-| Multi-storey car parks | `infra_itu_concrete_carparks.ply` | — | itu_concrete | Needs Cell 0 re-run |
-| Cooling towers | `infra_itu_concrete_coolingtowers.ply` | — | itu_concrete | Needs Cell 0 re-run |
-| Bridges (solid slab) | `bld_itu_concrete_bridges.ply` | — | itu_concrete | Needs Cell 4 re-run |
-| Embankments (with walls) | — | — | itu_concrete | Needs Cell 4 re-run |
+| Power pylons | `infra_itu_metal_pylons.ply` | 61 | itu_metal | ✓ Generated |
+| Telecom masts | `infra_itu_metal_masts.ply` | 48 | itu_metal | ✓ Generated |
+| Chimneys | `infra_itu_concrete_chimneys.ply` | 10 | itu_concrete | ✓ Generated |
+| Water towers | `infra_itu_metal_watertowers.ply` | 1 | itu_metal | ✓ Generated |
+| Storage tanks | `infra_itu_metal_tanks.ply` | 6 | itu_metal | ✓ Generated |
+| Stadiums | `infra_itu_metal_stadiums.ply` | 2 | itu_metal | ✓ Generated |
+| Substations | `infra_itu_metal_substations.ply` | 183 | itu_metal | ✓ Generated |
+| Multi-storey car parks | `infra_itu_concrete_carparks.ply` | 4 (405 verts, 235 faces) | itu_concrete | ✓ Generated |
+| Bridges (solid slab 1.5 m) | `bld_itu_concrete_bridges.ply` | 34 (2,300 verts, 1,314 faces) | itu_concrete | ✓ Generated |
+| Embankments (4-wall solid) | `bld_itu_concrete_embankments.ply` | 374 lines (59,994 verts, 35,249 faces) | itu_concrete | ✓ Generated |
+| Cooling towers | `infra_itu_concrete_coolingtowers.ply` | 0 | itu_concrete | ✗ FAILED — no OSM features in bbox |
+| Vegetation footprints | `vegetation_footprints.geojson` | 2,187 polygons | — | ✓ Generated |
+
+**Note on cooling towers:** OSM tag `man_made=cooling_tower` returns zero results in the Nottingham bbox. Nottingham has no large industrial cooling towers in the drive-test area. This PLY is not required — its absence has no impact on 915 MHz propagation in the measurement corridor.
+
+**Summary: 10 of 11 PLY types generated. Cooling towers omitted (zero OSM features). All 3 newly added types (bridges, embankments, car parks) now on disk.**
+
+#### Why these additions matter for the 300–500m band
+
+The A52 corridor (300–500m from TX) is the geometry-limited band showing −10 to −13 dB negative bias in all runs. The 34 bridges and 374 embankment sections along the A52 / rail corridor add:
+- **Bridges:** Solid concrete slabs block elevated diffuse scatter paths that currently find unobstructed routes over the A52
+- **Embankments:** 4-wall extrusions create lateral shadowing along rail cuts that currently appear transparent
+- **Car parks:** 4 multi-storey structures add additional NLOS attenuation near the TX
+
+Expected effect: reduce STD in the 0–500m band (currently 6.0–11.4 dB) and bring negative bias toward 0 dB.
 
 ### 9.3 Next run order
 
+Cell 4 is **complete**. All PLYs are on disk. Next step: assemble the XML files.
+
 | Step | Notebook label | Cell index | Action |
 |------|---------------|-----------|--------|
-| **1** | **CELL 0** | index 2 | Activate `INCLUDE_CAR_PARKS=True`, `INCLUDE_COOLING_TOWERS=True` |
-| **2** | **CELL 1** | index 3 | Imports |
-| **3** | **CELL 4** | index 16 | Re-export all PLYs (bridges solid slab, embankments, car parks, cooling towers) |
-| **4** | **CELL B3** | index 33 | Assemble `scene_with_full.xml` (Sionna 2.0) |
-| **5** | **CELL B1** | index 28 | Convert to `scene_with_full_019.xml` (Sionna 0.19) |
-| **6** | **CELL 8e** | DEM notebook | Run with scene_v2_infra + 500M sps — measure bias reduction |
-| **7** | **Cell 10b** | — | Re-run scalar calibration with correct TX height + updated scene |
-| **8** | **Cell 11b** | — | Material calibration (~3h) |
-| **9** | **Cell 15** | — | Residual MLP — target <5 dB RMSE |
+| **1** | **CELL B3** | index 33 | Assemble `scene_with_full.xml` incorporating all new PLYs (bridges, embankments, car parks + existing infra) |
+| **2** | **CELL B1** | index 28 | Convert `scene_with_full.xml` → `scene_with_full_019.xml` (Sionna 0.19 format) |
+| **3** | **CELL 8e** | DEM notebook | Run with scene_v2_infra + 500M sps — measure A52 bias reduction |
+| **4** | **Cell 10b** | — | Re-run scalar calibration after scene confirmed |
+| **5** | **Cell 11b** | — | Material calibration (~3 h) |
+| **6** | **Cell 15** | — | Residual MLP — target <5 dB RMSE |
 
 ### 9.4 Expected RMSE progression
 
