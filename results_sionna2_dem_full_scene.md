@@ -755,9 +755,90 @@ At 300M sps the near-band avg_rays (~250K/RX) far exceeds the DIAG avg_rays (78K
 
 ### 7e.3 Recommended run order
 
-1. **Run scene_v2_infra CELL 8** with medium+S=0.70+80M first — test new scene features at current sps. Expected: ~9–10 dB from geometry improvements alone.
-2. **If ≥1 dB improvement confirmed** → then run 300M sps with scene_v2_infra for best possible result.
-3. **Cell 10b** scalar calibration after geometry is finalised.
+**Step-by-step reasoning:**
+
+| Step | Action | Why |
+|------|--------|-----|
+| 1 | **Cell 8e medium+S=0.70 (current run)** | Confirms S=0.70 cumulative performance at 80M sps before committing 300M runtime |
+| 2 | **Compare S=0.70 vs S=0.50 across all thresholds** | S=0.70 already better at every window — validates DIAG finding at higher N |
+| 3 | **Run scene_v2_infra CELL 8, medium+S=0.70, 80M** | Isolate geometry improvement — noise barriers + embankments + pylons now in XML. Expected −2 to −4 dB from §7.2 analysis |
+| 4 | **If RMSE improves ≥1 dB → run 300M sps** | 300M sps only worth the 3–4h runtime if scene is finalised. Running 300M on old scene wastes compute |
+| 5 | **Cell 10b scalar calibration** | Only meaningful after geometry gaps are closed — scalar offset from broken scene is unreliable |
+| 6 | **Cell 11b material calibration (~3h)** | Fine-tunes ε_r/σ/S per material after geometry baseline is solid |
+| 7 | **Cell 15 Residual MLP** | Final RMSE push — target <5 dB |
+
+---
+
+## 7f. CELL 8e Run 4 — Medium Ground, S=0.70, Cumulative (In Progress)
+
+### 7f.1 Why this run was chosen
+
+**Reasoning chain leading to this run:**
+
+1. **Run 1** (dry+per-mat, 80M) → 11.0 dB overall. Good baseline but dry ground underestimates UK urban soil moisture.
+2. **DIAG** (medium+S=0.70, N=50, 80M) → 8.27 dB, R²=0.824. Physics settings correct but N too small to be representative.
+3. **Run 2** (medium+S=0.70, N=1200, 80M stratified) → 12.3 dB. Path count collapse (60–70%) at all bands >500m. Worse than Run 1.
+4. **Run 3** (medium+S=0.50, Cell 8e cumulative) → 9.9 dB at 0–1km, 14.5 dB at 0–4km. S=0.50 depletes rays slower but not enough — still worse than Run 1 at full scale.
+5. **Run 4 (this run):** medium+S=0.70, Cell 8e cumulative. Goal: determine if S=0.70 is better or worse than S=0.50 in cumulative mode, and establish the exact threshold where starvation onset occurs.
+
+The cumulative (Cell 8e) approach is used instead of stratified (Cell 8) because it reveals the starvation onset point precisely — RMSE trend as N grows shows exactly where path budget runs out.
+
+### 7f.2 Partial results (0–2000m, run in progress)
+
+```
+==============================================================================
+CELL 8e Run 4 — Cumulative ON incoh (medium+S=0.70, 80M sps)
+  Threshold   N   avg_rays    Bias    MSE   RMSE    STD      R²
+------------------------------------------------------------------------------
+    0–100m    8   96,340    −9.9    125.7   11.2    5.2   −8.447
+    0–200m   17   89,570    −6.2     66.6    8.2    5.3   −4.166
+    0–300m   26   86,863    −6.2     67.4    8.2    5.3   −0.911
+    0–500m   44   70,888    −7.2     88.4    9.4    6.0   +0.174
+    0–750m   67   47,230    −4.9     76.1    8.7    7.2   +0.652
+    0–900m   78   40,799    −4.4     73.6    8.6    7.4   +0.692
+   0–1000m   87   36,699    −4.9     79.1    8.9    7.4   +0.707  ← peak R² so far
+   0–1250m  179   18,074    −9.5    202.6   14.2   10.6   +0.378
+   0–1500m  221   14,886    −8.9    181.3   13.5   10.1   +0.351
+   0–1750m  289   11,845    −8.0    166.3   12.9   10.1   +0.283
+   0–2000m  355    9,830    −6.8    167.1   12.9   11.0   +0.211  ← still positive
+==============================================================================
+[Run still in progress — 0–2500m through 0–4000m pending]
+```
+
+### 7f.3 Interim analysis vs Run 3 (S=0.50)
+
+**S=0.70 is better than S=0.50 at every threshold:**
+
+| Threshold | N | S=0.70 RMSE | S=0.50 RMSE | Δ | S=0.70 R² | S=0.50 R² |
+|-----------|---|------------|------------|---|----------|----------|
+| 0–750m | 67 | **8.7 dB** | 9.7 dB | −1.0 | **+0.652** | +0.571 |
+| 0–1000m | 87 | **8.9 dB** | 9.9 dB | −1.0 | **+0.707** | +0.639 |
+| 0–1500m | 221 | **13.5 dB** | 13.9 dB | −0.4 | **+0.351** | +0.305 |
+| 0–2000m | 355 | **12.9 dB** | 14.2 dB | −1.3 | **+0.211** | +0.043 |
+
+R² remains positive at 2km for S=0.70 (+0.211) vs barely positive for S=0.50 (+0.043). This means S=0.70 still has predictive power at 2km where S=0.50 has essentially none.
+
+**Unexpected finding — S=0.70 has MORE avg_rays than S=0.50:**
+
+| Threshold | S=0.70 avg_rays | S=0.50 avg_rays |
+|-----------|----------------|----------------|
+| 0–1km (N=87) | **36,699** | 28,763 |
+| 0–2km (N=355) | **9,830** | 7,337 |
+
+Counter-intuitive: S=0.70 (49% diffuse) creates more paths per receiver in the cumulative window than S=0.50 (25% diffuse). Physical explanation: higher scatter generates more diffuse branches at each surface interaction → more scatter paths are created overall at short/medium range. These branches reach the 0–2km receivers efficiently. The collapse happens faster at >3km because those same branches have already spent their energy budget in the near field.
+
+This explains why the DIAG (N=50, all receivers within ~5km) worked well with S=0.70 — it had enough near/medium-range coverage. The stratified Run 2 failed because the >3km band (N=675) got zero near-field paths.
+
+### 7f.4 Updated overall run comparison (to be completed when run finishes)
+
+| Run | Config | 0–1km RMSE | 0–1km R² | 0–2km RMSE | 0–2km R² | Status |
+|-----|--------|-----------|---------|-----------|---------|--------|
+| DIAG | medium+0.70, N=50 | 8.27 dB | +0.824 | — | — | Reference |
+| Run 3 (Cell 8e) | medium+0.50, N≤619 | 9.9 dB | +0.639 | 14.2 dB | +0.043 | Complete |
+| **Run 4 (Cell 8e)** | **medium+0.70, N≤619** | **8.9 dB** | **+0.707** | **12.9 dB** | **+0.211** | **In progress** |
+| Run 1 (Cell 8 strat.) | dry+per-mat, N=1200 | ~9 dB | <0 | ~11 dB | <0 | Complete |
+
+*Table will be updated with full 0–4km results when Run 4 completes.*
 
 --- (All 1,200 Receivers)
 
