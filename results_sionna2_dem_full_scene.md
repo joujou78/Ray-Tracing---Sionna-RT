@@ -833,6 +833,94 @@ Note: at 0–750m, OFF incoh R²=+0.346 in Run 5 vs +0.652 (ON incoh). Scatter s
 
 ---
 
+## TASK 8 — CELL 8e Run 6: scene_v2_infra + S=0.70 + 500M sps
+
+### Purpose
+
+First simulation with the **complete scene_v2_infra geometry** (bridges, embankments, car parks, pylons, masts, substations, chimneys) combined with 500M sps ray budget. This run tests the primary hypothesis: does adding the missing A52 corridor geometry (34 bridges + 374 embankment sections) eliminate the −10 to −13 dB bias and the STD inflation seen in Run 5 at 0–500m?
+
+Two improvements combined vs Run 4 (best previous):
+1. **scene_v2_infra** — 10 new PLY types including bridges and embankments blocking A52 scatter paths
+2. **500M sps** — 6.25× ray budget to eliminate starvation at N>350 (>2km)
+
+### Steps followed
+
+| Step | Notebook label | Cell index | Action |
+|------|----------------|------------|--------|
+| **1** | **CELL 0** | index 2 | Set `GROUND_PRESET="medium"`, `SCATTER_OVERRIDE=0.70`, `MAX_SAMPLES_PS=500M` |
+| **2** | **CELL 1** | index 4 | Config — `SCENE_XML` → `scene_v2_infra/scene_with_full.xml` |
+| **3** | **CELL 3** | index — | Load scene (23 shapes, 9 materials) |
+| **4** | **CELL 4A** | index 15 | Assign EM materials — keyword matching covers all new PLYs automatically |
+| **5** | **CELL 4** | index — | Place TX at terrain_z + 17m AGL |
+| **6** | **CELL 5/6** | index — | Load 1,200 RX from Ofcom CSV, place at DEM height + 1.5m |
+| **7** | **CELL 8e** | index — | Cumulative GPU pass — 17 thresholds 100m → 4000m, 500M sps |
+
+### Configuration
+
+| Parameter | Run 4 (best previous) | Run 5 (incomplete scene) | **Run 6 (this run)** |
+|-----------|----------------------|--------------------------|----------------------|
+| Scene | Full OSM (no infra) | Full OSM (no infra) | **scene_v2_infra (complete)** |
+| Ground | medium ε_r=4.0 | medium ε_r=4.0 | medium ε_r=4.0 |
+| Scatter | S=0.70 | S=0.70 | S=0.70 |
+| sps | 80M | 500M | **500M** |
+| New PLYs | — | — | bridges×34, embankments×374, carparks×4, pylons×61, masts×48, substations×183 |
+
+### Results — Cumulative output (incoherent ON)
+
+*Paste CELL 8e output here as bands arrive.*
+
+```
+[Run 6 output — pending]
+```
+
+### Results — Run 6 vs Run 4 comparison (incoherent ON)
+
+| Threshold | N | Run 4 RMSE | Run 6 RMSE | ΔRMSE | Run 4 R² | Run 6 R² | Run 4 STD | Run 6 STD |
+|-----------|---|-----------|-----------|-------|---------|---------|----------|----------|
+| 0–100m | 8 | 11.2 dB | — | — | −8.447 | — | 5.2 | — |
+| 0–200m | 17 | 8.2 dB | — | — | −4.166 | — | 5.3 | — |
+| 0–300m | 26 | 8.2 dB | — | — | −0.911 | — | 5.3 | — |
+| 0–500m | 44 | **9.4 dB** | — | — | **+0.174** | — | **6.0** | — |
+| 0–750m | 67 | 8.7 dB | — | — | +0.652 | — | 7.2 | — |
+| 0–900m | 78 | 8.6 dB | — | — | +0.692 | — | 7.4 | — |
+| 0–1000m | 87 | 8.9 dB | — | — | +0.707 | — | 7.4 | — |
+| 0–1250m | 179 | 14.2 dB | — | — | +0.378 | — | 10.6 | — |
+| 0–1500m | 221 | 13.5 dB | — | — | +0.351 | — | 10.1 | — |
+| 0–1750m | 289 | 12.9 dB | — | — | +0.283 | — | 10.1 | — |
+| 0–2000m | 355 | 12.9 dB | — | — | +0.211 | — | 11.0 | — |
+| 0–2250m | 448 | 13.9 dB | — | — | −0.026 | — | 11.2 | — |
+| 0–2500m | 482 | 14.4 dB | — | — | −0.080 | — | 11.2 | — |
+| 0–2750m | 503 | 14.3 dB | — | — | −0.045 | — | 11.1 | — |
+| 0–3000m | 525 | 14.1 dB | — | — | −0.010 | — | 10.9 | — |
+| 0–3500m | 567 | 13.6 dB | — | — | +0.045 | — | 10.8 | — |
+| 0–4000m | 619 | 13.3 dB | — | — | +0.107 | — | 10.5 | — |
+
+*Fill Run 6 column as results arrive.*
+
+### Key indicators to watch
+
+| Band | Run 4 value | Expected Run 6 | Why |
+|------|------------|----------------|-----|
+| 0–500m STD | 6.0 dB | **~5–6 dB** | Bridges/embankments block A52 scatter variance |
+| 0–500m R² | +0.174 | **>+0.3** | Geometry fix reduces inter-receiver spread |
+| 0–500m Bias | −7.2 dB | **−3 to −5 dB** | Missing obstructions now present |
+| 0–2000m R² | +0.211 | **>+0.5** | 500M sps eliminates starvation |
+| 0–4000m R² | +0.107 | **>+0.4** | Combined effect |
+| 0–4000m RMSE | 13.3 dB | **~9–10 dB** | Scene + sps together |
+
+### Charts
+
+> *Chart: Run 6 — 6-panel cumulative chart (Bias, RMSE, STD, MSE, R², dRMSE ON−OFF) vs threshold*
+> *(Attach screenshot when run completes)*
+
+### Interpretation
+
+*To be written after results arrive.*
+
+---
+
+---
+
 ## 8. Master Comparison — All Runs
 
 ### 8.1 Configuration table
@@ -847,6 +935,7 @@ Note: at 0–750m, OFF incoh R²=+0.346 in Run 5 vs +0.652 (ON incoh). Scatter s
 | **Run 3** | Task 5 | Full OSM scene | medium ε_r=4.0 | S=0.50 global | cumulative | ≤619 | 80M |
 | **Run 4** | Task 6 | Full OSM scene | medium ε_r=4.0 | S=0.70 global | cumulative | ≤619 | 80M |
 | **Run 5** | Task 7 | Full OSM scene | medium ε_r=4.0 | S=0.70 global | cumulative | ≤619 | **500M** |
+| **Run 6** | Task 8 | **scene_v2_infra** | medium ε_r=4.0 | S=0.70 global | cumulative | ≤619 | **500M** |
 
 ### 8.2 Performance comparison — key metrics
 
@@ -860,6 +949,7 @@ Note: at 0–750m, OFF incoh R²=+0.346 in Run 5 vs +0.652 (ON incoh). Scatter s
 | Run 3 (S=0.50, 80M) | 9.9 dB | +0.639 | 14.2 dB | +0.043 | 14.5 dB | −0.052 | −6.5 dB |
 | **Run 4 (S=0.70, 80M)** | **8.9 dB** | **+0.707** | **12.9 dB** | **+0.211** | **13.3 dB** | **+0.107** | **−8.2 dB** |
 | **Run 5 (S=0.70, 500M)** | **10.5 dB** ▼ | **+0.588** ▼ | *pending* | *pending* | *pending* | *pending* | **−4.8 dB** |
+| **Run 6 (scene_v2_infra+500M)** | *pending* | *pending* | *pending* | *pending* | *pending* | *pending* | *pending* |
 
 ★ Path counts collapsed 61–70% vs Run 1 — starvation dominated despite better physics settings.
 
