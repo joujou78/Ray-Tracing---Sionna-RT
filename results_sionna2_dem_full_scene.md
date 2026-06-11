@@ -792,25 +792,25 @@ The cumulative (Cell 8e) approach is used instead of stratified (Cell 8) because
 CELL 8e Run 4 — medium ground + S=0.70 global scatter, 80M sps, cumulative
   Threshold   N   avg_rays(ON/OFF)    Bias    MSE    RMSE   STD     R²      [s]
 ------------------------------------------------------------------------------
-    0–100m    8   96,340 / 67.3    −9.9   125.7   11.2   5.2  −8.447   (72)
-    0–200m   17   89,570 / —       −6.2    66.6    8.2   5.3  −4.166
-    0–300m   26   86,863 / —       −6.2    67.4    8.2   5.3  −0.911
-    0–500m   44   70,888 / —       −7.2    88.4    9.4   6.0  +0.174
-    0–750m   67   47,230 / —       −4.9    76.1    8.7   7.2  +0.652
-    0–900m   78   40,799 / —       −4.4    73.6    8.6   7.4  +0.692
-   0–1000m   87   36,699 / 67.3    −4.9    79.1    8.9   7.4  +0.707  (72) ← peak R²
-   0–1250m  179   18,074 / 38.5    −9.5   202.6   14.2  10.6  +0.378 (145) ← starvation onset
-   0–1500m  221   14,886 / 33.2    −8.9   181.3   13.5  10.1  +0.351 (184)
-   0–1750m  289   11,845 / 28.3    −8.0   166.3   12.9  10.1  +0.283 (237)
-   0–2000m  355    9,830 / 23.9    −6.8   167.1   12.9  11.0  +0.211 (296) ← last positive R²
-   0–2250m  448    8,055 / 21.3    −8.2   193.6   13.9  11.2  −0.026 (372) ← R² turns negative
-   0–2500m  482    7,771 / 21.7    −8.9   205.9   14.4  11.2  −0.080 (401)
-   0–2750m  503    7,549 / 21.2    −9.0   203.1   14.3  11.1  −0.045 (419)
-   0–3000m  525    7,301 / 20.6    −9.0   198.4   14.1  10.9  −0.010 (440)
-   0–3500m  567    6,845 / 19.5    −8.3   184.8   13.6  10.8  +0.045 (470) ← R² recovers
+    0–100m    8   96,340 /  168.0   −9.9   125.7   11.2   5.2  −8.447   (14)
+    0–200m   17   89,570 /  150.5   −6.2    66.6    8.2   5.3  −4.166   (19)
+    0–300m   26   86,863 /  144.0   −6.2    67.4    8.2   5.3  −0.911   (26)
+    0–500m   44   70,888 /  111.2   −7.2    88.4    9.4   6.0  +0.174   (42)
+    0–750m   67   47,230 /   79.8   −4.9    76.1    8.7   7.2  +0.652   (56)
+    0–900m   78   40,799 /   72.7   −4.4    73.6    8.6   7.4  +0.692   (64)
+   0–1000m   87   36,699 /   67.3   −4.9    79.1    8.9   7.4  +0.707   (72) ← peak R²
+   0–1250m  179   18,074 /   38.5   −9.5   202.6   14.2  10.6  +0.378  (145) ← starvation onset
+   0–1500m  221   14,886 /   33.2   −8.9   181.3   13.5  10.1  +0.351  (184)
+   0–1750m  289   11,845 /   28.3   −8.0   166.3   12.9  10.1  +0.283  (237)
+   0–2000m  355    9,830 /   23.9   −6.8   167.1   12.9  11.0  +0.211  (296) ← last band >+0.2
+   0–2250m  448    8,055 /   21.3   −8.2   193.6   13.9  11.2  −0.026  (372) ← turns negative
+   0–2500m  482    7,771 /   21.7   −8.9   205.9   14.4  11.2  −0.080  (401) ← worst RMSE
+   0–2750m  503    7,549 /   21.2   −9.0   203.1   14.3  11.1  −0.045  (419)
+   0–3000m  525    7,301 /   20.6   −9.0   198.4   14.1  10.9  −0.010  (440)
+   0–3500m  567    6,845 /   19.5   −8.3   184.8   13.6  10.8  +0.045  (470) ← partial recovery
+   0–4000m  619    6,312 /   18.1   −8.2   177.2   13.3  10.5  +0.107  (525) ← FINAL
 ==============================================================================
-Overall (0–3500m): RMSE = 13.6 dB, Bias = −8.3 dB, R² = +0.045
-[Run still in progress — 0–4000m final band pending]
+FINAL (0–4000m, N=619):  RMSE = 13.3 dB  Bias = −8.2 dB  R² = +0.107  Runtime = 525 s
 ```
 
 **Scatter ON vs OFF comparison at key thresholds:**
@@ -841,7 +841,8 @@ ON coh is 20–22.5 dB RMSE at every window — meaningless, as expected. Drive-
 | 0–2000m | 355 | **12.9 dB** | 14.2 dB | −1.3 | **+0.211** | +0.043 |
 | 0–2500m | 482 | **14.4 dB** | 14.9 dB | −0.5 | −0.080 | −0.089 |
 | 0–3000m | 525 | **14.1 dB** | 14.8 dB | −0.7 | −0.010 | −0.095 |
-| 0–3500m | 567 | **13.6 dB** | 14.4 dB | **−0.8** | **+0.045** | −0.031 |
+| 0–3500m | 567 | **13.6 dB** | 14.4 dB | −0.8 | **+0.045** | −0.031 |
+| 0–4000m | 619 | **13.3 dB** | — | — | **+0.107** | — |
 
 S=0.70 wins at all ranges. The gap is largest at 0–2km (−1.3 dB) where scatter paths dominate NLOS propagation. At 0–3500m, S=0.70 recovers to R²=+0.045 while S=0.50 remains negative (−0.031).
 
@@ -878,17 +879,29 @@ Physical explanation: S=0.70 (49% diffuse fraction) generates more total scatter
 | DIAG | medium+0.70 | stratified | 50 | 8.27 dB | +0.824 | — | — | ~10min |
 | Run 2 (Cell 8) | medium+0.70 | stratified | 1200 | — | — | 12.3 dB overall | <0 | ~2h |
 | Run 3 (Cell 8e) | medium+0.50 | cumulative | ≤619 | 9.9 dB | +0.639 | 14.4 dB | −0.031 | ~7.8h |
-| **Run 4 (Cell 8e)** | **medium+0.70** | **cumulative** | **≤567** | **8.9 dB** | **+0.707** | **13.6 dB** | **+0.045** | **~7.8h** |
+| **Run 4 (Cell 8e)** | **medium+0.70** | **cumulative** | **≤619** | **8.9 dB** | **+0.707** | **13.3 dB** | **+0.107** | **525 s** |
 
-**Key conclusion:** S=0.70 (Run 4) beats S=0.50 (Run 3) at every range and is the best full-N result to date. At 0–1km, Run 4 (8.9 dB) nearly matches DIAG (8.27 dB), confirming the physics settings are correct. The gap between DIAG and Run 4 at longer ranges is entirely explained by ray starvation (avg_rays 36,699 vs ~6,845 at full N).
+**Key conclusion:** S=0.70 (Run 4) is the best full-N result to date. Final RMSE = **13.3 dB** at 0–4km, R² = **+0.107**. R² recovers from the 0–2.5km trough (+0.045 at 3.5km → +0.107 at 4km) as the large-N statistics stabilise. At 0–1km, Run 4 (8.9 dB, R²=+0.707) nearly matches DIAG (8.27 dB, R²=+0.824) — confirming the physics settings are correct and starvation is the only remaining barrier.
+
+### 7f.5 Chart analysis (cumulative_eval chart)
+
+Six panels from the uploaded chart confirm the quantitative findings:
+
+**Bias panel:** incoh ON (blue) holds steady at −5 to −9 dB across all ranges — a systematic negative bias indicating missing obstructions (over-prediction of received power). incoh OFF (red) trends toward 0 at >2km, but this is spurious: with avg_rays_OFF ~20 the simulation has essentially no multi-bounce paths and produces flat predictions near free-space loss. coh ON (green) is stuck at −20 dB — incoherent combination is the only valid mode.
+
+**RMSE panel:** incoh ON peaks at 14.4 dB (0–2500m) then decreases to 13.3 dB (0–4km) as larger N dilutes the A52 dead-zone receivers. incoh OFF climbs to 19.7 dB at 4km — scatter is essential at sub-GHz range. The 6.4 dB separation at 4km is the quantified scatter benefit.
+
+**R² panel:** Shows the characteristic shape — rises to +0.707 at 1km (scatter paths capture distance-dependent NLOS attenuation), drops negative at 2–2.5km (starvation + A52 dead zone), recovers to +0.107 at 4km (statistics stabilise over larger N). incoh OFF stays near 0 for all ranges beyond 0.75km — essentially a random predictor.
+
+**dRMSE ON−OFF panel:** Scatter ON benefit (negative = ON better) grows from ~0 at 0–0.5km to −6 dB at 4km. The benefit is largest at long range where NLOS diffuse paths are the only propagation mechanism.
 
 **Reasoning for next step:**
 
-The consistent negative bias (−8 to −9 dB at 0–3km) and starvation at N>350 both point to the same two fixes needed:
-1. **scene_v2_infra** — add missing geometry (pylons, car parks, bridges already present → re-run with new infrastructure PLYs). Expected: reduce negative bias by 2–4 dB.
-2. **300M sps** — eliminate starvation at N>350. Expected: R² positive beyond 2km, RMSE 9–10 dB at 0–3.5km.
+The consistent negative bias (−8 to −9 dB at 0–4km) and starvation at N>350 point to two independent fixes:
+1. **scene_v2_infra** — 61 pylons + 48 masts + 183 substations + bridges already on disk → re-run Cell B3 + B1 to assemble XML. Expected: reduce negative bias 2–4 dB by adding obstructions along A52 corridor.
+2. **300M sps** — eliminate starvation at N>350. Expected: R² positive beyond 2km, RMSE ~9–10 dB at 0–4km (matching DIAG performance at full N).
 
-These are independent and can be combined. Priority: scene_v2_infra first (geometry is free), then 300M sps run.
+Priority: scene_v2_infra first (free geometry improvement), then 300M sps run on the improved scene.
 
 --- (All 1,200 Receivers)
 
