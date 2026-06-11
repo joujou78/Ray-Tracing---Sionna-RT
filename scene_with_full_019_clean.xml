@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<scene version="2.1.0">
+
+  <!-- ── Materials (diffuse BSDF — no radio-material plugin needed) ── -->
+  <!-- EM properties assigned programmatically in Cell 4A via RadioMaterial -->
+  <bsdf type="diffuse" id="itu_brick">
+    <rgb name="reflectance" value="0.5 0.5 0.5"/>
+  </bsdf>
+
+  <bsdf type="diffuse" id="itu_concrete">
+    <rgb name="reflectance" value="0.5 0.5 0.5"/>
+  </bsdf>
+
+  <bsdf type="diffuse" id="itu_glass">
+    <rgb name="reflectance" value="0.5 0.5 0.5"/>
+  </bsdf>
+
+  <bsdf type="diffuse" id="itu_metal">
+    <rgb name="reflectance" value="0.5 0.5 0.5"/>
+  </bsdf>
+
+  <bsdf type="diffuse" id="itu_plywood">
+    <rgb name="reflectance" value="0.5 0.5 0.5"/>
+  </bsdf>
+
+  <bsdf type="diffuse" id="itu_wet_ground">
+    <rgb name="reflectance" value="0.5 0.5 0.5"/>
+  </bsdf>
+
+  <bsdf type="diffuse" id="mat_asphalt">
+    <rgb name="reflectance" value="0.5 0.5 0.5"/>
+  </bsdf>
+
+  <bsdf type="diffuse" id="mat_vegetation">
+    <rgb name="reflectance" value="0.5 0.5 0.5"/>
+  </bsdf>
+
+  <bsdf type="diffuse" id="mat_water">
+    <rgb name="reflectance" value="0.5 0.5 0.5"/>
+  </bsdf>
+
+  <!-- ── Shapes ─────────────────────────────────────────── -->
+  <shape type="ply" id="mesh-ground">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/terrain.ply"/>
+    <ref id="itu_wet_ground" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-road_itu_asphalt">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/road_itu_asphalt.ply"/>
+    <ref id="mat_asphalt" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-bld_itu_brick">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/bld_itu_brick.ply"/>
+    <ref id="itu_brick" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-bld_itu_concrete">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/bld_itu_concrete.ply"/>
+    <ref id="itu_concrete" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-infra_itu_concrete_carparks">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/infra_itu_concrete_carparks.ply"/>
+    <ref id="itu_concrete" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-bld_itu_concrete_bridges">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/bld_itu_concrete_bridges.ply"/>
+    <ref id="itu_concrete" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-infra_itu_concrete_chimneys">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/infra_itu_concrete_chimneys.ply"/>
+    <ref id="itu_concrete" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-barriers_itu_concrete">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/barriers_itu_concrete.ply"/>
+    <ref id="itu_concrete" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-bld_itu_concrete_embankments">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/bld_itu_concrete_embankments.ply"/>
+    <ref id="itu_concrete" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-infra_itu_concrete_hwy_bridges">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/infra_itu_concrete_hwy_bridges.ply"/>
+    <ref id="itu_concrete" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-bld_itu_glass">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/bld_itu_glass.ply"/>
+    <ref id="itu_glass" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-bld_itu_glass_greenhouses">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/bld_itu_glass_greenhouses.ply"/>
+    <ref id="itu_glass" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-infra_itu_metal_pylons">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/infra_itu_metal_pylons.ply"/>
+    <ref id="itu_metal" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-infra_itu_metal_bus_stations">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/infra_itu_metal_bus_stations.ply"/>
+    <ref id="itu_metal" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-barriers_itu_metal">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/barriers_itu_metal.ply"/>
+    <ref id="itu_metal" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-infra_itu_metal_masts">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/infra_itu_metal_masts.ply"/>
+    <ref id="itu_metal" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-bld_itu_metal">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/bld_itu_metal.ply"/>
+    <ref id="itu_metal" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-infra_itu_metal_stadiums">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/infra_itu_metal_stadiums.ply"/>
+    <ref id="itu_metal" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-infra_itu_metal_fuel_canopies">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/infra_itu_metal_fuel_canopies.ply"/>
+    <ref id="itu_metal" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-infra_itu_metal_watertowers">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/infra_itu_metal_watertowers.ply"/>
+    <ref id="itu_metal" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-rail_itu_metal">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/rail_itu_metal.ply"/>
+    <ref id="itu_metal" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-infra_itu_metal_tanks">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/infra_itu_metal_tanks.ply"/>
+    <ref id="itu_metal" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-infra_itu_metal_substations">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/infra_itu_metal_substations.ply"/>
+    <ref id="itu_metal" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-trees_itu_vegetation">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/trees_itu_vegetation.ply"/>
+    <ref id="mat_vegetation" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-veg_itu_vegetation">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/veg_itu_vegetation.ply"/>
+    <ref id="mat_vegetation" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-water_itu_water">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/water_itu_water.ply"/>
+    <ref id="mat_water" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+  <shape type="ply" id="mesh-bld_itu_wood">
+    <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/bld_itu_wood.ply"/>
+    <ref id="itu_plywood" name="bsdf"/>
+    <boolean name="face_normals" value="true"/>
+  </shape>
+
+</scene>
