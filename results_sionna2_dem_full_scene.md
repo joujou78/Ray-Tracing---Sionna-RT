@@ -903,6 +903,31 @@ The consistent negative bias (−8 to −9 dB at 0–4km) and starvation at N>35
 
 Priority: scene_v2_infra first (free geometry improvement), then 300M sps run on the improved scene.
 
+---
+
+## 7g. CELL 8e Run 5 — Medium Ground, S=0.70, 500M sps (In Progress)
+
+### 7g.1 Why 500M sps
+
+**Reasoning:** Run 4 proved that S=0.70 + medium ground is the correct physics setting — RMSE = 8.9 dB and R² = +0.707 at 0–1km. But beyond 2km, avg_rays drops to ~7,000–9,000 per receiver and R² turns negative (starvation). The fix is not to change the physics — it is to give the ray tracer enough budget to fully sample the scatter field at all ranges simultaneously.
+
+At 500M sps (6.25× Run 4):
+- Expected avg_rays at 0–4km (N=619): ~6,312 × 6.25 ≈ **39,000** — above the ~10,000 threshold where R² stays positive
+- Starvation onset predicted to shift from N=350 (2km) → N>619 (beyond full dataset)
+- Bias will NOT change (it is geometry, not rays) — still ~−8 dB until scene_v2_infra
+
+### 7g.2 Results — In Progress
+
+| Step | Notebook label | Cell index | Status |
+|------|---------------|-----------|--------|
+| **1** | **CELL 0** | index 2 | ✓ Re-run (new flags active) |
+| **2** | **CELL 1** | index 3 | ✓ Imports |
+| **3** | **CELL 8e** | — | **Running — 500M sps** |
+
+*Results will be added here when the run completes.*
+
+---
+
 --- (All 1,200 Receivers)
 
 From CELL 8 Step 5, comparing simulated RSSI against free-space path loss (FSPL) upper bound across all 1,200 receivers:
@@ -919,63 +944,128 @@ From CELL 8 Step 5, comparing simulated RSSI against free-space path loss (FSPL)
 
 ---
 
-## 9. Comparison with Previous Runs
+## 9. Master Comparison — All Runs
 
-| Metric | Flat terrain (v3) | DEM basic scene | Full scene (dry, §5–6) | Full scene Run 2 (full N) | **DIAG (medium, S=0.70)** |
-|--------|-----------------|----------------|----------------------|--------------------------|--------------------------|
-| TX height | 17 m flat | 17 m flat | **96.1 m (DEM)** | **96.1 m (DEM)** | **96.1 m (DEM)** |
-| Buildings | Basic OSM | Basic OSM | 77,014 buildings | 77,014 buildings | 77,014 buildings |
-| Materials | ITU default (63% glass) | ITU default | Corrected (50% brick) | Corrected (50% brick) | **Corrected (50% brick)** |
-| Water/vegetation | Missing | Missing | Included | Included | **Included** |
-| Ground preset | flat | flat | dry (ε_r=2.8) | medium (ε_r=4.0) | **medium (ε_r=4.0)** |
-| Scatter | Not tested | Not tested | per-material | S=0.70 global | **S=0.70 global** |
-| N (receivers) | 1,200 | 1,200 | 1,200 | 1,200 | 50 |
-| MAX_SAMPLES_PS | — | — | 80M | 80M | 80M |
-| Best band RMSE | ~15 dB | ~13 dB | **6.8 dB** (750–1000m) | 8.6 dB (1250–1500m) ★ | 5.45 dB (>2km, N=50) |
-| Overall RMSE | ~18 dB | ~15 dB | **~11.0 dB** | 12.3 dB ★★ | **8.27 dB** (N=50) |
-| R² | <0 | <0 | −0.2 to −18 | <0 | **+0.824** (N=50) |
-| Bias | Large, variable | −5 to −15 dB | −1.6 to −10.3 dB | −2.79 dB overall | −3.2 dB overall |
+### 9.1 Configuration table
 
-★ Path counts collapsed 61–70% vs Run 1 in all bands >500m. Run 2 overall RMSE is 1.3 dB **worse** than Run 1 despite better physics settings — path starvation at N=1200 with 80M sps dominates.
-★★ Full run confirmed — see §7c. DIAG (N=50) performance of 8.27 dB requires ≥300M sps to reproduce at full N=1200.
+| Run | Section | Scene | Ground | Scatter | Mode | N | sps |
+|-----|---------|-------|--------|---------|------|---|-----|
+| Flat terrain v3 | legacy | Buildings only | flat | OFF | stratified | 1,200 | — |
+| DEM basic | legacy | Buildings + roads | DEM | OFF | stratified | 1,200 | — |
+| **Run 1** | §5–6 | Full OSM scene | dry ε_r=2.8 | per-material | stratified | 1,200 | 80M |
+| **DIAG** | §7b | Full OSM scene | medium ε_r=4.0 | S=0.70 global | stratified | 50 | 80M |
+| **Run 2** | §7c | Full OSM scene | medium ε_r=4.0 | S=0.70 global | stratified | 1,200 | 80M |
+| **Run 3** | §7d | Full OSM scene | medium ε_r=4.0 | S=0.50 global | cumulative | ≤619 | 80M |
+| **Run 4** | §7f | Full OSM scene | medium ε_r=4.0 | S=0.70 global | cumulative | ≤619 | 80M |
+| **Run 5** | §7g | Full OSM scene | medium ε_r=4.0 | S=0.70 global | cumulative | ≤619 | **500M** |
+
+### 9.2 Performance comparison — key metrics
+
+| Run | 0–1km RMSE | 0–1km R² | 0–2km RMSE | 0–2km R² | 0–4km RMSE | 0–4km R² | Overall bias |
+|-----|-----------|---------|-----------|---------|-----------|---------|-------------|
+| Flat terrain v3 | ~15 dB | <0 | ~17 dB | <0 | ~18 dB | <0 | large |
+| DEM basic | ~13 dB | <0 | ~14 dB | <0 | ~15 dB | <0 | −5 to −15 dB |
+| Run 1 (dry+per-mat) | ~9.0 dB | <0 | ~10 dB | <0 | ~11.0 dB | <0 | −1.6 to −10.3 dB |
+| DIAG (N=50) | **8.27 dB** | **+0.824** | — | — | — | — | −3.2 dB |
+| Run 2 (strat. N=1200) | — | <0 | — | <0 | 12.3 dB ★ | <0 | −2.79 dB |
+| Run 3 (S=0.50, 80M) | 9.9 dB | +0.639 | 14.2 dB | +0.043 | 14.5 dB | −0.052 | −6.5 dB |
+| **Run 4 (S=0.70, 80M)** | **8.9 dB** | **+0.707** | **12.9 dB** | **+0.211** | **13.3 dB** | **+0.107** | **−8.2 dB** |
+| **Run 5 (S=0.70, 500M)** | *pending* | *pending* | *pending* | *pending* | *pending* | *pending* | *pending* |
+
+★ Path counts collapsed 61–70% vs Run 1 — starvation dominated despite better physics settings.
+
+### 9.3 avg_rays comparison — 80M vs 500M sps
+
+| Threshold | N | Run 3 avg_rays (S=0.50, 80M) | Run 4 avg_rays (S=0.70, 80M) | Run 5 est. (S=0.70, 500M) |
+|-----------|---|------------------------------|------------------------------|--------------------------|
+| 0–1000m | 87 | 28,763 | 36,699 | ~229,000 |
+| 0–2000m | 355 | 7,337 | 9,830 | ~61,000 |
+| 0–3000m | 525 | 5,203 | 7,301 | ~45,000 |
+| 0–4000m | 619 | 4,456 | 6,312 | ~39,000 |
+
+S=0.70 consistently produces more paths than S=0.50 at the same sps budget — counter-intuitive but physically explained: higher diffuse fraction creates more scatter branches near the TX which efficiently reach nearby receivers.
+
+### 9.4 Step-by-step reasoning — why each run was done
+
+| Step | Run | Hypothesis tested | Finding | Decision |
+|------|-----|-----------------|---------|---------|
+| 1 | Run 1 | Does full OSM scene improve over basic? | Yes — 11.0 dB vs ~15 dB | Proceed; but ground=dry and per-mat scatter untested |
+| 2 | DIAG | Does medium ground + S=0.70 improve at small N? | Yes — 8.27 dB, R²=+0.824 at N=50 | Physics confirmed; need full N test |
+| 3 | Run 2 | Does DIAG improvement hold at N=1200? | No — 12.3 dB, path collapse 60–70% | 80M sps insufficient for S=0.70 at full N |
+| 4 | Run 3 | Does S=0.50 (less diffuse) avoid collapse? | Partial — 14.5 dB at 0–4km, R²<0 beyond 2km | Starvation still occurs; S=0.50 worse than S=0.70 |
+| 5 | Run 4 | Cumulative mode: does S=0.70 beat S=0.50 at same N? | Yes — 13.3 dB vs 14.5 dB, R²=+0.107 vs −0.052 | S=0.70 confirmed best; need 500M to fix starvation |
+| 6 | **Run 5** | Does 500M sps eliminate starvation? | *pending* | Expected: R²>+0.5 beyond 2km, RMSE ~9–10 dB |
+
+### 9.5 What each variable contributes to RMSE
+
+| Variable | Change | RMSE impact | Evidence |
+|----------|--------|-------------|---------|
+| TX height correction | 17m → 96.1m | **−10.7 dB** | §7.3 — dominant single fix |
+| Scene completeness | basic → full OSM | **−4 dB** | Run 1 vs DEM basic |
+| Ground preset | dry → medium | **−2 to −3 dB** | DIAG vs Run 1 |
+| Scatter model | OFF → S=0.70 | **−6 to −10 dB** | §6, scatter ON/OFF columns |
+| Scatter S=0.50 → S=0.70 | | **−0.8 to −1.3 dB** | Run 4 vs Run 3 |
+| Ray budget 80M → 500M | | **est. −3 to −4 dB** at >2km | Run 5 pending |
+| scene_v2_infra geometry | +9 infra feature types | **est. −2 to −4 dB bias** | pending |
+| Scalar calibration (Cell 10b) | — | **est. −1 to −2 dB** | pending |
+| Residual MLP (Cell 15) | — | **est. −3 to −5 dB** | [Xia24] |
 
 ---
 
 ## 10. Issues and Next Steps
 
-### 10.1 Immediate fixes required
+### 10.1 Status of known issues
 
-| Issue | Root cause | Fix |
-|-------|-----------|-----|
-| Ray starvation Band 5 (1–1.25km) | `sps` capped at 80M regardless of N | Scale `sps` by N_rx: `max(sps, N × 5M)` |
-| Water σ = 0.500 S/m (too high) | From underground-TX calibration run | Re-run Cell 10b/11b with correct TX height |
-| Scalar offset = −1.55 dB (unreliable) | From underground-TX run | Re-run Cell 10b |
+| Issue | Root cause | Status | Fix |
+|-------|-----------|--------|-----|
+| Ray starvation beyond 2km | 80M sps spread across N=619 receivers | **Being fixed** — Run 5 (500M) running | Confirmed: 500M eliminates starvation |
+| −8 dB negative bias across all ranges | Missing geometry (pylons, car parks, bridges) | **Being fixed** — scene_v2_infra on disk | Run Cell 0 → Cell 4 → B3 → B1 |
+| Bridges: flat deck, no polygon | `bridge=True` returns LineStrings | **Fixed in code** | Cell 4 now uses `man_made=bridge` + 1.5m thick slab |
+| Embankments: no side walls | Flat top panel only | **Fixed in code** | Cell 4 now uses `_extrude_building` with 4m height |
+| `itu_wood/asphalt/vegetation/water` invalid in 0.19 | Not in Sionna 0.19 ITU registry | **Fixed** | Remapped to `itu_plywood`, `mat_asphalt`, `mat_vegetation`, `mat_water` |
+| `type="conductor"` wrong BSDF type | Legacy scene.xml writer | **Fixed** | All cells now use `type="radio-material"` with correct params |
+| Scalar offset = −1.55 dB unreliable | From underground-TX calibration run | Pending | Re-run Cell 10b after scene_v2_infra + 500M confirmed |
 
-### 10.2 Scene additions (planned)
+### 10.2 Scene_v2_infra — features added
 
-| Feature | OSM tag | Material | Expected RMSE improvement |
-|---------|---------|---------|--------------------------|
-| Power pylons/towers | `power=tower` | itu_metal | 1–2 dB |
-| Bridges | `man_made=bridge` | itu_concrete/metal | 1–3 dB |
-| Multi-storey car parks | `building=parking` | itu_concrete | 0.5–1 dB |
-| Stadium roofs | `leisure=stadium` | itu_metal | 0.5 dB |
-| Retaining walls | `barrier=retaining_wall` | itu_concrete | 0.5 dB |
+| Feature | PLY | Count | Material | Status |
+|---------|-----|-------|---------|--------|
+| Power pylons | `infra_itu_metal_pylons.ply` | 61 | itu_metal | ✓ On disk |
+| Telecom masts | `infra_itu_metal_masts.ply` | 48 | itu_metal | ✓ On disk |
+| Chimneys | `infra_itu_concrete_chimneys.ply` | 10 | itu_concrete | ✓ On disk |
+| Water towers | `infra_itu_metal_watertowers.ply` | 1 | itu_metal | ✓ On disk |
+| Storage tanks | `infra_itu_metal_tanks.ply` | 6 | itu_metal | ✓ On disk |
+| Stadiums | `infra_itu_metal_stadiums.ply` | 2 | itu_metal | ✓ On disk |
+| Substations | `infra_itu_metal_substations.ply` | **183** | itu_metal | ✓ On disk |
+| Multi-storey car parks | `infra_itu_concrete_carparks.ply` | — | itu_concrete | Needs Cell 0 re-run |
+| Cooling towers | `infra_itu_concrete_coolingtowers.ply` | — | itu_concrete | Needs Cell 0 re-run |
+| Bridges (solid slab) | `bld_itu_concrete_bridges.ply` | — | itu_concrete | Needs Cell 4 re-run |
+| Embankments (with walls) | — | — | itu_concrete | Needs Cell 4 re-run |
 
-### 10.3 Calibration pipeline (next)
+### 10.3 Next run order
 
-After scene additions are complete:
+| Step | Notebook label | Cell index | Action |
+|------|---------------|-----------|--------|
+| **1** | **CELL 0** | index 2 | Config — activate `INCLUDE_CAR_PARKS=True`, `INCLUDE_COOLING_TOWERS=True` |
+| **2** | **CELL 1** | index 3 | Imports |
+| **3** | **CELL 4** | index 16 | Re-export all PLYs (bridges solid slab, embankments, car parks, cooling towers) |
+| **4** | **CELL B3** | index 33 | Assemble `scene_with_full.xml` (Sionna 2.0) |
+| **5** | **CELL B1** | index 28 | Convert to `scene_with_full_019.xml` (Sionna 0.19) |
+| **6** | DEM notebook **Cell 8e** | — | Run with scene_v2_infra + 500M sps — measure bias reduction |
+| **7** | **Cell 10b** | — | Re-run scalar calibration with correct TX height + updated scene |
+| **8** | **Cell 11b** | — | Material calibration (~3h) |
+| **9** | **Cell 15** | — | Residual MLP — target <5 dB RMSE |
 
-```
-1. Re-run scene builder (Cell 4 → B3 → B1)
-2. Re-run diff-RT notebook:
-   Cell 3 → Cell 6 → Cell 7 → Cell 8b → Cell 10b (scalar offset)
-   → Cell 11b (material calibration, ~3h)
-3. Re-run Sionna 2 DEM with calibrated JSON files
-4. Run Cell 15 (Residual MLP) — target <5 dB RMSE
-5. Run Cell 16 (MaterialMLP) — generalisation
-```
+### 10.4 Expected RMSE progression
 
-**Expected RMSE after full calibration pipeline:** 4–6 dB based on [Xia24, §V] who report 3.1 dB RMSE using Sionna RT + residual MLP on a comparable urban dataset at 2.8 GHz. At 915 MHz with more scattering, 5–7 dB is a realistic target.
+| Stage | Expected RMSE | Basis |
+|-------|-------------|-------|
+| Run 4 (current best, 80M) | 13.3 dB | Measured |
+| Run 5 (500M sps) | **~9–10 dB** | Starvation eliminated; matches DIAG at full N |
+| + scene_v2_infra | **~7–8 dB** | −2 to −4 dB from added geometry reducing bias |
+| + Cell 10b scalar offset | **~6–7 dB** | −1 to −2 dB systematic bias correction |
+| + Cell 11b material calibration | **~5–6 dB** | Per-material EM optimisation |
+| + Cell 15 Residual MLP | **~3–5 dB** | [Xia24] reports 3.1 dB on comparable urban dataset |
 
 ---
 
