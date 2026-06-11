@@ -259,27 +259,69 @@ Each band is solved twice: **Scatter ON** (Lambertian diffuse reflection enabled
 
 **Interpretation:** **11.8 dB RMSE** at 2–3 km. Scatter OFF reaches 33.8 dB — 22 dB worse than ON. At 2–3 km in Nottingham, essentially all propagation is via multiple diffuse scatter hops through the urban canyon network. The bias of −4.2 dB is consistent across bands — a systematic ~4 dB overestimation likely attributable to: (a) missing diffracting edges (power pylons, bridges absent from scene), and (b) the elevated water conductivity (σ=0.5 S/m) adding ~2 dB excess specular reflection from the River Trent.
 
-#### Band 8: >3000 m (pending)
+#### Band 8: 1250–1500 m (N=42, sps=80M)
 
-*Results pending — to be added when CELL 8 completes.*
+```
+  ON  incoh  42   Bias=-6.7 dB   MSE=74.4    RMSE=8.6 dB    STD=5.4    Paths=2,188
+  OFF incoh  —    —
+```
+
+**Interpretation:** 8.6 dB RMSE with −6.7 dB bias. Path count (2,188) is adequate. Bias is larger than Band 4 (−3.2 dB) indicating more NLOS geometry gaps at 1.25–1.5 km.
+
+#### Band 9: >3000 m (N=675, sps=80M, t=668s)
+
+```
+  ON  incoh  503  Bias=-3.7 dB   MSE=110.4   RMSE=10.5 dB   STD=9.8    Paths=382
+  OFF incoh  189  Bias=+30.1 dB  MSE=1351.8  RMSE=36.8 dB   STD=21.2   Paths=1
+```
+
+**Interpretation:** The largest band (N=675) with only 503 receivers getting valid paths ON (172 receivers = 25.5% receive zero paths — complete radio shadow or ray starvation at extreme range). RMSE = 10.5 dB with bias −3.7 dB. Scatter OFF has 1 path per receiver — completely failed. The 668s runtime reflects the scale of this band. At >3km in urban Nottingham, scatter is literally the only propagation mechanism — every specular path is blocked.
 
 ---
 
-## 6. Summary Table — Scatter ON vs OFF (Incoherent)
+## 6. Summary Table — Scatter ON vs OFF (Incoherent, Complete)
 
-| Band | N | Scatter ON RMSE | Bias | Scatter OFF RMSE | Improvement | ON Paths |
-|------|---|----------------|------|-----------------|-------------|----------|
-| 0–300m | 26 | 10.8 dB | −6.4 | 10.0 dB | −0.8 dB | 27,267 |
-| 300–500m | 18 | 12.5 dB | −10.6 | 12.7 dB | +0.2 dB | 45,415 |
-| 500–750m | 23 | **8.0 dB** | −4.6 | 11.6 dB | **−3.6 dB** | 3,259 |
-| 750–1000m | 20 | **6.8 dB** | −3.2 | 11.5 dB | **−4.7 dB** | 1,938 |
-| 1000–1250m | 92 | 14.7 dB* | −10.3 | 16.7 dB | −2.0 dB | 702* |
-| 1250–1500m | — | — | — | — | — | — |
-| 1500–2000m | 134 | **11.4 dB** | **−1.6** | 34.9 dB | **−23.5 dB** | 2,663 |
-| 2000–3000m | 170 | **11.8 dB** | −4.2 | 33.8 dB | **−22.0 dB** | 3,273 |
-| >3000m | — | pending | — | pending | — | — |
+| Band | N | sps | Scatter ON RMSE | Bias | STD | R² | Scatter OFF RMSE | ΔRMSE | ON Paths |
+|------|---|-----|----------------|------|-----|-----|-----------------|-------|----------|
+| 0–300m | 26 | 20M | 10.8 dB | −6.4 | 8.7 | −2.295 | 10.0 dB | −0.8 | 27,267 |
+| 300–500m | 18 | 20M | 12.5 dB | −10.6 | 6.6 | −18.319 | 12.7 dB | +0.2 | 45,415 |
+| 500–750m | 23 | 80M | **8.0 dB** | −4.6 | 6.5 | −3.513 | 11.6 dB | **−3.6** | 3,259 |
+| 750–1000m | 20 | 80M | **6.8 dB** | −3.2 | 6.0 | −1.955 | 11.5 dB | **−4.7** | 1,938 |
+| 1000–1250m | 92 | 80M | 14.7 dB ★ | −10.3 | 10.5 | −7.102 | 16.7 dB | −2.0 | 702 ★ |
+| 1250–1500m | 42 | 80M | **8.6 dB** | −6.7 | 5.4 | −7.384 | — | — | 2,188 |
+| 1500–2000m | 134 | 80M | 11.4 dB | −1.6 | 11.3 | −5.848 | 34.9 dB | **−23.5** | 2,663 |
+| 2000–3000m | 170 | 80M | 11.8 dB | −4.2 | 11.1 | −2.590 | 33.8 dB | **−22.0** | 3,273 |
+| >3000m | 675 | 80M | 10.5 dB | −3.7 | 9.8 | −1.160 | 36.8 dB | **−26.3** | 382 |
 
-*Ray starvation — sps fix required.
+★ Ray starvation — N=92 sharing 80M rays → ~702 paths/RX. Needs sps scaling fix.
+
+### 6.1 Weighted overall RMSE (scatter ON, incoherent)
+
+Weighted by N per band across all 1,200 receivers:
+
+```
+Weighted RMSE = √( Σ(N_i × MSE_i) / Σ(N_i) )
+             = √( (26×116.1 + 18×157.2 + 23×64.1 + 20×46.8 + 92×216.4
+                   + 42×74.4 + 134×130.6 + 170×140.1 + 675×110.4) / 1200 )
+             = √( 143,847 / 1200 )
+             = √119.9
+             ≈ 10.95 dB
+```
+
+**Overall weighted RMSE = ~11.0 dB (scatter ON, no calibration, correct TX height)**
+
+This is the physics-only baseline. After scalar offset calibration (Cell 10b): expected ~7–8 dB. After material calibration (Cell 11b) + Residual MLP (Cell 15): target 4–6 dB.
+
+### 6.2 Why R² is always negative
+
+R² is defined as `1 − SS_res / SS_tot` where `SS_tot` is the variance of the measurements and `SS_res` is the model's residual variance. **R² < 0 means the model is worse than simply predicting the mean PL for every receiver.**
+
+This is expected and physically meaningful:
+- The measurements span a wide PL range (e.g. 70–160 dB across 23m–9km)
+- Per-receiver prediction errors (6–14 dB RMSE) exceed the within-band PL variance (~6 dB STD)
+- The sim captures the correct mean behaviour (small bias) but not the per-receiver spatial detail
+
+R² becomes positive only after calibration reduces per-receiver errors below the measurement spread. [Xia24] reports R² = 0.82 after full Sionna RT calibration + MLP correction. Current state: R² ≈ −0.2 to −18 → target R² > 0.7 after full pipeline.
 
 ---
 
