@@ -905,19 +905,45 @@ CELL 8 DIAG — Scatter ON vs OFF  (medium + S=0.70, scene_v2_infra)
 *Paste CELL 8e output here as bands arrive.*
 
 ```
-[Run 6 CELL 8e output — pending]
+  0- 500m  N=44  avg_rays ON=83028.6 OFF=73.3  [798s]
+  Method            N    Bias     MSE   RMSE    STD      R2  (ON | OFF)
+  ON  incoh        44    -5.4    93.7    9.7    8.0   0.125
+  OFF incoh        44    -5.5    99.3   10.0    8.3   0.072
+  ON  coh          44   -20.7   511.7   22.6    9.0  -3.777
+  OFF coh          44    -5.2   100.2   10.0    8.5   0.064
+  ON  best         44    -4.3   122.2   11.1   10.2  -0.141
+  OFF best         44    -5.2   105.4   10.3    8.9   0.016
+
+  0- 750m  N=67  avg_rays ON=67078.1 OFF=54.6  [1136s]
+  Method            N    Bias     MSE   RMSE    STD      R2  (ON | OFF)
+  ON  incoh        67    -1.8    88.0    9.4    9.2   0.598
+  OFF incoh        67    -1.5   142.8   12.0   11.9   0.347
+  ON  coh          67   -23.2   608.9   24.7    8.3  -1.782
+  OFF coh          67    -1.2   161.6   12.7   12.7   0.261
+  ON  best         67    +2.1   200.8   14.2   14.0   0.082
+  OFF best         67    -0.3   173.4   13.2   13.2   0.207
+
+  0- 900m  N=78  avg_rays ON=61952.6 OFF=55.5  [1293s]
+  Method            N    Bias     MSE   RMSE    STD      R2  (ON | OFF)
+  ON  incoh        78    -2.1    79.7    8.9    8.7   0.667
+  OFF incoh        78    -1.7   127.0   11.3   11.1   0.469
+  ON  coh          78   -22.9   605.4   24.6    9.1  -1.533
+  OFF coh          78    -1.1   143.1   12.0   11.9   0.401
+  ON  best         78    +1.6   174.7   13.2   13.1   0.269
+  OFF best         78    -0.4   151.8   12.3   12.3   0.365
 ```
+*(0–1000m through 0–4000m bands — pending, run still in progress)*
 
 ### Results — Run 6 vs Run 4 comparison (incoherent ON)
 
 | Threshold | N | Run 4 RMSE | Run 6 RMSE | ΔRMSE | Run 4 R² | Run 6 R² | Run 4 STD | Run 6 STD |
 |-----------|---|-----------|-----------|-------|---------|---------|----------|----------|
-| 0–100m | 8 | 11.2 dB | — | — | −8.447 | — | 5.2 | — |
-| 0–200m | 17 | 8.2 dB | — | — | −4.166 | — | 5.3 | — |
-| 0–300m | 26 | 8.2 dB | — | — | −0.911 | — | 5.3 | — |
-| 0–500m | 44 | **9.4 dB** | — | — | **+0.174** | — | **6.0** | — |
-| 0–750m | 67 | 8.7 dB | — | — | +0.652 | — | 7.2 | — |
-| 0–900m | 78 | 8.6 dB | — | — | +0.692 | — | 7.4 | — |
+| 0–100m | 8 | 11.2 dB | 11.2 dB | **0.0** | −8.447 | −8.445 | 5.2 | 5.2 |
+| 0–200m | 17 | 8.2 dB | 8.1 dB | **−0.1** | −4.166 | −4.052 | 5.3 | 5.3 |
+| 0–300m | 26 | 8.2 dB | 8.3 dB | +0.1 | −0.911 | −0.978 | 5.3 | 4.7 |
+| 0–500m | 44 | **9.4 dB** | 9.7 dB | +0.3 | **+0.174** | +0.125 | **6.0** | 8.0 |
+| 0–750m | 67 | 8.7 dB | **9.4 dB** | +0.7 | +0.652 | **+0.598** | 7.2 | **9.2** |
+| 0–900m | 78 | 8.6 dB | **8.9 dB** | +0.3 | +0.692 | **+0.667** | 7.4 | **8.7** |
 | 0–1000m | 87 | 8.9 dB | — | — | +0.707 | — | 7.4 | — |
 | 0–1250m | 179 | 14.2 dB | — | — | +0.378 | — | 10.6 | — |
 | 0–1500m | 221 | 13.5 dB | — | — | +0.351 | — | 10.1 | — |
@@ -948,9 +974,104 @@ CELL 8 DIAG — Scatter ON vs OFF  (medium + S=0.70, scene_v2_infra)
 > *Chart: Run 6 — 6-panel cumulative chart (Bias, RMSE, STD, MSE, R², dRMSE ON−OFF) vs threshold*
 > *(Attach screenshot when run completes)*
 
-### Interpretation
+### Interpretation (0–900m, partial — run still in progress)
 
-*To be written after results arrive.*
+**Partial results (0–900m, N=78) reveal a two-zone pattern:**
+
+#### Zone 1 — Near field (0–500m, N=44): STD inflation despite bias recovery
+- Bias improves from Run 4's −7.2 dB → **−5.4 dB** (bridges/embankments partially blocking A52 scatter)
+- BUT STD inflates from **6.0 → 8.0 dB** and RMSE degrades 9.4 → 9.7 dB vs Run 4
+- **Root cause hypothesis:** The 500M sps finds more valid scatter paths off the new bridge/embankment surfaces, increasing inter-receiver variance. Some Rx in the 300–500m band sit in deep A52 cutting geometry that the new PLYs partially obstruct but with high per-receiver variability.
+- The `avg_rays ON=83028.6` confirms no starvation in this zone — problem is geometry variance not ray budget.
+
+#### Zone 2 — Mid field (0–750m → 0–900m): Strong recovery
+- Bias snaps from −5.4 dB (at 500m) to **−1.8 dB (at 750m)** — the incremental 500–750m receivers are well-predicted, implying the new geometry corrects a specific over-obstruction in the 250–500m zone.
+- R² improves strongly: 0–750m = **+0.598** (vs Run 4's +0.652, difference only −0.054), 0–900m = **+0.667** (vs Run 4's +0.692, difference −0.025).
+- STD at 0–900m is **8.7 dB** vs Run 4's 7.4 dB — still elevated but narrowing.
+
+#### Key finding vs expected:
+| Indicator | Expected | Actual (0–500m) | Status |
+|-----------|---------|----------------|--------|
+| 0–500m STD | ~5–6 dB | **8.0 dB** | ✗ Worse than Run 4 (6.0) |
+| 0–500m R² | >+0.3 | **+0.125** | ✗ Below target |
+| 0–500m Bias | −3 to −5 dB | **−5.4 dB** | ✓ Partial improvement |
+| 0–750m R² | >+0.5 | **+0.598** | ✓ Target met |
+| 0–900m RMSE | ~8 dB | **8.9 dB** | ✓ Close to Run 4 level |
+
+**Conclusion for partial results:** Scene_v2_infra improves the mid/far field but the 300–500m near-field zone still has excess variance — consistent with missing vegetation attenuation (P.833 not yet applied) and/or additional road cutting geometry in that specific corridor. Awaiting 0–2000m+ results to confirm 500M sps benefit at long range.
+
+### OSM Feature Gap Analysis — From Google Earth Map
+
+Inspecting the Google Earth map (TX bottom-left, A610 corridor east, M1 junction 26 right) reveals several high-priority features **visible on the map but not yet in the scene**:
+
+#### Priority 1 — Very likely to reduce STD in 300–500m band
+| Feature | OSM Tag | Evidence on Map | Impact |
+|---------|---------|----------------|--------|
+| **Dense woodland belt (northern A610 corridor)** | `natural=wood` / `landuse=forest` | Large dark-green canopy block visible along northern edge of route (Rx 120–230 area) | Blocks scatter paths to Rx on far side of woodland; P.833 needs these polygons in `vegetation_footprints.geojson` |
+| **Reservoir / lake near Kimberley** | `natural=water` / `water=reservoir` | Bright reflective body visible centre-left of image | Strong specular reflector — not yet modelled as water surface |
+| **A610 road cutting** | `cutting=yes` on highway | A610 runs in a slight valley/cutting visible in terrain relief | Depressed road = natural signal obstruction not captured by flat road PLY |
+
+#### Priority 2 — Likely to help at 750m–2km
+| Feature | OSM Tag | Evidence on Map | Impact |
+|---------|---------|----------------|--------|
+| **M1 noise barriers** | `barrier=noise_barrier` | Motorway with residential either side — UK standard concrete barriers | Blocks scatter to Rx east of M1 |
+| **M1 embankments (junction 26)** | `embankment=yes` on motorway | Large earth mound visible at J26 interchange | Adds significant obstruction for southern Rx |
+| **Brownfield / construction earthworks** | `landuse=brownfield` | Large orange-brown cleared area near M1 | Smooth ground → changed scatter properties |
+| **Railway embankment** | `railway=rail` + `embankment=yes` | Rail line visible running through scene | Embankment acts as barrier (already partly captured?) |
+
+#### Priority 3 — Worth checking exist in scene already
+| Feature | OSM Tag | Already in scene? | Check |
+|---------|---------|-------------------|-------|
+| Kimberley woodland | `natural=wood` | Possibly in `vegetation_footprints.geojson` via CELL 4 | Run `len(gdf_veg)` — if <20 polygons, woodland blocks are missing |
+| Industrial buildings (Bulwell Riverside, top-right) | `building=industrial` | Likely yes via main building export | Check bbox coverage |
+
+#### Scene builder OSM query audit — what's already covered
+
+After inspecting Cell 4 (`sionna019_scene_builder.ipynb`, cell index 16), the following features **are already queried**:
+
+| Feature | OSM tag queried | Cell 4 flag | PLY output |
+|---------|----------------|-------------|-----------|
+| River Trent + canals | `natural=water/river/stream` | `INCLUDE_WATER=True` | `water_itu_water.ply` |
+| Reservoirs / lakes | `natural=water` | `INCLUDE_WATER=True` | included in `water_itu_water.ply` if in OSM |
+| Woodland / forest | `natural=wood`, `landuse=forest` | `INCLUDE_VEGETATION=True` | `vegetation_footprints.geojson` |
+| M1 noise barriers | `barrier=noise_barrier` | `INCLUDE_BARRIERS=True` | `barriers_itu_concrete.ply` |
+| Retaining walls | `barrier=retaining_wall` | `INCLUDE_BARRIERS=True` | `barriers_itu_concrete.ply` |
+| Railway embankments | `railway=rail` + `embankment=yes` | `INCLUDE_EMBANKMENTS=True` | `infra_itu_concrete_embankments.ply` |
+
+#### True gaps — features NOT in current scene builder
+
+| Feature | OSM tag | Status | Impact |
+|---------|---------|--------|--------|
+| **A610 road cutting walls** | `cutting=yes` on `highway=*` | ❌ **Not queried** — no `cutting` tag handler in Cell 4 | A610 runs partially in a shallow cutting (depressed road); side-walls block scatter from flanking terrain |
+| **Motorway cutting walls (M1)** | `cutting=yes` on `highway=motorway` | ❌ **Not queried** | Same as above for M1 sections |
+| `water=reservoir` sub-tag | `water=reservoir` | ⚠️ Partially covered — `natural=water` catches it if feature also has `natural=water` | Kimberley reservoir may be `water=reservoir` only → check if in output |
+
+#### Verification steps (run in notebook before adding new features)
+
+**Step 1 — Check woodland polygon count:**
+```python
+import geopandas as gpd, os
+gdf = gpd.read_file(os.path.join(SCENE_DIR, 'vegetation_footprints.geojson'))
+print(f"Vegetation polygons: {len(gdf)}")
+print(gdf[['geometry','landuse','natural']].head(10))
+```
+> If count < 10, the large woodland belts on the Google Earth map are NOT yet in the scene — re-run Cell 4 with `INCLUDE_VEGETATION=True`.
+
+**Step 2 — Check water PLY covers the Kimberley lake:**
+```python
+import trimesh, os
+m = trimesh.load(os.path.join(SCENE_DIR, 'meshes', 'water_itu_water.ply'))
+print(f"Water mesh: {len(m.vertices)} verts, bounds={m.bounds}")
+```
+> Bounds should extend north of the A610 to cover the reservoir.
+
+#### New feature to add — Road cuttings (awaiting approval)
+Road cuttings require generating vertical wall faces on both sides of the cut road. This is a new geometry type not currently in Cell 4. The proposed implementation would:
+1. Query `highway=* cutting=yes` from OSM
+2. Extrude vertical concrete walls 2–4 m on each side of the road centreline
+3. Assign `itu_concrete` material (same as retaining walls)
+
+**This is a proposal — no code change made. Awaiting user approval before implementing.**
 
 ---
 
