@@ -966,16 +966,62 @@ Expected effect: reduce STD in the 0–500m band (currently 6.0–11.4 dB) and b
 
 ### 9.3 Next run order
 
-Cell 4 is **complete**. All PLYs are on disk. Next step: assemble the XML files.
+Cell 4, CELL B3, and CELL B1 are all **complete**. `scene_with_full_019.xml` is on disk and validated.
 
-| Step | Notebook label | Cell index | Action |
-|------|---------------|-----------|--------|
-| **1** | **CELL B3** | index 33 | Assemble `scene_with_full.xml` incorporating all new PLYs (bridges, embankments, car parks + existing infra) |
-| **2** | **CELL B1** | index 28 | Convert `scene_with_full.xml` → `scene_with_full_019.xml` (Sionna 0.19 format) |
-| **3** | **CELL 8e** | DEM notebook | Run with scene_v2_infra + 500M sps — measure A52 bias reduction |
-| **4** | **Cell 10b** | — | Re-run scalar calibration after scene confirmed |
-| **5** | **Cell 11b** | — | Material calibration (~3 h) |
-| **6** | **Cell 15** | — | Residual MLP — target <5 dB RMSE |
+#### CELL B1 output (2026-06-11) — scene_with_full_019.xml written
+
+```
+Input   : scene_v2_infra/scene_with_full.xml
+Shapes  : 23
+Mat IDs : ['mat-asphalt', 'mat-itu_brick', 'mat-itu_concrete', 'mat-itu_glass',
+           'mat-itu_metal', 'mat-itu_wet_ground', 'mat-itu_wood', 'mat-vegetation', 'mat-water']
+
+Resolved ITU materials: ['itu_brick', 'itu_concrete', 'itu_glass', 'itu_metal',
+                         'itu_plywood', 'itu_wet_ground', 'mat_asphalt', 'mat_vegetation', 'mat_water']
+
+  mat-asphalt      → mat_asphalt       mat-itu_brick  → itu_brick
+  mat-itu_concrete → itu_concrete      mat-itu_glass  → itu_glass
+  mat-itu_metal    → itu_metal         mat-itu_wet_ground → itu_wet_ground
+  mat-itu_wood     → itu_plywood       mat-vegetation → mat_vegetation
+  mat-water        → mat_water
+
+PLY files found in MESH_DIR: 22 PLYs (barriers×2, bld×6, infra×9, rail, road, trees, veg, water)
+  [ERR] Cannot resolve PLY for shape 'mesh-ground' (raw_fn='') — shape skipped (expected — terrain embedded in XML)
+  [S4] All 22 mesh shapes resolved to PLY paths ✓
+
+Wrote: scene_v2_infra/scene_with_full_019.xml
+  Shapes    : 23  (22 PLY meshes + 1 terrain)
+  Materials : 9 ITU materials
+PLY path validation: 22/22 [OK] — All PLY paths valid — scene ready to load
+```
+
+**New PLYs confirmed in scene_with_full_019.xml:**
+
+| PLY | Resolved | Path OK |
+|-----|---------|---------|
+| `bld_itu_concrete_bridges.ply` | itu_concrete | ✓ |
+| `bld_itu_concrete_embankments.ply` | itu_concrete | ✓ |
+| `infra_itu_concrete_carparks.ply` | itu_concrete | ✓ |
+| `infra_itu_concrete_chimneys.ply` | itu_concrete | ✓ |
+| `infra_itu_metal_pylons.ply` | itu_metal | ✓ |
+| `infra_itu_metal_masts.ply` | itu_metal | ✓ |
+| `infra_itu_metal_substations.ply` | itu_metal | ✓ |
+| `infra_itu_metal_stadiums.ply` | itu_metal | ✓ |
+| `infra_itu_metal_tanks.ply` | itu_metal | ✓ |
+| `infra_itu_metal_watertowers.ply` | itu_metal | ✓ |
+
+**scene_v2_infra is fully assembled and ready for simulation.**
+
+#### Remaining steps
+
+| Step | Notebook label | Cell index | Action | Status |
+|------|----------------|------------|--------|--------|
+| ~~1~~ | ~~CELL B3~~ | ~~index 33~~ | ~~Assemble scene_with_full.xml~~ | ✓ Done |
+| ~~2~~ | ~~CELL B1~~ | ~~index 28~~ | ~~Convert to scene_with_full_019.xml~~ | ✓ Done |
+| **3** | **CELL 8e** | DEM notebook | Run with scene_v2_infra + 500M sps — measure A52 bias reduction | **← NEXT** |
+| **4** | **Cell 10b** | diff RT notebook | Re-run scalar calibration after scene confirmed | pending |
+| **5** | **Cell 11b** | diff RT notebook | Material calibration (~3 h) | pending |
+| **6** | **Cell 15** | diff RT notebook | Residual MLP — target <5 dB RMSE | pending |
 
 ### 9.4 Expected RMSE progression
 
