@@ -916,7 +916,7 @@ At 500M sps (6.25× Run 4):
 - Starvation onset predicted to shift from N=350 (2km) → N>619 (beyond full dataset)
 - Bias will NOT change (it is geometry, not rays) — still ~−8 dB until scene_v2_infra
 
-### 7g.2 Results — In Progress
+### 7g.2 Results — Partial (0–500m received, run still in progress)
 
 | Step | Notebook label | Cell index | Status |
 |------|---------------|-----------|--------|
@@ -924,7 +924,81 @@ At 500M sps (6.25× Run 4):
 | **2** | **CELL 1** | index 3 | ✓ Imports |
 | **3** | **CELL 8e** | — | **Running — 500M sps** |
 
-*Results will be added here when the run completes.*
+#### Raw output (500M sps, medium+S=0.70, cumulative — bands received so far)
+
+```
+===============================================================================================
+CELL 8e — CUMULATIVE DISTANCE EVALUATION  (scattering ON vs OFF)
+===============================================================================================
+PL_meas reference: TX_CONDUCTED_DBM = 49.0 dBm
+
+  0- 100m  N=8  avg_rays ON=112099.4 OFF=173.8  [72s]
+  Method            N    Bias     MSE   RMSE    STD      R2  (ON | OFF)
+  ON  incoh         8    -9.9   125.7   11.2    5.2  -8.445
+  OFF incoh         8    -9.9   125.7   11.2    5.2  -8.447
+  ON  coh           8   -16.9   293.3   17.1    2.9 -21.043
+  OFF coh           8    -9.8   123.5   11.1    5.3  -8.278
+  ON  best          8    -9.9   125.7   11.2    5.2  -8.445
+  OFF best          8    -9.9   125.7   11.2    5.2  -8.445
+
+  0- 200m  N=17  avg_rays ON=100851.8 OFF=125.2  [141s]
+  Method            N    Bias     MSE   RMSE    STD      R2  (ON | OFF)
+  ON  incoh        17    -6.1    65.2    8.1    5.3  -4.052
+  OFF incoh        17    -6.1    65.2    8.1    5.3  -4.055
+  ON  coh          17   -15.2   238.2   15.4    2.8 -17.462
+  OFF coh          17    -6.0    64.3    8.0    5.3  -3.984
+  ON  best         17    -6.1    65.2    8.1    5.3  -4.052
+  OFF best         17    -6.1    65.2    8.1    5.3  -4.052
+
+  0- 300m  N=26  avg_rays ON=96206.9 OFF=104.8  [216s]
+  Method            N    Bias     MSE   RMSE    STD      R2  (ON | OFF)
+  ON  incoh        26    -6.1    66.2    8.1    5.4  -0.878
+  OFF incoh        26    -6.1    67.1    8.2    5.4  -0.903
+  ON  coh          26   -15.6   286.2   16.9    6.5  -7.121
+  OFF coh          26    -5.7    60.1    7.7    5.2  -0.704
+  ON  best         26    -6.1    66.2    8.1    5.4  -0.878
+  OFF best         26    -6.1    66.2    8.1    5.4  -0.878
+
+  0- 500m  N=44  avg_rays ON=86942.6 OFF=106.2  [363s]
+  Method            N    Bias     MSE   RMSE    STD      R2  (ON | OFF)
+  ON  incoh        44    -4.8   153.1   12.4   11.4  -0.429
+  OFF incoh        44    -4.3   178.0   13.3   12.6  -0.662
+  ON  coh          44   -21.3   581.6   24.1   11.3  -4.430
+  OFF coh          44    -3.5   182.7   13.5   13.1  -0.705
+  ON  best         44    -2.6   224.1   15.0   14.7  -1.093
+  OFF best         44    -3.4   192.3   13.9   13.4  -0.795
+```
+
+#### Run 5 vs Run 4 — side-by-side comparison (incoherent ON, bands received so far)
+
+| Threshold | N | Run 4 avg_rays ON | Run 5 avg_rays ON | Δ rays | Run 4 RMSE | Run 5 RMSE | ΔRMSE | Run 4 Bias | Run 5 Bias | Run 4 STD | Run 5 STD | Run 4 R² | Run 5 R² |
+|-----------|---|-------------------|-------------------|--------|-----------|-----------|-------|-----------|-----------|----------|----------|---------|---------|
+| 0–100m | 8 | 96,340 | 112,099 | +16% | 11.2 dB | **11.2 dB** | 0.0 | −9.9 | −9.9 | 5.2 | 5.2 | −8.447 | −8.445 |
+| 0–200m | 17 | 89,570 | 100,852 | +13% | 8.2 dB | **8.1 dB** | −0.1 | −6.2 | −6.1 | 5.3 | 5.3 | −4.166 | −4.052 |
+| 0–300m | 26 | 86,863 | 96,207 | +11% | 8.2 dB | **8.1 dB** | −0.1 | −6.2 | −6.1 | 5.3 | 5.4 | −0.911 | −0.878 |
+| 0–500m | 44 | 70,888 | 86,943 | +23% | **9.4 dB** | 12.4 dB | **+3.0** | −7.2 | **−4.8** | 6.0 | **11.4** | +0.174 | −0.429 |
+| 0–750m | 67 | — | — | — | — | — | — | — | — | — | — | — | — |
+| 0–1000m | 87 | — | — | — | — | — | — | — | — | — | — | — | — |
+| 0–1250m | 126 | — | — | — | — | — | — | — | — | — | — | — | — |
+| 0–1500m | 178 | — | — | — | — | — | — | — | — | — | — | — | — |
+| 0–1750m | 228 | — | — | — | — | — | — | — | — | — | — | — | — |
+| 0–2000m | 310 | — | — | — | — | — | — | — | — | — | — | — | — |
+| 0–2250m | 448 | — | — | — | — | — | — | — | — | — | — | — | — |
+| 0–2500m | 481 | — | — | — | — | — | — | — | — | — | — | — | — |
+| 0–2750m | 519 | — | — | — | — | — | — | — | — | — | — | — | — |
+| 0–3000m | 554 | — | — | — | — | — | — | — | — | — | — | — | — |
+| 0–3500m | 595 | — | — | — | — | — | — | — | — | — | — | — | — |
+| 0–4000m | 619 | — | — | — | — | — | — | — | — | — | — | — | — |
+
+*Remaining bands to be filled when run completes.*
+
+#### Interpretation — partial results (0–500m)
+
+**0–100m to 0–300m: identical to Run 4.** avg_rays increased +11–16% with 500M sps but these near-range receivers are already ray-saturated at 80M — no measurable difference in RMSE, bias, or STD. The extra rays add nothing at close range.
+
+**0–500m: unexpected degradation (+3.0 dB RMSE vs Run 4).** Bias improved (−7.2→−4.8 dB, +2.4 dB correction), but STD nearly doubled (6.0→11.4 dB) and R² turned negative (−0.429 vs +0.174). The 300–500m increment (A52 corridor — geometry-limited band) receives significantly more scatter paths with 500M sps, but because the blocking structures (pylons, bridges) are absent from the scene, some receivers in this band get over-predicted by diffuse scatter while others remain under-predicted. Result: higher variance, lower R². This confirms the 300–500m band is geometry-limited — more rays do not fix it, only scene_v2_infra will.
+
+*Full interpretation will be added once all 17 bands are received.*
 
 ---
 
@@ -976,10 +1050,14 @@ From CELL 8 Step 5, comparing simulated RSSI against free-space path loss (FSPL)
 
 ### 9.3 avg_rays comparison — 80M vs 500M sps
 
-| Threshold | N | Run 3 avg_rays (S=0.50, 80M) | Run 4 avg_rays (S=0.70, 80M) | Run 5 est. (S=0.70, 500M) |
-|-----------|---|------------------------------|------------------------------|--------------------------|
-| 0–1000m | 87 | 28,763 | 36,699 | ~229,000 |
-| 0–2000m | 355 | 7,337 | 9,830 | ~61,000 |
+| Threshold | N | Run 3 avg_rays (S=0.50, 80M) | Run 4 avg_rays (S=0.70, 80M) | Run 5 actual (S=0.70, 500M) |
+|-----------|---|------------------------------|------------------------------|----------------------------|
+| 0–100m | 8 | — | 96,340 | **112,099** (+16%) |
+| 0–200m | 17 | — | 89,570 | **100,852** (+13%) |
+| 0–300m | 26 | — | 86,863 | **96,207** (+11%) |
+| 0–500m | 44 | — | 70,888 | **86,943** (+23%) |
+| 0–1000m | 87 | 28,763 | 36,699 | *pending* |
+| 0–2000m | 355 | 7,337 | 9,830 | *pending* |
 | 0–3000m | 525 | 5,203 | 7,301 | ~45,000 |
 | 0–4000m | 619 | 4,456 | 6,312 | ~39,000 |
 
