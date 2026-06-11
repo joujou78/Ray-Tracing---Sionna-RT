@@ -713,6 +713,33 @@ PL_meas reference: TX_CONDUCTED_DBM = 49.0 dBm
   OFF coh          44    -3.5   182.7   13.5   13.1  -0.705
   ON  best         44    -2.6   224.1   15.0   14.7  -1.093
   OFF best         44    -3.4   192.3   13.9   13.4  -0.795
+
+  0- 750m  N=67  avg_rays ON=63693.6 OFF=82.6  [518s]
+  Method            N    Bias     MSE   RMSE    STD      R2  (ON | OFF)
+  ON  incoh        67    -4.3   115.2   10.7    9.8   0.474
+  OFF incoh        67    -2.4   143.1   12.0   11.7   0.346
+  ON  coh          67   -23.3   647.3   25.4   10.1  -1.958
+  OFF coh          67    -1.0   153.7   12.4   12.4   0.298
+  ON  best         67    -0.8   178.0   13.3   13.3   0.186
+  OFF best         67    -1.1   163.5   12.8   12.7   0.253
+
+  0- 900m  N=78  avg_rays ON=56851.5 OFF=79.1  [591s]
+  Method            N    Bias     MSE   RMSE    STD      R2  (ON | OFF)
+  ON  incoh        78    -4.1   107.9   10.4    9.5   0.548
+  OFF incoh        78    -1.6   140.1   11.8   11.7   0.414
+  ON  coh          78   -23.2   630.9   25.1    9.7  -1.640
+  OFF coh          78    -0.1   158.2   12.6   12.6   0.338
+  ON  best         78    -0.1   175.0   13.2   13.2   0.268
+  OFF best         78    +0.1   170.1   13.0   13.0   0.288
+
+  0-1000m  N=87  avg_rays ON=52103.8 OFF=76.1  [656s]
+  Method            N    Bias     MSE   RMSE    STD      R2  (ON | OFF)
+  ON  incoh        87    -4.8   111.3   10.5    9.4   0.588
+  OFF incoh        87    -2.0   140.7   11.9   11.7   0.479
+  ON  coh          87   -23.7   650.1   25.5    9.4  -1.407
+  OFF coh          87    -0.8   156.3   12.5   12.5   0.421
+  ON  best         87    -0.3   170.8   13.1   13.1   0.368
+  OFF best         87    -0.0   172.3   13.1   13.1   0.362
 ```
 
 ### Results — Run 5 vs Run 4 comparison (incoherent ON)
@@ -722,9 +749,10 @@ PL_meas reference: TX_CONDUCTED_DBM = 49.0 dBm
 | 0–100m | 8 | 96,340 | 112,099 | +16% | 11.2 dB | **11.2 dB** | 0.0 | −9.9 | −9.9 | 5.2 | 5.2 | −8.447 | −8.445 |
 | 0–200m | 17 | 89,570 | 100,852 | +13% | 8.2 dB | **8.1 dB** | −0.1 | −6.2 | −6.1 | 5.3 | 5.3 | −4.166 | −4.052 |
 | 0–300m | 26 | 86,863 | 96,207 | +11% | 8.2 dB | **8.1 dB** | −0.1 | −6.2 | −6.1 | 5.3 | 5.4 | −0.911 | −0.878 |
-| 0–500m | 44 | 70,888 | 86,943 | +23% | **9.4 dB** | 12.4 dB | **+3.0** | −7.2 | **−4.8** | 6.0 | **11.4** | +0.174 | −0.429 |
-| 0–750m | 67 | 47,230 | — | — | 8.7 dB | — | — | −4.9 | — | 7.2 | — | +0.652 | — |
-| 0–1000m | 87 | 36,699 | — | — | 8.9 dB | — | — | −4.9 | — | 7.4 | — | +0.707 | — |
+| 0–500m | 44 | 70,888 | 86,943 | +23% | **9.4 dB** | 12.4 dB | **+3.0** | −7.2 | −4.8 | 6.0 | 11.4 | +0.174 | −0.429 |
+| 0–750m | 67 | 47,230 | 63,694 | +35% | **8.7 dB** | 10.7 dB | **+2.0** | −4.9 | −4.3 | 7.2 | 9.8 | **+0.652** | +0.474 |
+| 0–900m | 78 | 40,799 | 56,852 | +39% | **8.6 dB** | 10.4 dB | **+1.8** | −4.4 | −4.1 | 7.4 | 9.5 | **+0.692** | +0.548 |
+| 0–1000m | 87 | 36,699 | 52,104 | +42% | **8.9 dB** | 10.5 dB | **+1.6** | −4.9 | −4.8 | 7.4 | 9.4 | **+0.707** | +0.588 |
 | 0–1250m | 179 | 18,074 | — | — | 14.2 dB | — | — | −9.5 | — | 10.6 | — | +0.378 | — |
 | 0–1500m | 221 | 14,886 | — | — | 13.5 dB | — | — | −8.9 | — | 10.1 | — | +0.351 | — |
 | 0–1750m | 289 | 11,845 | — | — | 12.9 dB | — | — | −8.0 | — | 10.1 | — | +0.283 | — |
@@ -746,7 +774,9 @@ PL_meas reference: TX_CONDUCTED_DBM = 49.0 dBm
 | 0–200m | 17 | — | 89,570 | **100,852** (+13%) |
 | 0–300m | 26 | — | 86,863 | **96,207** (+11%) |
 | 0–500m | 44 | — | 70,888 | **86,943** (+23%) |
-| 0–1000m | 87 | 28,763 | 36,699 | *pending* |
+| 0–750m | 67 | — | 47,230 | **63,694** (+35%) |
+| 0–900m | 78 | — | 40,799 | **56,852** (+39%) |
+| 0–1000m | 87 | 28,763 | 36,699 | **52,104** (+42%) |
 | 0–2000m | 355 | 7,337 | 9,830 | *pending* |
 | 0–3000m | 525 | 5,203 | 7,301 | *pending* |
 | 0–4000m | 619 | 4,456 | 6,312 | *pending* |
@@ -756,13 +786,48 @@ PL_meas reference: TX_CONDUCTED_DBM = 49.0 dBm
 > *Chart: Run 5 — 6-panel cumulative chart (Bias, RMSE, STD, MSE, R², dRMSE ON−OFF) vs threshold*
 > *(Attach screenshot when run completes)*
 
-### Interpretation — partial results (0–500m)
+### Interpretation — 0–1km confirmed (bands 0–300m through 0–1000m received)
 
-**0–100m to 0–300m: identical to Run 4.** avg_rays increased +11–16% with 500M sps but these near-range receivers are already ray-saturated at 80M — no measurable difference in RMSE, bias, or STD. Extra rays add nothing at close range.
+#### Key finding: 500M sps is WORSE than 80M sps at 0–1km
 
-**0–500m: unexpected degradation (+3.0 dB RMSE vs Run 4).** Bias improved (−7.2→−4.8 dB, +2.4 dB correction), but STD nearly doubled (6.0→11.4 dB) and R² turned negative (−0.429 vs +0.174). The 300–500m increment (A52 corridor — geometry-limited band) receives significantly more scatter paths with 500M sps, but because blocking structures (pylons, bridges) are absent from the scene, some receivers get over-predicted by diffuse scatter while others remain under-predicted. Higher variance, lower R². This confirms the 300–500m band is geometry-limited — more rays do not fix it, only scene_v2_infra will.
+| Threshold | Run 4 RMSE | Run 5 RMSE | ΔRMSE | Run 4 R² | Run 5 R² | Δ R² |
+|-----------|-----------|-----------|-------|---------|---------|------|
+| 0–300m | 8.2 dB | **8.1 dB** | −0.1 | −0.911 | −0.878 | +0.033 |
+| 0–500m | **9.4 dB** | 12.4 dB | **+3.0** | **+0.174** | −0.429 | −0.603 |
+| 0–750m | **8.7 dB** | 10.7 dB | **+2.0** | **+0.652** | +0.474 | −0.178 |
+| 0–900m | **8.6 dB** | 10.4 dB | **+1.8** | **+0.692** | +0.548 | −0.144 |
+| 0–1000m | **8.9 dB** | 10.5 dB | **+1.6** | **+0.707** | +0.588 | −0.119 |
 
-*Full interpretation will be added once all 17 bands are received.*
+**Run 4 (80M sps) wins at every threshold from 0–500m onward. Run 5 (500M sps) is 1.6–3.0 dB worse at 0–1km despite avg_rays being 35–42% higher.**
+
+#### Root cause analysis
+
+The degradation is caused by the **300–500m geometry-limited band** contaminating all cumulative windows. With 500M sps:
+
+1. **More scatter paths reach the A52 corridor receivers (300–500m).** The 500M ray budget generates ~86,943 avg_rays at N=44 vs 70,888 at 80M — 23% more paths finding routes around missing obstructions (pylons, bridges, car parks absent from scene).
+2. **These extra paths over-predict RSSI for the blocked receivers.** Real-world: these receivers are attenuated −10 to −13 dB by missing structures. Simulation: more scatter paths "find" diffuse routes past the missing geometry → RSSI over-predicted.
+3. **STD at 0–500m doubles: 6.0 → 11.4 dB.** The extra scatter creates high inter-receiver variance — some receivers get many over-predicted paths; others still get few. Result: variance↑, R²↓, RMSE↑.
+4. **This 300–500m high-variance contamination propagates into 0–750m, 0–900m, 0–1000m cumulative windows.** Every new threshold includes these 44 receivers permanently, so RMSE stays elevated at all subsequent windows.
+
+**Physical conclusion: more rays ≠ better when scene geometry is incomplete.** At 80M sps, the ray budget was insufficient to find many routes around the missing A52 structures, so those receivers were simply under-sampled (fewer paths, lower STD). At 500M sps, the solver finds diffuse routes regardless of missing geometry — producing confident but wrong predictions (high-STD, over-predicted).
+
+#### What changes at 0–750m, 0–900m, 0–1000m
+
+Despite the degradation, Run 5 still achieves **R²=+0.474–0.588 at 0–1km** — positive throughout. This is because the 500–1000m receivers (N=43 new ones beyond 0–500m) are better predicted at 500M sps (more rays reach these NLOS receivers correctly). But the accumulated 300–500m variance from the A52 corridor drags R² below Run 4's +0.707.
+
+Note: at 0–750m, OFF incoh R²=+0.346 in Run 5 vs +0.652 (ON incoh). Scatter still essential — scatter OFF is 12.0 vs 10.7 dB at 0–750m.
+
+#### Critical revised conclusion
+
+**scene_v2_infra must come BEFORE any sps increase.** The expected benefit of 500M sps (eliminating starvation at >2km) is real, but the near-range degradation from A52 missing geometry offsets it at 0–1km. Priority order revised:
+
+| Priority | Action | Expected effect |
+|----------|--------|----------------|
+| **1st** | scene_v2_infra (Cell 4 re-run + B3 + B1) | Fix 300–500m A52 bias → eliminate STD inflation |
+| **2nd** | Re-run 500M sps on improved scene | Starvation elimination will no longer be masked by near-range variance |
+| **3rd** | Cell 10b scalar calibration | Residual bias correction |
+
+*Remaining bands (0–1250m through 0–4000m) will be added as Run 5 continues.*
 
 ---
 
@@ -794,7 +859,7 @@ PL_meas reference: TX_CONDUCTED_DBM = 49.0 dBm
 | Run 2 (strat. N=1200) | — | <0 | — | <0 | 12.3 dB ★ | <0 | −2.79 dB |
 | Run 3 (S=0.50, 80M) | 9.9 dB | +0.639 | 14.2 dB | +0.043 | 14.5 dB | −0.052 | −6.5 dB |
 | **Run 4 (S=0.70, 80M)** | **8.9 dB** | **+0.707** | **12.9 dB** | **+0.211** | **13.3 dB** | **+0.107** | **−8.2 dB** |
-| **Run 5 (S=0.70, 500M)** | *pending* | *pending* | *pending* | *pending* | *pending* | *pending* | *pending* |
+| **Run 5 (S=0.70, 500M)** | **10.5 dB** ▼ | **+0.588** ▼ | *pending* | *pending* | *pending* | *pending* | **−4.8 dB** |
 
 ★ Path counts collapsed 61–70% vs Run 1 — starvation dominated despite better physics settings.
 
@@ -807,7 +872,7 @@ PL_meas reference: TX_CONDUCTED_DBM = 49.0 dBm
 | 3 | Run 2 | Does DIAG improvement hold at N=1200? | No — 12.3 dB, path collapse 60–70% | 80M sps insufficient for S=0.70 at full N |
 | 4 | Run 3 | Does S=0.50 (less diffuse) avoid collapse? | Partial — 14.5 dB at 0–4km, R²<0 beyond 2km | Starvation still occurs; S=0.50 worse than S=0.70 |
 | 5 | Run 4 | Cumulative mode: does S=0.70 beat S=0.50 at same N? | Yes — 13.3 dB vs 14.5 dB, R²=+0.107 vs −0.052 | S=0.70 confirmed best; need 500M to fix starvation |
-| 6 | **Run 5** | Does 500M sps eliminate starvation? | *pending* | Expected: R²>+0.5 beyond 2km, RMSE ~9–10 dB |
+| 6 | **Run 5** | Does 500M sps eliminate starvation? | **Partial — 0–1km WORSE (+1.6–3.0 dB RMSE)** due to geometry-limited 300–500m band; R² positive but lower (+0.588 vs +0.707). Starvation beyond 2km unknown (pending). | scene_v2_infra must precede any sps increase — missing A52 geometry inflates scatter paths and STD |
 
 ### 8.4 Variable contribution to RMSE
 
