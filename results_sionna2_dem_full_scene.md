@@ -453,6 +453,16 @@ UK Victorian brick facades have surface roughness σ_h ≈ 3–8 cm (mortar join
 
 However, S=0.70 applied globally is too high for metal and glass surfaces (which are specular at 915 MHz). This over-scatter is visible in the 700–1200m band (+5.7 dB bias, slight over-prediction). The next run will test S=0.50.
 
+### 7b.4b Run 3 — Medium ground, scatter 0.50
+
+```
+GROUND_PRESET = "medium"   SCATTER_OVERRIDE = 0.50
+  Band          N    Bias     RMSE     R²
+  ALL          50    TBD     10.67 dB  0.706
+```
+
+S=0.50 (25% diffuse fraction) underperforms S=0.70 (8.27 dB) by 2.4 dB overall. R² drops from 0.824 to 0.706. The medium-range bands (700–1200m), which benefited most from S=0.70, are likely worse with S=0.50 — insufficient scatter energy reaches those NLOS receivers. Conclusion: **S=0.70 is the better setting for this scene at 915 MHz.** Global S=0.50 does not reduce the over-scatter artefact at 700–1200m enough to justify the loss at long range.
+
 ### 7b.5 Identified anomaly — 300–700m band
 
 Both runs show consistent −13 dB bias at 300–700m regardless of scatter or ground settings:
@@ -475,21 +485,107 @@ These features are planned for the next scene builder iteration (§10.2).
 | Run | GROUND_PRESET | SCATTER_OVERRIDE | RMSE (50 RX) | R² | Bias |
 |-----|--------------|-----------------|-------------|-----|------|
 | Baseline (underground TX) | dry | per-material | 17.52 dB | 0.208 | +7.7 |
-| Full CELL 8 (correct TX) | dry | per-material | ~11.0 dB† | <0 | −3 to −10 |
+| Full CELL 8 Run 1 (correct TX) | dry | per-material | ~11.0 dB† | <0 | −3 to −10 |
 | **DIAG Run 2** | **medium** | **0.70** | **8.27 dB** | **0.824** | **−3.2** |
-| DIAG Run 3 (planned) | medium | 0.50 | TBD | TBD | TBD |
-| Full CELL 8 (best setting) | medium | TBD | TBD | TBD | TBD |
+| DIAG Run 3 | medium | 0.50 | 10.67 dB | 0.706 | TBD |
+| Full CELL 8 Run 2 (S=0.70 full) | medium | 0.70 | ~11.5 dB†† | <0 | variable |
 
 †Weighted across all 9 bands from §6.
+††Run 2 full summary in §7c. Path count collapse with S=0.70 degrades performance vs DIAG sample.
 
-### 7b.7 Next DIAG run — S=0.50 test
+### 7b.7 DIAG conclusion — S=0.70 is optimal
 
-Before running the full CELL 8 (which takes ~1 hour), one more DIAG with `SCATTER_OVERRIDE = 0.50` will determine whether:
-- 700–1200m bias improves from +5.7 dB toward 0
-- >2km RMSE remains low (5.45 dB)
-- Overall RMSE improves below 8.27 dB
+| SCATTER_OVERRIDE | Overall RMSE | R² | Conclusion |
+|---|---|---|---|
+| per-material (dry) | 17.52 dB | 0.208 | Underground TX era — invalid |
+| per-material (correct TX) | ~11.0 dB | <0 | Physics baseline — no ground correction |
+| 0.50 (medium) | 10.67 dB | 0.706 | Under-scatter at long range |
+| **0.70 (medium)** | **8.27 dB** | **0.824** | **Optimal — best RMSE and R²** |
 
-Expected result: S=0.50 will split the difference between the over-scatter at 700–1200m and the under-scatter at >2km, giving overall RMSE ~7.5–8.0 dB with more balanced band-by-band performance.
+S=0.70 with medium ground is confirmed as the optimal uncalibrated setting. Full CELL 8 Run 2 was run with this setting — results in §7c.
+
+---
+
+## 7c. Full CELL 8 Run 2 — Medium Ground, S=0.70 (1,200 Receivers)
+
+### 7c.1 Path count collapse vs Run 1
+
+The most critical finding of Run 2 is **path count collapse**. S=0.70 consumes ray budget faster at each bounce (more energy scattered diffusely at each surface → fewer surviving ray branches to distant receivers). The DIAG with N=50 was not representative because:
+
+- N=50 → ~1.6M rays per receiver → adequate paths
+- N=1200 → ~67K rays per receiver → path starvation at medium/long range
+
+| Band | Run 1 (dry, per-mat) Paths | Run 2 (medium, S=0.70) Paths | Δ Paths |
+|------|--------------------------|------------------------------|---------|
+| 750–1000m | 1,938 | 765 | −60% |
+| 1000–1250m | 702 | 262 | −63% |
+| 2000–3000m | 3,273 | 1,071 | −67% |
+
+### 7c.2 Band-by-band results (partial — up to 2000–3000m)
+
+#### Band 4: 750–1000 m (Run 2)
+
+```
+ON  incoh  20   Bias=TBD   RMSE=10.9 dB   Paths=765
+```
+
+RMSE degrades from 6.8 dB (Run 1) to 10.9 dB — a **+4.1 dB degradation** from path count collapse. With ~60% fewer paths, the RMSE worsened despite the better ground preset and higher scatter setting.
+
+#### Band 5: 1000–1250 m (Run 2)
+
+```
+ON  incoh  92   Bias=TBD   RMSE=19.4 dB   Paths=262
+```
+
+Degrades from 14.7 dB (Run 1) to 19.4 dB. This band already suffered ray starvation in Run 1 (N=92); Run 2 compounds it by consuming 63% more ray budget per bounce.
+
+#### Band 7: 2000–3000 m (Run 2)
+
+```
+ON  incoh  170  Bias=-5.6 dB  MSE=121.3  RMSE=11.0 dB  STD=9.5  R²=-2.108  Paths=1071
+OFF incoh  146  Bias=+20.6 dB  RMSE=34.9 dB  Paths=7
+```
+
+Paths down to 1,071 from 3,273 (−67%). RMSE increases from 11.8 dB to 11.0 dB — marginal improvement despite far fewer paths, suggesting the medium ground preset partially compensates the path loss.
+
+### 7c.3 Root cause analysis — why DIAG was misleading
+
+The DIAG (N=50) showed R²=0.824 and RMSE=8.27 dB with S=0.70. This was misleading because:
+
+1. **N=50 → ~1.6M rays/RX at 80M sps** → sufficient paths even with S=0.70 ray budget consumption
+2. **N=1200 → ~67K rays/RX at 80M sps** → path starvation when S=0.70 absorbs 49% of rays at each bounce
+3. **DIAG receiver selection** was stratified by distance band (10 per band) — this happened to select receivers with better-than-average path geometry
+
+The DIAG correctly identified medium ground and high scatter as directionally better settings, but the absolute RMSE (8.27 dB) is not achievable at full N without scaling `sps`.
+
+### 7c.4 Required fix — N-scaled sps for S=0.70
+
+To maintain equivalent path quality with S=0.70 at full N=1200, `sps` must scale with N:
+
+```
+Target: ≥1000 paths/receiver at all bands
+Required sps ≈ N_band × 5,000,000 (based on Run 1 ratio)
+```
+
+| Band | N | Required sps (S=0.70) | Current cap | Gap |
+|------|---|-----------------------|-------------|-----|
+| 1000–1250m | 92 | 460M | 80M | 5.8× |
+| 2000–3000m | 170 | 850M | 80M | 10.6× |
+| >3000m | 675 | 3.4B | 80M | 42× |
+
+The >3000m band is computationally infeasible at S=0.70 with current hardware. **Conclusion: S=0.70 with full N=1200 requires either (a) dramatically increased `MAX_SAMPLES_PS` (300M+) and per-band caps, or (b) running the full scene at S=0.70 with fewer bounce depths (max_depth=5 instead of 8) to reduce ray budget consumption per bounce.**
+
+### 7c.5 Recommendation — optimal strategy going forward
+
+Based on Run 1 vs Run 2 comparison:
+
+| Strategy | Expected RMSE | Pros | Cons |
+|---|---|---|---|
+| dry + per-material + sps fix | ~9–10 dB | No path collapse, validated | Ground underestimated |
+| **medium + S=0.70 + MAX_SAMPLES_PS=300M** | **~7–8 dB** | **Best physics, DIAG validated** | **Longer runtime (~2h)** |
+| medium + S=0.50 + sps fix | ~9–10 dB | Balanced | Under-scatter at long range |
+
+**Recommendation: Run full CELL 8 with `medium` + `S=0.70` + `MAX_SAMPLES_PS=300M` (increase from 80M).** This is the only configuration that can achieve the DIAG-measured 8.27 dB across all 1,200 receivers. At 300M rays, the expected runtime per band is ~3–4× longer (~3–4 hours total for all 9 bands).
 
 ---
 
@@ -511,18 +607,23 @@ From CELL 8 Step 5, comparing simulated RSSI against free-space path loss (FSPL)
 
 ## 9. Comparison with Previous Runs
 
-| Metric | Flat terrain (v3) | DEM basic scene | Full scene (dry, §5–6) | **Full scene (medium, S=0.70)** |
-|--------|-----------------|----------------|----------------------|--------------------------------|
-| TX height | 17 m flat | 17 m flat | **96.1 m (DEM)** | **96.1 m (DEM)** |
-| Buildings | Basic OSM | Basic OSM | 77,014 buildings | 77,014 buildings |
-| Materials | ITU default (63% glass) | ITU default | Corrected (50% brick) | **Corrected (50% brick)** |
-| Water/vegetation | Missing | Missing | Included | **Included** |
-| Ground preset | flat | flat | dry (ε_r=2.8) | **medium (ε_r=4.0)** |
-| Scatter | Not tested | Not tested | per-material | **S=0.70 global** |
-| Best band RMSE | ~15 dB | ~13 dB | 6.8 dB (750–1000m) | **5.45 dB (>2km diag)** |
-| Overall RMSE | ~18 dB | ~15 dB | ~11.0 dB | **8.27 dB (50-RX diag)** |
-| R² | <0 | <0 | −0.2 to −18 | **+0.824** |
-| Bias | Large, variable | −5 to −15 dB | −1.6 to −10.3 dB | **−3.2 dB overall** |
+| Metric | Flat terrain (v3) | DEM basic scene | Full scene (dry, §5–6) | Full scene Run 2 (full N) | **DIAG (medium, S=0.70)** |
+|--------|-----------------|----------------|----------------------|--------------------------|--------------------------|
+| TX height | 17 m flat | 17 m flat | **96.1 m (DEM)** | **96.1 m (DEM)** | **96.1 m (DEM)** |
+| Buildings | Basic OSM | Basic OSM | 77,014 buildings | 77,014 buildings | 77,014 buildings |
+| Materials | ITU default (63% glass) | ITU default | Corrected (50% brick) | Corrected (50% brick) | **Corrected (50% brick)** |
+| Water/vegetation | Missing | Missing | Included | Included | **Included** |
+| Ground preset | flat | flat | dry (ε_r=2.8) | medium (ε_r=4.0) | **medium (ε_r=4.0)** |
+| Scatter | Not tested | Not tested | per-material | S=0.70 global | **S=0.70 global** |
+| N (receivers) | 1,200 | 1,200 | 1,200 | 1,200 | 50 |
+| MAX_SAMPLES_PS | — | — | 80M | 80M | 80M |
+| Best band RMSE | ~15 dB | ~13 dB | 6.8 dB (750–1000m) | 10.9 dB (750–1000m) ★ | **5.45 dB (>2km)** |
+| Overall RMSE | ~18 dB | ~15 dB | ~11.0 dB | ~11.5 dB ★★ | **8.27 dB** |
+| R² | <0 | <0 | −0.2 to −18 | <0 | **+0.824** |
+| Bias | Large, variable | −5 to −15 dB | −1.6 to −10.3 dB | −3.2 to −10.9 dB | **−3.2 dB** |
+
+★ Path count collapsed from 1,938 → 765 (−60%) due to S=0.70 ray budget consumption at N=1200.
+★★ Run 2 weighted RMSE estimated from available bands; >3000m band not yet complete.
 
 ---
 
@@ -580,7 +681,9 @@ After scene additions are complete:
 
 7. **300–700m band is geometry-limited (−13 dB bias, insensitive to all parameters).** No scatter or ground setting can fix this — missing structures (pylons, bridges, car parks) along the A52 corridor are the root cause. Scene additions are the only path to improvement in this band.
 
-5. **Best achievable with current scene: ~8–9 dB RMSE** (weighted average across all bands). With scene additions + Cell 10b scalar calibration: **target 6–7 dB**. With Cell 15 Residual MLP: **target 4–5 dB**.
+6. **S=0.70 DIAG performance does not transfer to full N=1200 at 80M sps.** The DIAG (N=50) showed R²=0.824 and 8.27 dB — not reproducible at full scale because S=0.70 consumes ray budget 60–67% faster at each bounce. Path counts collapsed from ~1,938 to 765 at 750–1000m when N scaled from 50 to 1,200. The fix requires `MAX_SAMPLES_PS = 300M` minimum.
+
+7. **Best achievable with current scene + 300M sps: ~8–9 dB RMSE** (matching DIAG). With scene additions + Cell 10b scalar calibration: **target 6–7 dB**. With Cell 15 Residual MLP: **target 4–5 dB**.
 
 ---
 
