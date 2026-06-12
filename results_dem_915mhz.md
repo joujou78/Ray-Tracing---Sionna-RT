@@ -616,3 +616,70 @@ P.833 corrects a **systematic under-attenuation bias** at long range. The simula
 ---
 
 *Cell 8e-P833 — scene_v2_infra — ITU-R P.833 Weissberger — Branch: claude/cool-cori-rrWbY*
+
+---
+
+## 17. P.833 Impact — All 6 Methods at 4000 m (Cell 8e-P833 Full)
+
+**Exported:** `p833_cumulative_impact.csv` — 17 thresholds × 6 methods × base/P.833 metrics
+
+### 17.1 Summary at 4000 m (N=619 solved)
+
+| Method | Base Bias | Base RMSE | Base R² | P.833 Bias | P.833 RMSE | P.833 R² | ΔRMSE |
+|---|---|---|---|---|---|---|---|
+| **Incoh ON** | −7.24 | 11.76 | +0.305 | −4.36 | **10.22** | +0.475 | **−1.54 dB** |
+| Best ON | −1.38 | 13.03 | +0.146 | +1.50 | 13.21 | +0.123 | +0.18 dB |
+| Coh ON | −27.01 | 28.81 | −3.173 | −24.13 | 25.97 | −2.390 | −2.84 dB |
+| Best OFF | +3.52 | 20.18 | −1.059 | +6.37 | 21.30 | −1.293 | +1.12 dB ⚠ |
+| Incoh OFF | +1.91 | 19.55 | −0.931 | +4.76 | 20.47 | −1.118 | +0.92 dB ⚠ |
+| Coh OFF | +2.55 | 19.86 | −0.993 | +5.40 | 20.83 | −1.193 | +0.97 dB ⚠ |
+
+### 17.2 Key Findings by Method
+
+**Incoh ON + P.833 — only reliable combination:**
+- Consistent improvement at every threshold beyond 900 m
+- Max ΔRMSE = **−1.54 dB** at 4 km, never over-corrects
+- Bias reduced from −7.24 → −4.36 dB (+2.88 dB correction)
+- R² improved +0.305 → **+0.475**
+
+**Best ON — marginal, mixed results:**
+- P.833 over-corrects at 1750–2000 m (+0.33/+0.43 dB) and 4 km (+0.18 dB)
+- Best ON already has near-zero bias (−1.38 dB) — P.833 pushes it positive (+1.50 dB)
+- **Not recommended with P.833**
+
+**Coh ON — largest absolute ΔRMSE (−2.84 dB) but method is invalid:**
+- Coherent combination is wrong for drive-test regardless of vegetation correction
+
+**Scatter OFF methods (Best/Incoh/Coh OFF) — P.833 makes things worse ⚠:**
+- All three show positive ΔRMSE at >1750 m (over-correction)
+- Scatter OFF already over-attenuates at long range (bias goes positive without scatter)
+- Adding P.833 attenuation on top pushes bias further positive
+- **P.833 should not be applied to scatter OFF results**
+
+### 17.3 P.833 Onset by Method
+
+| Method | First threshold with ΔRMSE < −0.1 dB | Max improvement |
+|---|---|---|
+| Incoh ON | **1250 m** | −1.54 dB @ 4 km |
+| Coh ON | 1250 m | −2.84 dB @ 4 km |
+| Best ON | 1250 m (−0.15 dB only) | −0.15 dB |
+| Best OFF | no consistent benefit | +1.12 dB @ 4 km |
+| Incoh OFF | 2250 m (marginal) | +0.92 dB @ 4 km |
+| Coh OFF | 2250 m (marginal) | +0.97 dB @ 4 km |
+
+### 17.4 Conclusion
+
+**Use Incoh ON + P.833 for all downstream analysis.** P.833 reduces RMSE by 1.5 dB and bias by 2.9 dB at full range, with zero over-correction risk. All other method+P.833 combinations either show no benefit or actively degrade accuracy.
+
+**Final pipeline metrics (Incoh ON + P.833, 0–4 km, N=619):**
+
+| Metric | Value |
+|---|---|
+| RMSE | **10.22 dB** |
+| Bias | **−4.36 dB** |
+| R² | **+0.475** |
+| vs baseline (no P.833) | −1.54 dB RMSE, +2.88 dB bias correction |
+
+---
+
+*Cell 8e-P833 — all 6 methods — p833_cumulative_impact.csv — Branch: claude/cool-cori-rrWbY*
