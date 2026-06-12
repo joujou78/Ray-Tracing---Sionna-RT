@@ -504,3 +504,70 @@ The new scene (27 infrastructure shapes vs flat DEM) delivers **7.3 dB RMSE redu
 ---
 
 *Cell 7c — scene_v2_infra — 253,749 rays — Branch: claude/cool-cori-rrWbY*
+
+---
+
+## 15. DIAG Cell — 50-Receiver Path Loss Diagnostic (Scatter ON vs OFF)
+
+**Purpose:** Step-by-step bias decomposition on a stratified sample of 50 receivers across all distance bands.
+**Solver:** 10M samples/receiver | max_depth=15 | TX=49.0 dBm conducted
+
+### 15.1 Measurement Sanity Check (STEP 1)
+
+| Check | Result |
+|---|---|
+| RSSI range | −118.0 → −22.9 dBm |
+| PL range | 71.9 → 167.0 dB |
+| Near-field mean PL−FSPL (50–300 m) | +4.2 dB |
+| Urban overhead expectation | +5 to +15 dB |
+| Status | ✓ Physically reasonable |
+
+### 15.2 TX Position (STEP 3)
+
+| Parameter | Value |
+|---|---|
+| TX local coordinates | (−4208.1, 1364.9, 96.1) m |
+| TX GPS | 52.9863°N, −1.2559°E |
+| Terrain at TX | 79.1 m |
+| AGL | 17.0 m |
+| Total TX height | 96.1 m |
+| Position error | 0.0 m N-S / E-W ✓ |
+
+### 15.3 Scatter ON vs OFF — 50-Receiver Test (STEP 4)
+
+| Band | N | Scatter ON RMSE | Scatter OFF RMSE | ΔRMSE |
+|---|---|---|---|---|
+| <300 m | 10 | **5.62 dB** | 5.67 dB | −0.05 dB |
+| 300–700 m | 10 | **15.26 dB** | 14.94 dB | +0.32 dB |
+| 700–1200 m | 10 | **7.93 dB** | 10.95 dB | −3.02 dB |
+| 1.2–2 km | 10 | **3.01 dB** | 32.91 dB | **−29.9 dB** |
+| >2 km | 10 | **3.68 dB** | 31.60 dB | **−27.9 dB** |
+| **ALL** | **50** | **8.37 dB** | 22.17 dB | **−13.80 dB** |
+
+**Overall (50 RX):**
+
+| Method | Bias (dB) | RMSE (dB) | STD (dB) | R² |
+|---|---|---|---|---|
+| **Scatter ON** | −3.30 | **8.37** | 7.76 | **+0.820** |
+| Scatter OFF | +9.60 | 22.17 | 20.18 | −0.267 |
+
+### 15.4 Key Findings
+
+- **Best accuracy zone: 1.2–2 km** — Scatter ON RMSE = **3.01 dB**, R² effectively ≈ 1.0 in this band
+- **Scatter OFF catastrophic failure at >1.2 km** — RMSE jumps to 32–33 dB; Scatter ON stays at 3–4 dB
+- Scatter OFF still works at <700 m (RMSE 5–15 dB) because short-range paths don't need diffuse reflections
+- ΔRMSE scatter ON vs OFF = **−13.8 dB overall** — strongest single improvement in the pipeline
+- R² = **+0.820** on 50-receiver sample confirms strong physical correlation (vs full dataset R² = +0.361, which is degraded by long-range outliers)
+
+### 15.5 Per-Receiver Detail (Selected)
+
+| RX | Dist | PL meas | PL sim ON | Error ON | Paths ON |
+|---|---|---|---|---|---|
+| RX_000008 | 104 m | 71.9 dB | 68.9 dB | −2.9 dB | 802,918 |
+| RX_000177 | 1237 m | 121.8 dB | 120.7 dB | −1.1 dB | 217 |
+| RX_000332 | 2004 m | 131.7 dB | 131.4 dB | −0.3 dB | 396 |
+| RX_000256 | 2029 m | 129.7 dB | 122.7 dB | −6.9 dB | 773 |
+
+---
+
+*DIAG Cell — 50-receiver stratified sample — scene_v2_infra — Branch: claude/cool-cori-rrWbY*
