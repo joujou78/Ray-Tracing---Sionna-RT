@@ -283,9 +283,74 @@ Permittivity and scattering coefficient are clip-bounded inside `_apply11()`:
 
 ---
 
-## 8. Summary
+## 8. Pipeline Architecture & Exported Files
 
-### 8.1 Stage 1 Results (Complete)
+### 8.1 Pipeline Organogram
+
+The figure below shows the full differentiable RT calibration pipeline from raw inputs to final calibrated outputs. Each stage is shown with its inputs, processing steps, and exported files.
+
+![Differentiable RT Pipeline Organogram](report_figures/fig6_pipeline_organogram.png)
+
+**Figure: Full differentiable RT calibration pipeline — 7 stages from raw inputs to residual MLP correction.**
+
+---
+
+### 8.2 Exported Files Reference
+
+Every stage of the pipeline writes specific files to disk. The table below documents each file, its location, content, and purpose.
+
+| File | Location | Stage | Content | Purpose |
+|------|----------|-------|---------|---------|
+| `path_solver_results.csv` | `results/diff_rt/` | Stage 2 — Pre-tracing | Per-receiver: `rx_name`, `x_m`, `y_m`, `z_m`, `rssi_sim_dbm`, `rssi_meas_dbm`, `pl_sim_db`, `pl_meas_db`, `paths_found` | Raw RT output vs measurement, before any calibration. Diagnostic tool — shows which receivers are visible and which are in deep shadow. |
+| `scalar_offset_history.csv` | `results/diff_rt/` | Stage 3 — Scalar offset | Per-step: `step`, `loss`, `sf_db`, `pl_rmse_db`, `mae_db` | Adam optimiser convergence log. Confirms training stability and shows at which step the single scalar correction converged (~step 100). |
+| `scalar_offset_915mhz.json` | `nottingham_ofcom2018_915mhz_dem/` | Stage 3 — Scalar offset | `scaling_factor_db = −10.825`, metadata (frequency, N, RMSE before/after) | **Transfer file.** Loaded by Sionna 2.0 DEM Cell 4A to apply the same global power correction to the full production simulation. |
+| `material_calib_history.csv` | `results/diff_rt/` | Stage 4 — Material calib | Per-step: `step`, `loss`, `rmse`, `lr` | Material calibration convergence curve. Used to plot RMSE vs steps and verify the optimiser did not diverge. |
+| `calibrated_materials_915mhz.json` | `nottingham_ofcom2018_915mhz_dem/` | Stage 4 — Material calib | Per-material: `er`, `sigma`, `scatter` for all 17 ITU materials | **Main deliverable.** Physically-tuned EM properties for Nottingham at 915 MHz. Loaded by Sionna 2.0 DEM Cell 4A to replace ITU defaults. |
+| `calibration_results.json` | `results/diff_rt/` | Stage 5 — Evaluation | Final RMSE, MAE, N, convergence summary | Machine-readable summary for automated pipeline comparison. |
+| `receiver_results_calibrated.csv` | `results/diff_rt/` | Stage 5 — Evaluation | Per-receiver final PL sim vs meas after full calibration | Final per-point accuracy assessment. Used to generate scatter plots and coverage maps. |
+
+---
+
+### 8.3 Pipeline Data Flow
+
+Each file acts as a **handoff point** between pipeline stages:
+
+```
+Raw inputs
+    │
+    ▼
+[Stage 2 Pre-tracing]
+    └──► path_solver_results.csv          (diagnostic: which RX are solvable)
+    │
+    ▼
+[Stage 3 Scalar Offset — Cell 10b]
+    └──► scalar_offset_915mhz.json        (transfer: global dB correction)
+    └──► scalar_offset_history.csv        (diagnostic: convergence)
+    │
+    ▼
+[Stage 4 Material Calibration — Cell 11b]
+    └──► calibrated_materials_915mhz.json (transfer: learned ep_r, sigma, S)
+    └──► material_calib_history.csv       (diagnostic: convergence)
+    │
+    ▼
+[Stage 5 Evaluation]
+    └──► calibration_results.json         (summary metrics)
+    └──► receiver_results_calibrated.csv  (per-RX final accuracy)
+    │
+    ▼
+[Stage 6 — Sionna 2.0 DEM Cell 4A]
+    ├── Loads scalar_offset_915mhz.json
+    └── Loads calibrated_materials_915mhz.json
+        └──► Full DEM simulation with calibrated materials
+```
+
+**Transfer files** (`scalar_offset_915mhz.json` and `calibrated_materials_915mhz.json`) bridge the Sionna 0.19.2 differentiable calibration → Sionna 2.0 production simulation. This decoupling means calibration can be re-run independently of the full DEM simulation.
+
+---
+
+## 9. Summary
+
+### 9.1 Stage 1 Results (Complete)
 
 | Metric | Value |
 |--------|-------|
@@ -297,7 +362,7 @@ Permittivity and scattering coefficient are clip-bounded inside `_apply11()`:
 | Convergence step | ~100 |
 | Valid pairs (N) | 228 / 1140 (20%) |
 
-### 8.2 Key Findings
+### 9.2 Key Findings
 
 1. **Sionna 0.19.2 over-predicts received power by 10.83 dB** with default ITU materials — consistent with known RT simulator bias.
 2. **Scalar offset converges in 4 seconds** — fast, reliable baseline correction.
@@ -305,7 +370,7 @@ Permittivity and scattering coefficient are clip-bounded inside `_apply11()`:
 4. **Plateau at step 100** — 500 steps were run but convergence is complete by step 100. Future runs can use 150 steps.
 5. **Stage 2 (material calibration) is the key next step** — per-material ε_r/σ/S will address spatially-varying bias that the scalar offset cannot correct.
 
-### 8.3 Open Items
+### 9.3 Open Items
 
 | Item | Status | Impact |
 |------|--------|--------|
