@@ -571,3 +571,48 @@ The new scene (27 infrastructure shapes vs flat DEM) delivers **7.3 dB RMSE redu
 ---
 
 *DIAG Cell — 50-receiver stratified sample — scene_v2_infra — Branch: claude/cool-cori-rrWbY*
+
+---
+
+## 16. P.833 Vegetation Correction — Cumulative Distance Impact (Cell 8e-P833)
+
+**Method:** ITU-R P.833 Weissberger model applied to `df_ps` (no solver re-run).
+**Formula:** A = 0.1824 · depth^0.588 (cap = 20 dB) @ 916 MHz
+**Polygons:** 386 woodland polygons, 3.56 km², 93.4% of receivers affected
+
+### 16.1 Cumulative RMSE — Before vs After P.833
+
+| Distance | N | Base Bias | Base RMSE | Base R² | P.833 Bias | P.833 RMSE | P.833 R² | ΔRMSE |
+|---|---|---|---|---|---|---|---|---|
+| 0–100 m | 8 | −9.92 | 11.22 | −8.454 | −9.92 | 11.22 | −8.454 | 0.00 |
+| 0–500 m | 44 | −7.44 | 9.45 | +0.167 | −7.44 | 9.45 | +0.167 | 0.00 |
+| 0–1000 m | 87 | −5.03 | 9.67 | +0.654 | −4.92 | 9.69 | +0.652 | +0.02 |
+| 0–1250 m | 179 | −7.77 | 12.74 | +0.502 | −6.79 | 12.17 | +0.546 | **−0.57** |
+| 0–1500 m | 221 | −7.03 | 11.84 | +0.498 | −5.70 | 11.21 | +0.550 | **−0.63** |
+| 0–2000 m | 354 | −5.62 | 11.30 | +0.397 | −3.47 | 10.72 | +0.458 | **−0.58** |
+| 0–2500 m | 482 | −7.46 | 12.35 | +0.199 | −4.80 | 10.92 | +0.375 | **−1.44** |
+| 0–3000 m | 525 | −7.63 | 12.37 | +0.221 | −4.92 | 10.87 | +0.399 | **−1.51** |
+| 0–3500 m | 567 | −7.28 | 12.00 | +0.255 | −4.56 | 10.54 | +0.426 | **−1.47** |
+| **0–4000 m** | **619** | **−7.24** | **11.76** | **+0.305** | **−4.36** | **10.22** | **+0.475** | **−1.54** |
+
+### 16.2 Key Findings
+
+| Observation | Detail |
+|---|---|
+| **No effect at <900 m** | ΔRMSE = 0.00 dB — woodland polygons are in mid/far field |
+| **Bias reduction** | −7.24 → −4.36 dB at 4 km (**+2.88 dB bias correction**) |
+| **RMSE improvement** | 11.76 → 10.22 dB at 4 km (**−1.54 dB**) |
+| **R² improvement** | +0.305 → +0.475 at 4 km |
+| **No over-correction** | ΔRMSE never exceeds +0.02 dB — P.833 model is conservative |
+| **Peak benefit** | 2.5–4 km range where woodland paths are longest |
+
+### 16.3 Interpretation
+
+P.833 corrects a **systematic under-attenuation bias** at long range. The simulation sends rays through woodland polygons without absorbing enough energy — P.833 adds the missing 2–3 dB mean attenuation. The correction is modest in absolute RMSE terms (−1.5 dB) because vegetation is only one of several error sources at long range (building geometry uncertainty, material properties, max_depth limits also contribute). After P.833:
+
+- Full dataset (0–4 km): RMSE = **10.22 dB**, Bias = **−4.36 dB**, R² = **+0.475**
+- vs pre-P.833: RMSE = 11.76 dB, Bias = −7.24 dB, R² = +0.305
+
+---
+
+*Cell 8e-P833 — scene_v2_infra — ITU-R P.833 Weissberger — Branch: claude/cool-cori-rrWbY*
