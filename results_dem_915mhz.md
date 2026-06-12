@@ -683,3 +683,85 @@ P.833 corrects a **systematic under-attenuation bias** at long range. The simula
 ---
 
 *Cell 8e-P833 — all 6 methods — p833_cumulative_impact.csv — Branch: claude/cool-cori-rrWbY*
+
+---
+
+## 18. Differentiable RT — Scalar Offset Calibration (Cell 10b, sionna019_differentiable_rt_fixed.ipynb)
+
+### 18.1 Method
+
+Cell 10b performs a **scalar offset calibration** using Sionna 0.19.2 differentiable ray tracing. It traces paths for all receivers in the scene using `compute_paths()` + `trace_paths()`, combines them incoherently, then optimises a single global `scaling_factor` (in dB) by minimising RMSE between simulated and measured path loss via Adam gradient descent.
+
+**Steps followed:**
+1. Path solver run on scene `scene_with_full_019.xml` (new scene v2 with infrastructure)
+2. Incoherent power combination: `P_r = Σ|a_n|²`
+3. Valid pairs filtered: `RSSI_sim > −150 dBm` threshold
+4. Adam optimiser, 500 steps, LR=0.5, loss = PL RMSE in dB
+5. Result saved to `scalar_offset_915mhz.json`
+
+**Parameters used (OOM-safe):**
+- `NUM_SAMPLES_PS = 2_000_000`
+- `CALIB_BATCH = 5`
+
+### 18.2 Path Solver Output
+
+| Metric | Value |
+|--------|-------|
+| Receivers solved | **228 / 1140** |
+| RSSI_sim range | −101.1 to −41.0 dBm |
+| PL_sim range | 90.0 – 150.1 dB |
+| PL_meas range | 93.7 – 142.0 dB |
+| Valid pairs (N) | **228** |
+
+> **Note:** 228/1140 solved = 20% coverage. The reduced `NUM_SAMPLES_PS=2M` (vs 20M) explains the lower coverage — fewer ray samples reach distant receivers. This is a speed/coverage trade-off accepted to avoid GPU OOM.
+
+### 18.3 Calibration Training (500 steps, Adam LR=0.5)
+
+| Step | PL RMSE (dB) | SMAPE×100 | scaling_factor (dB) |
+|------|-------------|-----------|---------------------|
+| 0 | 15.33 | +81.82 | −0.50 |
+| 50 | 8.89 | +47.91 | −10.17 |
+| 100 | 8.68 | +47.52 | −10.79 |
+| 150 | 8.66 | +47.52 | −10.84 |
+| 200 | 8.66 | +47.52 | −10.84 |
+| 300 | 8.66 | +47.52 | −10.85 |
+| 499 | 8.67 | +47.52 | −10.82 |
+
+**Convergence:** Reached plateau at step ~100. No further improvement beyond that point — the scalar offset is the maximum gain achievable with a single global correction.
+
+**Training time:** 4.2 seconds (XLA compiled after step 0)
+
+### 18.4 Calibration Results
+
+| Metric | Before Calibration | After Calibration | Improvement |
+|--------|-------------------|-------------------|-------------|
+| PL RMSE | 15.75 dB | **8.67 dB** | **−7.08 dB** |
+| PL MAE | 13.82 dB | **6.23 dB** | **−7.59 dB** |
+| scaling_factor | — | **−10.825 dB** | — |
+
+### 18.5 Interpretation
+
+The **−10.83 dB** offset means Sionna 0.19.2 consistently **over-estimates received power** (under-estimates path loss) by ~10.8 dB on this scene before calibration. This is a known issue in RT simulators when:
+- Antenna gain assumptions are not perfectly matched to hardware
+- Scene materials use default EM parameters (not yet calibrated per material)
+- Ground/building reflectivity is over-estimated
+
+The scalar offset brings RMSE from 15.75 → 8.67 dB (−7.08 dB gain). This is the **single-parameter ceiling** — further improvement requires per-material calibration (Cell 11b).
+
+### 18.6 Comparison with Sionna 2.0 DEM Pipeline
+
+| Pipeline | N | RMSE | MAE | Notes |
+|----------|---|------|-----|-------|
+| Sionna 2.0 DEM — Incoh ON | 619 | 11.91 dB | — | No scalar offset |
+| Sionna 2.0 DEM — Incoh ON + P.833 | 619 | 10.22 dB | — | Vegetation correction only |
+| **Sionna 0.19.2 diff RT — scalar offset** | 228 | **8.67 dB** | 6.23 dB | Global −10.83 dB correction |
+
+> Sionna 0.19.2 with scalar offset achieves **8.67 dB RMSE** — better than Sionna 2.0 DEM + P.833 (10.22 dB), but on a smaller subset (228 vs 619 valid pairs). Full coverage requires increasing `NUM_SAMPLES_PS`.
+
+### 18.7 Next Step
+
+Per-material calibration (Cell 11b) will replace the single scalar with per-material `(ε_r, σ)` parameters. Expected RMSE: ~7–8 dB. Estimated runtime: ~3 hours.
+
+---
+
+*Cell 10b — scalar_offset_915mhz.json — diff_rt/scalar_offset_history.csv — Branch: claude/cool-cori-rrWbY*
