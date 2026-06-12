@@ -435,3 +435,72 @@ Within-1km performance is substantially better — the long-range receivers (1�
 ---
 
 *Cell 8e — Cumulative PL evaluation, scattering ON vs OFF — scene_v2_infra — Branch: claude/cool-cori-rrWbY*
+
+---
+
+## 14. New Scene (scene_v2_infra) — Cell 7c Full Metrics
+
+**Source:** `path_solver_summary_915mhz_20260611_231149.csv` | N=1149 solved / 1200 total
+**Scene:** `scene_with_full.xml` — 27 shapes, 9 ITU materials | Scatter ON
+
+### 14.1 Overall Metrics
+
+| Method | N | Bias (dB) | MSE (dB²) | RMSE (dB) | MAE (dB) | STD (dB) | R² |
+|---|---|---|---|---|---|---|---|
+| **Incoh ON** | 1149 | **−6.64** | 141.88 | **11.91** | 9.48 | **9.89** | **+0.361** |
+| Best ON | 1149 | −0.28 | 146.76 | 12.11 | 9.57 | 12.11 | +0.339 |
+| Coh ON | 1149 | −22.50 | 710.71 | 26.66 | 23.75 | 14.30 | −2.203 |
+| Best OFF | 886 | +9.71 | 620.68 | 24.91 | 18.57 | 22.94 | −1.907 |
+| Incoh OFF | 886 | +8.21 | 588.83 | 24.27 | 17.87 | 22.84 | −1.758 |
+| Coh OFF | 886 | +8.74 | 606.11 | 24.62 | 18.20 | 23.01 | −1.839 |
+| FSPL ref | 1200 | −35.69 | 1353.06 | 36.78 | 35.69 | 8.92 | −4.812 |
+
+**Selected method:** Incoh ON — RMSE **11.91 dB**, R² **+0.361**, Bias **−6.64 dB**
+RT is **3× more accurate** than FSPL (36.78 dB) before any calibration.
+
+### 14.2 Per-Band RMSE (dB)
+
+| Band | Best ON | Incoh ON | Coh ON | Best OFF | Incoh OFF | FSPL |
+|---|---|---|---|---|---|---|
+| 0–300 m | 8.35 | **8.39** | 21.00 | 8.35 | 8.47 | 7.20 |
+| 300–700 m | 11.95 | **12.07** | 34.41 | 11.79 | 12.31 | 19.96 |
+| 700–1200 m | 14.95 | **14.06** | 18.64 | 15.28 | 14.99 | 34.69 |
+| 1200–2000 m | 14.17 | **9.47** | 25.80 | 16.84 | 15.57 | 31.26 |
+| 2000–3000 m | 12.75 | **14.34** | 34.95 | 15.71 | 15.60 | 36.10 |
+| 3000–9999 m | 10.79 | **11.51** | 25.15 | 34.26 | 33.45 | 39.90 |
+
+Best single-band: **Incoh ON 1200–2000 m = 9.47 dB**. Scatter OFF collapses at >3 km (RMSE 33–34 dB vs 11.5 dB ON).
+
+### 14.3 Ray Mechanism Distribution
+
+| Ray Type | Count | % | Distance trend |
+|---|---|---|---|
+| **MULTI_REFLECTION** | 136,933 | **54.0%** | Dominates beyond 1.2 km |
+| **DIFFRACTION** | 111,611 | **44.0%** | Dominates 0–300 m (100%) |
+| LOS | 2,697 | 1.1% | Sparse, near-TX only |
+| REFLECTION | 2,508 | 1.0% | Negligible |
+| **TOTAL** | **253,749** | — | — |
+
+**Distance-band pattern:**
+- 0–300 m: 100% diffraction — dense urban canyon, all paths knife-edge
+- 300–700 m: 85% diffraction, 8% LOS
+- 700–1.2 km: 75% diffraction, 25% multi-reflection
+- 1.2–3 km: ~50/50 diffraction / multi-reflection
+- >3 km: 20% diffraction, 80% multi-reflection — reflections dominate long range
+
+### 14.4 Comparison: Old Scene vs New Scene (scene_v2_infra)
+
+| Metric | Old scene (flat DEM) | New scene (v2_infra) | Improvement |
+|---|---|---|---|
+| Incoh ON RMSE | 19.22 dB | **11.91 dB** | **−7.31 dB** |
+| Incoh ON Bias | −16.10 dB | **−6.64 dB** | −9.46 dB |
+| R² | −0.585 | **+0.361** | +0.946 |
+| Ray count | 307,433 | 253,749 | — |
+| Diffraction % | 67.1% | 44.0% | Multi-reflection now dominant |
+| Multi-reflection % | 27.5% | **54.0%** | +26.5 pp |
+
+The new scene (27 infrastructure shapes vs flat DEM) delivers **7.3 dB RMSE reduction** and moves R² from negative to positive — confirming that infrastructure geometry (car parks, barriers, bridges, pylons, fuel canopies) is critical for accurate urban propagation modelling at 915 MHz.
+
+---
+
+*Cell 7c — scene_v2_infra — 253,749 rays — Branch: claude/cool-cori-rrWbY*
