@@ -356,3 +356,82 @@ Bias = −6.64 dB indicates simulation over-attenuates. Scalar offset correction
 ---
 
 *New scene v2_infra — 27 shapes including fuel canopies, bus stations, surface car parks, greenhouses, barriers, embankments, bridges — Sionna RT 2.0 — Branch: claude/cool-cori-rrWbY*
+
+---
+
+## 13. New Scene (scene_v2_infra) — Cell 8e Cumulative Distance Evaluation
+
+**Scene:** `scene_with_full.xml` — 27 shapes, 9 ITU materials
+**Method:** Cumulative evaluation — receivers within radius R from TX, R from 100 m to 4000 m
+**Date:** 2026-06-12 | Runtime: 2491s (41 min) | Scattering: ON vs OFF comparison
+
+### 13.1 Summary Table — Incoherent ON (Best Method)
+
+| Distance | N | Bias (dB) | RMSE (dB) | STD (dB) | R² | Avg rays ON |
+|---|---|---|---|---|---|---|
+| 0–100 m | 8 | −9.9 | 11.2 | 5.2 | −8.45 | 94 256 |
+| 0–200 m | 17 | −6.1 | 8.1 | 5.3 | −4.06 | 86 155 |
+| 0–300 m | 26 | −6.9 | 8.4 | 4.7 | −0.99 | 81 555 |
+| 0–500 m | 44 | −7.0 | 9.1 | 5.8 | +0.23 | 71 617 |
+| 0–750 m | 67 | −6.7 | 9.9 | 7.3 | +0.55 | 59 540 |
+| **0–1000 m** | **87** | **−4.4** | **9.3** | **8.2** | **+0.682** | **46 772** |
+| 0–1250 m | 179 | −7.4 | 12.6 | 10.1 | +0.516 | 23 482 |
+| 0–1500 m | 221 | −6.6 | 11.7 | 9.6 | +0.510 | 19 690 |
+| 0–1750 m | 289 | −5.5 | 11.1 | 9.6 | +0.470 | 17 112 |
+| 0–2000 m | 355 | −5.4 | 11.2 | 9.8 | +0.410 | 14 947 |
+| 0–2500 m | 482 | −7.1 | 12.1 | 9.9 | +0.229 | 13 409 |
+| 0–3000 m | 525 | −7.3 | 12.2 | 9.8 | +0.247 | 12 722 |
+| 0–4000 m | 619 | −6.9 | 11.6 | 9.3 | +0.328 | 11 373 |
+
+### 13.2 Scattering ON vs OFF — Impact by Distance
+
+| Distance | Incoh ON RMSE | Incoh OFF RMSE | ΔRMSE | OFF R² |
+|---|---|---|---|---|
+| 0–500 m | 9.1 | 9.3 | +0.2 dB | +0.19 |
+| 0–1000 m | **9.3** | **9.8** | **+0.5 dB** | +0.65 |
+| 0–1250 m | 12.6 | 13.5 | +0.9 dB | +0.44 |
+| 0–1500 m | 11.7 | 12.9 | +1.2 dB | +0.40 |
+| 0–1750 m | 11.1 | 14.4 | **+3.4 dB** | +0.10 |
+| 0–2000 m | 11.2 | 14.7 | **+3.5 dB** | −0.02 |
+| 0–3000 m | 12.2 | 15.0 | **+2.8 dB** | −0.14 |
+| 0–4000 m | 11.6 | 19.7 | **+8.1 dB** | −0.96 |
+
+**Scattering OFF collapses beyond 1250 m** — R² goes negative (worse than mean predictor), RMSE grows to 19.7 dB at 4 km. Scattering ON maintains RMSE 11–12 dB and R² > 0.20 across all distances. This confirms diffuse scattering is not optional at 915 MHz urban — it is the primary mechanism keeping paths alive beyond 1 km (avg rays ON: 11 373 vs OFF: 29 at 4 km).
+
+### 13.3 Ray Density by Distance
+
+| Distance | Avg rays ON | Avg rays OFF | Ratio |
+|---|---|---|---|
+| 0–100 m | 94 256 | 116 | 812× |
+| 0–1000 m | 46 772 | 68 | 688× |
+| 0–4000 m | 11 373 | 29 | 392× |
+
+Ray count drops as distance increases because far receivers subtend smaller solid angles, but scattering ON maintains 392–812× more rays than OFF across all distances — confirming diffuse scattering creates a rich multipath environment that drives incoh power accumulation.
+
+### 13.4 Coherent Combination — Confirmed Unsuitable
+
+Coherent RMSE ranges from 17 dB (0–200 m) to 28 dB (0–4000 m) with R² reaching −3.1. This is expected: phase coherence is meaningless for drive-test measurements where receiver position uncertainty is metres. **Incoherent combination is the only physically valid mode for drive-test comparison.**
+
+### 13.5 Key Finding — Optimal Working Range
+
+**Best performance zone: 0–1000 m**
+- Incoh ON RMSE = **9.27 dB**, R² = **0.682**, Bias = −4.4 dB
+- Ray count still high (avg 46 772 rays/receiver)
+- R² drops from 0.682 at 1000 m to 0.516 at 1250 m — RMSE penalty from adding distant receivers is ~3 dB
+
+**Full dataset (0–4000 m, N=619):** RMSE = 11.6 dB, R² = 0.328 — still physically meaningful, consistent with the Cell 7 full-dataset result (RMSE = 11.91 dB, N=1149).
+
+### 13.6 Comparison with Cell 7 Full-Dataset Result
+
+| Metric | Cell 7 (full) | Cell 8e (0–4000 m) | Cell 8e (0–1000 m) |
+|---|---|---|---|
+| N | 1149 | 619 | 87 |
+| Bias (dB) | −6.64 | −6.93 | −4.39 |
+| RMSE (dB) | 11.91 | 11.56 | **9.27** |
+| R² | 0.361 | 0.328 | **0.682** |
+
+Within-1km performance is substantially better — the long-range receivers (1–4 km) with fewer rays and stronger diffraction/multipath complexity degrade the overall metrics. This motivates the distance-banded calibration approach in Cell 11b.
+
+---
+
+*Cell 8e — Cumulative PL evaluation, scattering ON vs OFF — scene_v2_infra — Branch: claude/cool-cori-rrWbY*
