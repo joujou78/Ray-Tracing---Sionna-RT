@@ -2119,12 +2119,12 @@ txt(s, "Impact on Path Loss Prediction", Inches(6.75), cy_pt2 + Inches(0.1),
     Inches(6.1), Inches(0.38), size=11, bold=True, color=C_ACCENT2)
 
 impact_items = [
-    "915 MHz penetrates vegetation well but losses accumulate: λ = 32.7 cm",
-    "P.833 applied to 1121 / 1200 RX (93.4%) — Nottingham street trees ubiquitous",
-    "Mean attenuation (all RX): 2.94 dB  |  Max: 9.47 dB  |  Mean (affected): 3.15 dB",
-    "Weissberger formula: A = 0.1824 × depth^0.588 dB (capped 20 dB @ 916 MHz)",
-    "386 vegetation polygons loaded — total area 3.56 km²  (EPSG:32630)",
-    "Reference: ITU-R P.833-10, Section 3 — Weissberger exponential decay model",
+    "915 MHz penetrates vegetation: λ=32.7 cm, but losses accumulate with depth",
+    "P.833 applied to 1121/1200 RX (93.4%) — Nottingham street trees ubiquitous",
+    "Mean attenuation: 2.94 dB (all RX)  |  3.15 dB (affected)  |  Max: 9.47 dB",
+    "0–1 km: ΔRMSE = −0.06 dB (near-field not vegetation-dominated ✓)",
+    "2–3 km: ΔRMSE = −2.06 dB (street trees dominate mid-range error)",
+    "Best result Incoh ON + P.833 @ 4 km: RMSE = 11.50 dB  R² = +0.335",
 ]
 cy_imp = cy_pt2 + Inches(0.55)
 for item in impact_items:
