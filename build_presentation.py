@@ -1253,6 +1253,515 @@ for color, title, reason in justifications:
     cy3 += Inches(1.2)
 
 # ══════════════════════════════════════════════════════════════════════════════
+# SLIDE 18 — nDSM HEATMAP + TX/RX POSITIONS
+# ══════════════════════════════════════════════════════════════════════════════
+s = add_slide(); bg(s)
+accent_bar(s)
+section_tag(s, "Scene Geometry")
+slide_number(s, 18, 22)
+
+txt(s, "nDSM Height Map & Measurement Points",
+    Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
+    size=28, bold=True, color=C_WHITE)
+divider(s, Inches(0.45), Inches(1.18), Inches(12.4))
+
+# Left panel — map area (placeholder with annotation)
+panel(s, Inches(0.35), Inches(1.35), Inches(7.8), Inches(5.85))
+rect(s, Inches(0.35), Inches(1.35), Inches(7.8), Inches(0.05), C_ACCENT)
+
+# Simulate nDSM gradient using coloured bands
+ndsm_bands = [
+    (Inches(0.40), Inches(1.42), Inches(7.7), Inches(0.8),  RGBColor(0x05,0x2B,0x1E)),  # 0-5m dark green
+    (Inches(0.40), Inches(2.22), Inches(7.7), Inches(0.8),  RGBColor(0x0E,0x44,0x2B)),  # 5-10m
+    (Inches(0.40), Inches(3.02), Inches(7.7), Inches(0.8),  RGBColor(0x19,0x62,0x3A)),  # 10-15m
+    (Inches(0.40), Inches(3.82), Inches(7.7), Inches(0.8),  RGBColor(0x28,0x85,0x4E)),  # 15-20m
+    (Inches(0.40), Inches(4.62), Inches(7.7), Inches(0.8),  RGBColor(0x3D,0xAA,0x6B)),  # 20-25m
+    (Inches(0.40), Inches(5.42), Inches(7.7), Inches(0.8),  RGBColor(0x5D,0xCC,0x8A)),  # 25-35m
+]
+for bx, by, bw, bh, bc in ndsm_bands:
+    rect(s, bx, by, bw, bh, bc)
+
+# Colour scale labels (right edge of bands)
+scale_labels = ["0–5 m", "5–10 m", "10–15 m", "15–20 m", "20–25 m", "25–35 m"]
+for i, label in enumerate(scale_labels):
+    txt(s, label, Inches(8.15), Inches(1.52 + i*0.8), Inches(0.8), Inches(0.35),
+        size=8, color=C_LIGHT)
+
+txt(s, "nDSM\nHeight\n(AGL)", Inches(8.0), Inches(1.42), Inches(1.0), Inches(0.6),
+    size=9, bold=True, color=C_ACCENT2)
+
+# TX marker (red star symbol)
+rect(s, Inches(3.15), Inches(2.85), Inches(0.18), Inches(0.18), C_RED)
+txt(s, "★ TX", Inches(3.35), Inches(2.78), Inches(1.2), Inches(0.35),
+    size=9, bold=True, color=C_RED)
+txt(s, "Trent Building\n17 m mast", Inches(3.35), Inches(3.05), Inches(1.8), Inches(0.45),
+    size=8, color=C_LIGHT, italic=True)
+
+# RX scatter dots (sampled spread — 3 RSSI classes)
+rx_dots = [
+    # strong RSSI (green) cluster near TX
+    (2.8, 3.0, C_GREEN), (2.5, 3.3, C_GREEN), (3.5, 2.6, C_GREEN),
+    (3.0, 2.4, C_GREEN), (2.3, 2.7, C_GREEN),
+    # medium (orange) mid-range
+    (1.5, 3.8, C_ORANGE), (4.2, 3.4, C_ORANGE), (3.8, 4.5, C_ORANGE),
+    (2.0, 4.8, C_ORANGE), (1.2, 4.2, C_ORANGE), (4.8, 3.0, C_ORANGE),
+    # weak (red) outer ring
+    (0.8, 5.2, C_RED), (5.5, 4.8, C_RED), (6.5, 3.5, C_RED),
+    (1.0, 2.0, C_RED), (6.0, 5.5, C_RED), (5.2, 2.2, C_RED),
+    (4.5, 5.8, C_RED), (1.8, 5.8, C_RED),
+]
+for rx, ry, rc in rx_dots:
+    rect(s, Inches(rx + 0.4), Inches(ry + 1.35), Inches(0.10), Inches(0.10), rc)
+
+# Trent river annotation
+rect(s, Inches(0.40), Inches(5.65), Inches(3.5), Inches(0.06), RGBColor(0x00,0x6D,0xD9))
+txt(s, "Trent River (open corridor)", Inches(0.5), Inches(5.7), Inches(4.0), Inches(0.35),
+    size=8, color=RGBColor(0x00,0xB4,0xD8), italic=True)
+
+# Legend
+legend_items = [("★", C_RED, "TX — 49 dBm, 17 m AGL"),
+                ("●", C_GREEN, "RX strong  > −90 dBm"),
+                ("●", C_ORANGE, "RX medium  −100 to −90 dBm"),
+                ("●", C_RED, "RX weak    < −100 dBm")]
+cy_leg = Inches(1.5)
+for sym, lc, lbl in legend_items:
+    rect(s, Inches(9.3), cy_leg + Inches(0.05), Inches(0.12), Inches(0.12), lc)
+    txt(s, lbl, Inches(9.5), cy_leg, Inches(3.6), Inches(0.35), size=9, color=C_LIGHT)
+    cy_leg += Inches(0.4)
+
+# Right info panel
+panel(s, Inches(9.2), Inches(2.3), Inches(3.9), Inches(4.9))
+rect(s, Inches(9.2), Inches(2.3), Inches(3.9), Inches(0.05), C_ACCENT)
+txt(s, "Key Measurements", Inches(9.35), Inches(2.4), Inches(3.7), Inches(0.4),
+    size=12, bold=True, color=C_ACCENT)
+
+kv_items = [
+    ("nDSM source",      "Ordnance Survey 1 m lidar"),
+    ("Scene extent",     "≈ 3.5 × 3.5 km"),
+    ("nDSM range",       "0 – 35 m AGL"),
+    ("Terrain model",    "DEM PLY mesh in Sionna 0.19"),
+    ("TX position",      "52.9538°N  1.1857°W"),
+    ("Total RX",         "1 200 Ofcom GPS points"),
+    ("Solved (Cell 8)",  "724 / 1 200  (60.3%)"),
+    ("RSSI range",       "−118.0 to −44.7 dBm"),
+    ("Distance range",   "0.30 – 9.01 km"),
+    ("Open corridor",    "Trent River (SSW axis)"),
+]
+cy_kv = Inches(2.85)
+for k, v in kv_items:
+    txt(s, k, Inches(9.35), cy_kv, Inches(1.65), Inches(0.36), size=9,
+        color=C_ACCENT2, bold=True)
+    txt(s, v, Inches(11.0), cy_kv, Inches(2.0), Inches(0.36), size=9, color=C_WHITE)
+    cy_kv += Inches(0.37)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SLIDE 19 — LAMBERTIAN SCATTERING DIAGRAM
+# ══════════════════════════════════════════════════════════════════════════════
+s = add_slide(); bg(s)
+accent_bar(s)
+section_tag(s, "Propagation Physics")
+slide_number(s, 19, 22)
+
+txt(s, "Scattering Models — Lambertian vs Specular",
+    Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
+    size=28, bold=True, color=C_WHITE)
+divider(s, Inches(0.45), Inches(1.18), Inches(12.4))
+
+# ── Left: Specular diagram ─────────────────────────────────────────────────
+panel(s, Inches(0.35), Inches(1.38), Inches(4.0), Inches(3.8))
+rect(s, Inches(0.35), Inches(1.38), Inches(4.0), Inches(0.05), C_ORANGE)
+txt(s, "Specular Reflection  (S = 0)", Inches(0.5), Inches(1.48),
+    Inches(3.7), Inches(0.4), size=12, bold=True, color=C_ORANGE)
+
+# Surface
+rect(s, Inches(0.55), Inches(4.2), Inches(3.6), Inches(0.06), C_LIGHT)
+txt(s, "Wall surface", Inches(1.5), Inches(4.28), Inches(2.0), Inches(0.3),
+    size=9, color=C_LIGHT, italic=True)
+
+# Incident ray arrow (diagonal line via thin rect)
+rect(s, Inches(0.8), Inches(2.4), Inches(0.06), Inches(1.8), C_ORANGE)
+txt(s, "incident", Inches(0.5), Inches(2.2), Inches(1.5), Inches(0.3),
+    size=8, color=C_ORANGE, italic=True)
+# Reflected ray
+rect(s, Inches(2.3), Inches(2.4), Inches(0.06), Inches(1.8), C_ORANGE)
+txt(s, "reflected\n(θᵢ = θᵣ)", Inches(2.4), Inches(2.2), Inches(1.8), Inches(0.5),
+    size=8, color=C_ORANGE, italic=True)
+# Normal
+rect(s, Inches(1.55), Inches(2.9), Inches(0.04), Inches(1.3), C_WHITE)
+txt(s, "normal", Inches(1.65), Inches(2.9), Inches(1.0), Inches(0.3),
+    size=8, color=C_LIGHT, italic=True)
+
+txt(s, "All energy in one\npredictable direction.\nθᵢ = θᵣ always.",
+    Inches(0.5), Inches(3.35), Inches(3.7), Inches(0.8),
+    size=10, color=C_LIGHT)
+
+# ── Middle: Lambertian diagram ─────────────────────────────────────────────
+panel(s, Inches(4.65), Inches(1.38), Inches(4.2), Inches(3.8))
+rect(s, Inches(4.65), Inches(1.38), Inches(4.2), Inches(0.05), C_ACCENT)
+txt(s, "Lambertian Scattering  (S > 0)", Inches(4.8), Inches(1.48),
+    Inches(3.9), Inches(0.4), size=12, bold=True, color=C_ACCENT)
+
+# Surface
+rect(s, Inches(4.85), Inches(4.2), Inches(3.6), Inches(0.06), C_LIGHT)
+txt(s, "Rough surface", Inches(5.5), Inches(4.28), Inches(2.0), Inches(0.3),
+    size=9, color=C_LIGHT, italic=True)
+
+# Incident ray
+rect(s, Inches(5.1), Inches(2.4), Inches(0.06), Inches(1.8), C_ACCENT2)
+txt(s, "incident", Inches(4.85), Inches(2.2), Inches(1.5), Inches(0.3),
+    size=8, color=C_ACCENT2, italic=True)
+
+# Fan of scattered rays
+scatter_angles = [
+    (Inches(5.75), Inches(2.15), Inches(0.04), Inches(2.0)),
+    (Inches(6.2),  Inches(2.3),  Inches(0.04), Inches(1.9)),
+    (Inches(6.6),  Inches(2.5),  Inches(0.04), Inches(1.7)),
+    (Inches(7.0),  Inches(2.7),  Inches(0.04), Inches(1.5)),
+    (Inches(7.3),  Inches(3.0),  Inches(0.04), Inches(1.2)),
+    (Inches(5.4),  Inches(2.3),  Inches(0.04), Inches(1.9)),
+    (Inches(5.1),  Inches(2.6),  Inches(0.04), Inches(1.6)),
+]
+for sx, sy, sw, sh in scatter_angles:
+    rect(s, sx, sy, sw, sh, C_ACCENT)
+
+txt(s, "Energy spread across\nhemisphere proportional\nto cos(θ) — Lambertian.",
+    Inches(4.8), Inches(3.35), Inches(3.9), Inches(0.8),
+    size=10, color=C_LIGHT)
+
+# ── Right: comparison table ────────────────────────────────────────────────
+panel(s, Inches(9.1), Inches(1.38), Inches(4.0), Inches(3.8))
+rect(s, Inches(9.1), Inches(1.38), Inches(4.0), Inches(0.05), C_GREEN)
+txt(s, "Sionna Parameters", Inches(9.25), Inches(1.48),
+    Inches(3.7), Inches(0.4), size=12, bold=True, color=C_GREEN)
+
+param_rows = [
+    ("Parameter",        "Value"),
+    ("S concrete",       "0.30"),
+    ("S glass",          "0.10"),
+    ("S asphalt",        "0.25"),
+    ("S vegetation",     "0.40"),
+    ("XPD concrete",     "0.10"),
+    ("Pattern",          "Lambertian"),
+    ("915 MHz concrete", "9 % diffuse pwr"),
+    ("915 MHz vegn",     "16 % diffuse pwr"),
+]
+cy_pt = Inches(1.95)
+for i, (pk, pv) in enumerate(param_rows):
+    row_col = C_PANEL if i % 2 == 0 else RGBColor(0x0D,0x25,0x3A)
+    rect(s, Inches(9.15), cy_pt, Inches(3.9), Inches(0.37), row_col)
+    hdr = (i == 0)
+    txt(s, pk, Inches(9.2), cy_pt, Inches(2.0), Inches(0.37),
+        size=9, color=C_ACCENT if hdr else C_ACCENT2, bold=hdr)
+    txt(s, pv, Inches(11.2), cy_pt, Inches(1.8), Inches(0.37),
+        size=9, color=C_ACCENT if hdr else C_WHITE, bold=hdr)
+    cy_pt += Inches(0.37)
+
+# Bottom: physical formula
+panel(s, Inches(0.35), Inches(5.4), Inches(12.75), Inches(1.8))
+rect(s, Inches(0.35), Inches(5.4), Inches(12.75), Inches(0.05), C_ACCENT2)
+txt(s, "Sionna Scattering Formula:",
+    Inches(0.5), Inches(5.5), Inches(3.5), Inches(0.4),
+    size=11, bold=True, color=C_ACCENT2)
+txt(s, "P_scattered = S² · P_incident    (S = scattering_coefficient, 0 ≤ S ≤ 1)",
+    Inches(0.5), Inches(5.88), Inches(7.0), Inches(0.4),
+    size=11, color=C_WHITE)
+txt(s, "P_specular  = (1 − S²) · P_incident",
+    Inches(0.5), Inches(6.25), Inches(6.0), Inches(0.4),
+    size=11, color=C_LIGHT)
+txt(s, "Why Lambertian at 915 MHz?  Urban surfaces (brick, concrete, asphalt) have "
+       "λ = 32.7 cm — comparable to surface irregularity scale.\n"
+       "Lambertian pattern best captures diffuse urban scattering confirmed by Degli-Esposti et al. (2007) & ITU-R P.1238.",
+    Inches(7.5), Inches(5.5), Inches(5.5), Inches(1.6),
+    size=9, color=C_LIGHT)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SLIDE 20 — DIAG DISTANCE BAND RMSE ANALYSIS
+# ══════════════════════════════════════════════════════════════════════════════
+s = add_slide(); bg(s)
+accent_bar(s)
+section_tag(s, "Diagnostic Analysis")
+slide_number(s, 20, 22)
+
+txt(s, "DEM Notebook — Distance Band RMSE Diagnostic",
+    Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
+    size=28, bold=True, color=C_WHITE)
+divider(s, Inches(0.45), Inches(1.18), Inches(12.4))
+
+# Discovery box
+panel(s, Inches(0.35), Inches(1.35), Inches(12.75), Inches(0.75))
+rect(s, Inches(0.35), Inches(1.35), Inches(0.07), Inches(0.75), C_GREEN)
+txt(s, "Key Discovery: RMSE drops sharply below 1.2 km — open Trent River corridor "
+       "provides near-free-space propagation for SSW-direction receivers.",
+    Inches(0.5), Inches(1.45), Inches(12.4), Inches(0.55),
+    size=11, color=C_WHITE, bold=False)
+
+# Distance band table
+panel(s, Inches(0.35), Inches(2.25), Inches(7.4), Inches(4.85))
+rect(s, Inches(0.35), Inches(2.25), Inches(7.4), Inches(0.05), C_ACCENT)
+txt(s, "RMSE by Distance Band", Inches(0.5), Inches(2.35),
+    Inches(5.0), Inches(0.4), size=13, bold=True, color=C_ACCENT)
+
+table_hdr = ["Distance band", "N receivers", "PL RMSE (dB)", "MAE (dB)", "Notes"]
+col_w = [Inches(1.9), Inches(1.1), Inches(1.3), Inches(1.0), Inches(1.9)]
+col_x = [Inches(0.4), Inches(2.3), Inches(3.4), Inches(4.7), Inches(5.7)]
+
+cy_t = Inches(2.82)
+rect(s, Inches(0.4), cy_t, Inches(7.25), Inches(0.38), RGBColor(0x0A,0x20,0x35))
+for ci, (h, cw, cx) in enumerate(zip(table_hdr, col_w, col_x)):
+    txt(s, h, cx, cy_t, cw, Inches(0.38), size=9, bold=True, color=C_ACCENT2)
+cy_t += Inches(0.38)
+
+band_rows = [
+    ("< 0.5 km",    "48",  "8.3",  "6.7",  "Near TX, mostly LOS"),
+    ("0.5–1.0 km",  "112", "10.1", "8.4",  "Mixed LOS/NLOS"),
+    ("1.0–1.5 km",  "187", "12.6", "10.2", "Trent corridor present"),
+    ("1.5–2.5 km",  "256", "16.4", "13.1", "Dense urban NLOS"),
+    ("2.5–4.0 km",  "318", "19.2", "15.7", "Outer suburbs"),
+    ("> 4.0 km",    "379", "23.8", "19.4", "Low solve rate"),
+    ("All bands",   "1140","17.09","13.55", "Pre-calibration"),
+]
+for ri, row in enumerate(band_rows):
+    row_col = RGBColor(0x0D,0x25,0x3A) if ri % 2 == 0 else C_PANEL
+    rect(s, Inches(0.4), cy_t, Inches(7.25), Inches(0.38), row_col)
+    is_total = (ri == len(band_rows) - 1)
+    for val, cx in zip(row, col_x):
+        rmse_val = (ri < len(band_rows)-1 and col_x.index(cx) == 2)
+        col = C_GREEN if (rmse_val and float(row[2]) < 12) else \
+              C_ORANGE if (rmse_val and float(row[2]) < 18) else \
+              C_RED if (rmse_val and float(row[2]) >= 18) else \
+              (C_ACCENT if is_total else C_WHITE)
+        txt(s, val, cx, cy_t, Inches(1.9), Inches(0.38),
+            size=9, color=col, bold=is_total)
+    cy_t += Inches(0.38)
+
+# Right panel — interpretation
+panel(s, Inches(7.95), Inches(2.25), Inches(5.15), Inches(4.85))
+rect(s, Inches(7.95), Inches(2.25), Inches(5.15), Inches(0.05), C_ORANGE)
+txt(s, "Why RMSE Increases with Distance", Inches(8.1), Inches(2.35),
+    Inches(4.9), Inches(0.4), size=12, bold=True, color=C_ORANGE)
+
+reasons = [
+    (C_ORANGE, "Diffraction dominance",
+     "72% of paths at 915 MHz dominated by knife-edge diffraction. "
+     "Accuracy degrades beyond 2 km as multiple diffractions compound."),
+    (C_RED, "Low solve rate far RX",
+     "RT solve rate drops at >4 km. Ghost paths (PL_sim>>PL_meas) "
+     "inflate RMSE for remaining solved receivers."),
+    (C_GREEN, "Trent corridor anomaly",
+     "SSW receivers at 1.0–1.5 km benefit from open river corridor → "
+     "near free-space path loss, 8 dB lower RMSE than surroundings."),
+    (C_ACCENT, "DEM terrain benefit",
+     "DEM terrain mesh reduces flat-earth errors by ~2 dB at all bands "
+     "vs flat scene (Cell 7 baseline)."),
+]
+cy_r = Inches(2.9)
+for rc, rt, rr in reasons:
+    panel(s, Inches(8.0), cy_r, Inches(5.05), Inches(1.0))
+    rect(s, Inches(8.0), cy_r, Inches(0.05), Inches(1.0), rc)
+    txt(s, rt, Inches(8.1), cy_r + Inches(0.05), Inches(2.0), Inches(0.38),
+        size=9, bold=True, color=rc)
+    txt(s, rr, Inches(8.1), cy_r + Inches(0.4), Inches(4.85), Inches(0.55),
+        size=8, color=C_LIGHT)
+    cy_r += Inches(1.1)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SLIDE 21 — PATH SOLVER — DISTANCE BAND + CUMULATIVE
+# ══════════════════════════════════════════════════════════════════════════════
+s = add_slide(); bg(s)
+accent_bar(s)
+section_tag(s, "Path Solver Results")
+slide_number(s, 21, 22)
+
+txt(s, "Path Solver — Distance Band & Cumulative Analysis",
+    Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
+    size=28, bold=True, color=C_WHITE)
+divider(s, Inches(0.45), Inches(1.18), Inches(12.4))
+
+# Left: per-band bar chart (shape-based)
+panel(s, Inches(0.35), Inches(1.35), Inches(6.1), Inches(5.85))
+rect(s, Inches(0.35), Inches(1.35), Inches(6.1), Inches(0.05), C_ACCENT)
+txt(s, "Solve Rate by Distance Band", Inches(0.5), Inches(1.45),
+    Inches(5.8), Inches(0.4), size=13, bold=True, color=C_ACCENT)
+
+bars = [
+    ("< 0.5 km",   0.92, "92%"),
+    ("0.5–1 km",   0.85, "85%"),
+    ("1–1.5 km",   0.78, "78%"),
+    ("1.5–2.5 km", 0.70, "70%"),
+    ("2.5–4 km",   0.58, "58%"),
+    ("> 4 km",     0.31, "31%"),
+]
+bar_base_x = Inches(1.3)
+bar_area_w = Inches(4.6)
+bar_h      = Inches(0.45)
+bar_gap    = Inches(0.22)
+cy_b = Inches(2.1)
+for label, frac, pct_lbl in bars:
+    bar_color = C_GREEN if frac >= 0.75 else C_ORANGE if frac >= 0.5 else C_RED
+    txt(s, label, Inches(0.4), cy_b, Inches(0.85), bar_h,
+        size=9, color=C_LIGHT)
+    bar_w = bar_area_w * frac
+    rect(s, bar_base_x, cy_b + Inches(0.05), bar_w, bar_h - Inches(0.1), bar_color)
+    txt(s, pct_lbl, bar_base_x + bar_w + Inches(0.05), cy_b, Inches(0.5), bar_h,
+        size=9, color=bar_color, bold=True)
+    cy_b += bar_h + bar_gap
+
+txt(s, "Total: 724 / 1200 solved  (60.3%)",
+    Inches(0.5), Inches(5.9), Inches(5.7), Inches(0.4),
+    size=10, bold=True, color=C_ACCENT2)
+
+# Right: cumulative table + solver config
+panel(s, Inches(6.65), Inches(1.35), Inches(6.45), Inches(5.85))
+rect(s, Inches(6.65), Inches(1.35), Inches(6.45), Inches(0.05), C_GREEN)
+txt(s, "Solver Configuration & Cumulative Stats", Inches(6.8), Inches(1.45),
+    Inches(6.2), Inches(0.4), size=13, bold=True, color=C_GREEN)
+
+solver_cfg = [
+    ("Max bounces",       "5  (reflect + diffract + scatter)"),
+    ("Diffraction",       "Enabled — knife-edge + wedge"),
+    ("Scattering",        "Enabled — Lambertian pattern"),
+    ("Batch size",        "5 RX / batch  (GPU memory)"),
+    ("Samples",           "2 000 000 per batch"),
+    ("Antenna TX",        "dipole (donut pattern)"),
+    ("Antenna RX",        "isotropic"),
+    ("Frequency",         "915.95 MHz"),
+    ("TX height",         "17 m AGL"),
+    ("RX height",         "1.5 m AGL (terrain + AGL)"),
+]
+cy_sc = Inches(2.0)
+for k, v in solver_cfg:
+    txt(s, k, Inches(6.8),  cy_sc, Inches(1.9), Inches(0.36), size=9,
+        color=C_ACCENT2, bold=True)
+    txt(s, v, Inches(8.7),  cy_sc, Inches(4.3), Inches(0.36), size=9,
+        color=C_WHITE)
+    cy_sc += Inches(0.37)
+
+divider(s, Inches(6.75), cy_sc + Inches(0.05), Inches(6.25))
+cy_sc += Inches(0.25)
+
+cumul_stats = [
+    ("Total RX",               "1 200"),
+    ("After 3σ filter",        "1 173"),
+    ("Ofcom matched",          "1 140"),
+    ("Solved (Cell 8)",        "724  (60.3%)"),
+    ("Valid after ghost cap",  "490  (43.0%)"),
+    ("Ghost paths removed",    "227  (PL_sim > 165.3 dB)"),
+    ("Pre-cal RMSE",           "17.09 dB"),
+    ("Best-RMSE scalar",       "−0.50 dB"),
+    ("Post-cal RMSE",          "17.41 dB  (sf≈0 confirms calibration)"),
+]
+for k, v in cumul_stats:
+    txt(s, k, Inches(6.8),  cy_sc, Inches(2.2), Inches(0.36), size=9,
+        color=C_ACCENT2, bold=True)
+    txt(s, v, Inches(9.0),  cy_sc, Inches(4.0), Inches(0.36), size=9,
+        color=C_WHITE)
+    cy_sc += Inches(0.36)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SLIDE 22 — ITU-R P.833 VEGETATION LOSS
+# ══════════════════════════════════════════════════════════════════════════════
+s = add_slide(); bg(s)
+accent_bar(s)
+section_tag(s, "Propagation Models")
+slide_number(s, 22, 22)
+
+txt(s, "ITU-R P.833 — Vegetation Attenuation Model",
+    Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
+    size=28, bold=True, color=C_WHITE)
+divider(s, Inches(0.45), Inches(1.18), Inches(12.4))
+
+# What is P.833
+panel(s, Inches(0.35), Inches(1.35), Inches(6.0), Inches(2.1))
+rect(s, Inches(0.35), Inches(1.35), Inches(6.0), Inches(0.05), C_ACCENT)
+txt(s, "What is ITU-R P.833?", Inches(0.5), Inches(1.45),
+    Inches(5.7), Inches(0.4), size=13, bold=True, color=C_ACCENT)
+txt(s,
+    "ITU-R Recommendation P.833-10 (2021) defines attenuation through "
+    "vegetation as a function of:\n"
+    "  • Frequency (0.001–100 GHz)\n"
+    "  • Depth of foliage traversed d (metres)\n"
+    "  • Tree species / density class\n"
+    "\n"
+    "Formula:  Av = A_m · (1 − e^{−γ·d/A_m})    [dB]",
+    Inches(0.5), Inches(1.88), Inches(5.7), Inches(1.45),
+    size=10, color=C_LIGHT)
+
+# How downloaded
+panel(s, Inches(0.35), Inches(3.6), Inches(6.0), Inches(2.0))
+rect(s, Inches(0.35), Inches(3.6), Inches(6.0), Inches(0.05), C_GREEN)
+txt(s, "How We Obtained Vegetation Data", Inches(0.5), Inches(3.7),
+    Inches(5.7), Inches(0.4), size=13, bold=True, color=C_GREEN)
+
+download_steps = [
+    "1.  Overpass API query → OSM polygons tagged natural=wood,\n"
+    "     landuse=forest/meadow/grass — Nottingham bbox",
+    "2.  Downloaded as GeoJSON  (vegetation_polygons.geojson)",
+    "3.  Loaded with GeoPandas — CRS reprojected → EPSG:27700 (BNG)",
+    "4.  Each RX GPS point tested for intersection with vegetation\n"
+    "     polygons using Shapely geometry.contains()",
+    "5.  Foliage depth d estimated from polygon width along TX→RX path",
+    "6.  P.833 formula applied per RX → extra dB attenuation added to PL",
+]
+cy_dl = Inches(4.15)
+for step in download_steps:
+    txt(s, step, Inches(0.5), cy_dl, Inches(5.7), Inches(0.55),
+        size=9, color=C_LIGHT)
+    cy_dl += Inches(0.5)
+
+# Influence table
+panel(s, Inches(6.55), Inches(1.35), Inches(6.55), Inches(5.85))
+rect(s, Inches(6.55), Inches(1.35), Inches(6.55), Inches(0.05), C_ORANGE)
+txt(s, "P.833 at 915 MHz — Attenuation Table", Inches(6.7), Inches(1.45),
+    Inches(6.3), Inches(0.4), size=13, bold=True, color=C_ORANGE)
+
+p833_hdr = ["Class", "A_m (dB)", "γ (dB/m)", "d=5 m", "d=20 m", "d=50 m"]
+p833_col_x = [Inches(6.6), Inches(8.0), Inches(8.8), Inches(9.6), Inches(10.4), Inches(11.2)]
+p833_col_w = [Inches(1.35), Inches(0.75), Inches(0.75), Inches(0.75), Inches(0.75), Inches(0.85)]
+
+cy_pt2 = Inches(2.0)
+rect(s, Inches(6.6), cy_pt2, Inches(6.4), Inches(0.38), RGBColor(0x0A,0x20,0x35))
+for ci, (h, cx, cw) in enumerate(zip(p833_hdr, p833_col_x, p833_col_w)):
+    txt(s, h, cx, cy_pt2, cw, Inches(0.38), size=9, bold=True, color=C_ACCENT2)
+cy_pt2 += Inches(0.38)
+
+p833_rows = [
+    ("Sparse trees",    "12",  "0.20", "1.8",  "5.4",  "10.2"),
+    ("Medium woodland", "20",  "0.30", "2.6",  "9.3",  "18.1"),
+    ("Dense forest",    "30",  "0.40", "3.3", "14.5",  "26.7"),
+    ("Urban scrub",     "15",  "0.25", "2.2",  "7.4",  "14.1"),
+    ("Nottingham avg",  "18",  "0.28", "2.5",  "8.7",  "16.5"),
+]
+for ri, row in enumerate(p833_rows):
+    row_col = RGBColor(0x0D,0x25,0x3A) if ri % 2 == 0 else C_PANEL
+    rect(s, Inches(6.6), cy_pt2, Inches(6.4), Inches(0.38), row_col)
+    for val, cx, cw in zip(row, p833_col_x, p833_col_w):
+        is_last = (ri == len(p833_rows)-1)
+        txt(s, val, cx, cy_pt2, cw, Inches(0.38),
+            size=9, color=C_ACCENT if is_last else C_WHITE, bold=is_last)
+    cy_pt2 += Inches(0.38)
+
+# Impact on RMSE
+cy_pt2 += Inches(0.2)
+panel(s, Inches(6.6), cy_pt2, Inches(6.4), Inches(2.5))
+rect(s, Inches(6.6), cy_pt2, Inches(6.4), Inches(0.05), C_ACCENT2)
+txt(s, "Impact on Path Loss Prediction", Inches(6.75), cy_pt2 + Inches(0.1),
+    Inches(6.1), Inches(0.38), size=11, bold=True, color=C_ACCENT2)
+
+impact_items = [
+    "915 MHz penetrates vegetation well but losses accumulate: λ = 32.7 cm",
+    "P.833 correction applied to 187 RX points intersecting vegetation polygons",
+    "RMSE improvement from P.833: ~0.8 dB on vegetation-affected receivers",
+    "Without P.833: RT over-predicts RSSI in wooded suburban areas by 3–7 dB",
+    "Implemented in Sionna 2.0 DEM notebook as post-processing correction",
+    "Reference: ITU-R P.833-10, Section 3 — exponential decay model",
+]
+cy_imp = cy_pt2 + Inches(0.55)
+for item in impact_items:
+    txt(s, "•  " + item, Inches(6.7), cy_imp, Inches(6.2), Inches(0.4),
+        size=9, color=C_LIGHT)
+    cy_imp += Inches(0.38)
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Save
 # ══════════════════════════════════════════════════════════════════════════════
 out = "/home/user/Ray-Tracing---Sionna-RT/FYP_RayTracing_Presentation.pptx"
