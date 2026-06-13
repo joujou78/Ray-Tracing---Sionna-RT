@@ -2043,15 +2043,19 @@ rect(s, Inches(0.35), Inches(1.35), Inches(6.0), Inches(0.05), C_ACCENT)
 txt(s, "What is ITU-R P.833?", Inches(0.5), Inches(1.45),
     Inches(5.7), Inches(0.4), size=13, bold=True, color=C_ACCENT)
 txt(s,
-    "ITU-R Recommendation P.833-10 (2021) defines attenuation through "
-    "vegetation as a function of:\n"
-    "  • Frequency (0.001–100 GHz)\n"
-    "  • Depth of foliage traversed d (metres)\n"
-    "  • Tree species / density class\n"
+    "Two-layer vegetation model:\n"
     "\n"
-    "Formula:  Av = A_m · (1 − e^{−γ·d/A_m})    [dB]",
-    Inches(0.5), Inches(1.88), Inches(5.7), Inches(1.45),
-    size=10, color=C_LIGHT)
+    "  Sionna RT models vegetation as a 2D surface:\n"
+    "    → reflection / diffraction / scattering at boundary\n"
+    "    → does NOT model volumetric bulk absorption\n"
+    "\n"
+    "  P.833 adds volumetric penetration loss:\n"
+    "    → geometric TX→RX line intersected with OSM polygons\n"
+    "    → depth_m = total metres through canopy\n"
+    "    → A = 0.1824 × depth^0.588 dB  (Weissberger @ 916 MHz)\n"
+    "    → RSSI_corr = RSSI_sim − A  (post-processing, no re-tracing)",
+    Inches(0.5), Inches(1.88), Inches(5.7), Inches(1.55),
+    size=9, color=C_LIGHT)
 
 # How downloaded
 panel(s, Inches(0.35), Inches(3.6), Inches(6.0), Inches(2.0))
@@ -2116,11 +2120,11 @@ txt(s, "Impact on Path Loss Prediction", Inches(6.75), cy_pt2 + Inches(0.1),
 
 impact_items = [
     "915 MHz penetrates vegetation well but losses accumulate: λ = 32.7 cm",
-    "P.833 correction applied to 187 RX points intersecting vegetation polygons",
-    "RMSE improvement from P.833: ~0.8 dB on vegetation-affected receivers",
-    "Without P.833: RT over-predicts RSSI in wooded suburban areas by 3–7 dB",
-    "Implemented in Sionna 2.0 DEM notebook as post-processing correction",
-    "Reference: ITU-R P.833-10, Section 3 — exponential decay model",
+    "P.833 applied to 1121 / 1200 RX (93.4%) — Nottingham street trees ubiquitous",
+    "Mean attenuation (all RX): 2.94 dB  |  Max: 9.47 dB  |  Mean (affected): 3.15 dB",
+    "Weissberger formula: A = 0.1824 × depth^0.588 dB (capped 20 dB @ 916 MHz)",
+    "386 vegetation polygons loaded — total area 3.56 km²  (EPSG:32630)",
+    "Reference: ITU-R P.833-10, Section 3 — Weissberger exponential decay model",
 ]
 cy_imp = cy_pt2 + Inches(0.55)
 for item in impact_items:
