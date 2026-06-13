@@ -1253,12 +1253,164 @@ for color, title, reason in justifications:
     cy3 += Inches(1.2)
 
 # ══════════════════════════════════════════════════════════════════════════════
+# SLIDE 18A — STAGE COMPARISON: COVERAGE MAPS (Flat / DEM / DEM++)
+# ══════════════════════════════════════════════════════════════════════════════
+s = add_slide(); bg(s)
+accent_bar(s)
+section_tag(s, "Simulation Stages")
+slide_number(s, 18, 24)
+
+txt(s, "Coverage Map — Stage-by-Stage Comparison",
+    Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
+    size=28, bold=True, color=C_WHITE)
+divider(s, Inches(0.45), Inches(1.18), Inches(12.4))
+
+stage_labels = [
+    ("Flat Scene", C_ORANGE,  "No DEM terrain\nDefault building heights\nno terrain mesh"),
+    ("DEM Scene",  C_ACCENT,  "DEM PLY terrain mesh\nBuilding heights from\nnDSM lidar"),
+    ("DEM++",      C_GREEN,   "DEM + P.833 vegetation\nnDSM features + LOS/NLOS\nGhost path filter"),
+]
+col_x = [Inches(0.35), Inches(4.55), Inches(8.75)]
+col_w = Inches(3.9)
+
+for i, (label, color, desc) in enumerate(stage_labels):
+    cx = col_x[i]
+    # Header bar
+    rect(s, cx, Inches(1.35), col_w, Inches(0.45), color)
+    txt(s, label, cx + Inches(0.1), Inches(1.38), col_w - Inches(0.2), Inches(0.4),
+        size=14, bold=True, color=RGBColor(0x0D,0x1B,0x2A), align=PP_ALIGN.CENTER)
+
+    # Image placeholder box
+    panel(s, cx, Inches(1.82), col_w, Inches(3.8))
+    rect(s, cx, Inches(1.82), col_w, Inches(3.8), RGBColor(0x0A,0x1E,0x30))
+    # Dashed border simulation (4 thin rects)
+    rect(s, cx, Inches(1.82), col_w, Inches(0.03), color)
+    rect(s, cx, Inches(5.59), col_w, Inches(0.03), color)
+    rect(s, cx, Inches(1.82), Inches(0.03), Inches(3.8), color)
+    rect(s, cx + col_w - Inches(0.03), Inches(1.82), Inches(0.03), Inches(3.8), color)
+
+    txt(s, "[ INSERT COVERAGE MAP\nSCREENSHOT HERE ]",
+        cx + Inches(0.3), Inches(3.2), col_w - Inches(0.6), Inches(1.0),
+        size=13, bold=True, color=color, align=PP_ALIGN.CENTER)
+    txt(s, "Coverage map PNG\nfrom notebook output",
+        cx + Inches(0.2), Inches(4.2), col_w - Inches(0.4), Inches(0.6),
+        size=9, color=C_LIGHT, align=PP_ALIGN.CENTER, italic=True)
+
+    # Description below image
+    panel(s, cx, Inches(5.65), col_w, Inches(1.55))
+    rect(s, cx, Inches(5.65), col_w, Inches(0.04), color)
+    txt(s, desc, cx + Inches(0.1), Inches(5.72), col_w - Inches(0.2), Inches(0.8),
+        size=9, color=C_LIGHT, align=PP_ALIGN.CENTER)
+
+    # RMSE badge
+    rect(s, cx + Inches(0.7), Inches(6.55), col_w - Inches(1.4), Inches(0.55), color)
+    txt(s, "RMSE = [ TBD ] dB",
+        cx + Inches(0.7), Inches(6.58), col_w - Inches(1.4), Inches(0.45),
+        size=11, bold=True, color=RGBColor(0x0D,0x1B,0x2A), align=PP_ALIGN.CENTER)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SLIDE 18B — STAGE COMPARISON: DISTANCE BAND + CUMULATIVE RMSE
+# ══════════════════════════════════════════════════════════════════════════════
+s = add_slide(); bg(s)
+accent_bar(s)
+section_tag(s, "Simulation Stages")
+slide_number(s, 19, 24)
+
+txt(s, "RMSE by Distance Band — Flat vs DEM vs DEM++",
+    Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
+    size=28, bold=True, color=C_WHITE)
+divider(s, Inches(0.45), Inches(1.18), Inches(12.4))
+
+# Distance band table
+panel(s, Inches(0.35), Inches(1.35), Inches(8.5), Inches(5.0))
+rect(s, Inches(0.35), Inches(1.35), Inches(8.5), Inches(0.05), C_ACCENT)
+txt(s, "Path Loss RMSE (dB) by Distance Band",
+    Inches(0.5), Inches(1.45), Inches(8.0), Inches(0.4),
+    size=13, bold=True, color=C_ACCENT)
+
+# Table header
+hdr_cols = ["Distance band", "N rx", "Flat RMSE", "DEM RMSE", "DEM++ RMSE", "Best Δ"]
+hdr_x    = [Inches(0.4), Inches(1.85), Inches(2.7), Inches(4.0), Inches(5.3), Inches(6.65)]
+hdr_w    = [Inches(1.4), Inches(0.8), Inches(1.2), Inches(1.2), Inches(1.3), Inches(1.6)]
+
+cy_h = Inches(2.0)
+rect(s, Inches(0.4), cy_h, Inches(8.35), Inches(0.4), RGBColor(0x0A,0x20,0x35))
+for h, hx, hw in zip(hdr_cols, hdr_x, hdr_w):
+    txt(s, h, hx, cy_h, hw, Inches(0.4), size=9, bold=True, color=C_ACCENT2)
+cy_h += Inches(0.4)
+
+band_rows2 = [
+    "< 0.5 km", "0.5–1.0 km", "1.0–1.5 km", "1.5–2.5 km", "2.5–4.0 km", "> 4.0 km", "All bands"
+]
+for ri, band in enumerate(band_rows2):
+    row_col = RGBColor(0x0D,0x25,0x3A) if ri % 2 == 0 else C_PANEL
+    is_total = (ri == len(band_rows2)-1)
+    if is_total:
+        rect(s, Inches(0.4), cy_h, Inches(8.35), Inches(0.42), RGBColor(0x0A,0x20,0x35))
+    else:
+        rect(s, Inches(0.4), cy_h, Inches(8.35), Inches(0.42), row_col)
+    row_vals = [band, "TBD", "TBD", "TBD", "TBD", "TBD"]
+    for val, hx, hw in zip(row_vals, hdr_x, hdr_w):
+        is_tbd = (val == "TBD")
+        txt(s, val, hx, cy_h, hw, Inches(0.42),
+            size=9 if not is_total else 10,
+            color=C_LIGHT if is_tbd else (C_ACCENT if is_total else C_WHITE),
+            bold=is_total, italic=is_tbd)
+    cy_h += Inches(0.42)
+
+# Note below table
+txt(s, "* Fill values from DIAG notebook CSV outputs per simulation stage",
+    Inches(0.4), cy_h + Inches(0.1), Inches(8.2), Inches(0.35),
+    size=8, color=C_LIGHT, italic=True)
+
+# Cumulative stats panel (right)
+panel(s, Inches(9.0), Inches(1.35), Inches(4.1), Inches(5.0))
+rect(s, Inches(9.0), Inches(1.35), Inches(4.1), Inches(0.05), C_GREEN)
+txt(s, "Cumulative Summary", Inches(9.15), Inches(1.45),
+    Inches(3.8), Inches(0.4), size=13, bold=True, color=C_GREEN)
+
+cumul_stages = [
+    ("Stage", "Flat", "DEM", "DEM++"),
+    ("N valid pairs",    "TBD", "490",  "TBD"),
+    ("Overall RMSE",     "TBD", "17.09 dB", "TBD"),
+    ("Overall MAE",      "TBD", "13.55 dB", "TBD"),
+    ("Solved / 1200",    "TBD", "724", "TBD"),
+    ("Ghost removed",    "TBD", "227", "TBD"),
+    ("Best scalar sf",   "—",   "−0.50 dB", "—"),
+    ("RMSE improvement", "—",   "baseline", "TBD"),
+]
+cy_c = Inches(2.0)
+col_colors = [C_ACCENT2, C_ORANGE, C_ACCENT, C_GREEN]
+for ri, row in enumerate(cumul_stages):
+    row_col = RGBColor(0x0A,0x20,0x35) if ri == 0 else (RGBColor(0x0D,0x25,0x3A) if ri % 2 == 0 else C_PANEL)
+    rect(s, Inches(9.05), cy_c, Inches(3.95), Inches(0.4), row_col)
+    sub_x = [Inches(9.1), Inches(10.1), Inches(11.0), Inches(11.85)]
+    sub_w = [Inches(1.0), Inches(0.85), Inches(0.85), Inches(1.1)]
+    for val, sx, sw, cc in zip(row, sub_x, sub_w, col_colors):
+        is_hdr = (ri == 0)
+        is_tbd = (val == "TBD")
+        txt(s, val, sx, cy_c, sw, Inches(0.4),
+            size=8, bold=is_hdr,
+            color=cc if is_hdr else (C_LIGHT if is_tbd else C_WHITE),
+            italic=is_tbd)
+    cy_c += Inches(0.4)
+
+# Bottom note
+panel(s, Inches(0.35), Inches(6.6), Inches(12.75), Inches(0.65))
+rect(s, Inches(0.35), Inches(6.6), Inches(12.75), Inches(0.04), C_ORANGE)
+txt(s, "How to fill: run each stage notebook → export results CSV → "
+       "replace TBD values above with actual RMSE/MAE from CSV. "
+       "DEM values already confirmed from Cell 10b output (17.09 dB, 490 pairs).",
+    Inches(0.5), Inches(6.67), Inches(12.5), Inches(0.55),
+    size=9, color=C_LIGHT, italic=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
 # SLIDE 18 — nDSM HEATMAP + TX/RX POSITIONS
 # ══════════════════════════════════════════════════════════════════════════════
 s = add_slide(); bg(s)
 accent_bar(s)
 section_tag(s, "Scene Geometry")
-slide_number(s, 18, 22)
+slide_number(s, 20, 24)
 
 txt(s, "nDSM Height Map & Measurement Points",
     Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
@@ -1360,7 +1512,7 @@ for k, v in kv_items:
 s = add_slide(); bg(s)
 accent_bar(s)
 section_tag(s, "Propagation Physics")
-slide_number(s, 19, 22)
+slide_number(s, 21, 24)
 
 txt(s, "Scattering Models — Lambertian vs Specular",
     Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
@@ -1480,7 +1632,7 @@ txt(s, "Why Lambertian at 915 MHz?  Urban surfaces (brick, concrete, asphalt) ha
 s = add_slide(); bg(s)
 accent_bar(s)
 section_tag(s, "Diagnostic Analysis")
-slide_number(s, 20, 22)
+slide_number(s, 22, 24)
 
 txt(s, "DEM Notebook — Distance Band RMSE Diagnostic",
     Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
@@ -1570,7 +1722,7 @@ for rc, rt, rr in reasons:
 s = add_slide(); bg(s)
 accent_bar(s)
 section_tag(s, "Path Solver Results")
-slide_number(s, 21, 22)
+slide_number(s, 23, 24)
 
 txt(s, "Path Solver — Distance Band & Cumulative Analysis",
     Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
@@ -1663,7 +1815,7 @@ for k, v in cumul_stats:
 s = add_slide(); bg(s)
 accent_bar(s)
 section_tag(s, "Propagation Models")
-slide_number(s, 22, 22)
+slide_number(s, 24, 24)
 
 txt(s, "ITU-R P.833 — Vegetation Attenuation Model",
     Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
