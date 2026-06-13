@@ -796,6 +796,153 @@ for k, v in params:
     cy2 += Inches(0.52)
 
 # ══════════════════════════════════════════════════════════════════════════════
+# SLIDE 12 — OSM FEATURES & PATH LOSS IMPACT
+# ══════════════════════════════════════════════════════════════════════════════
+s = add_slide(); bg(s)
+accent_bar(s)
+section_tag(s, "OSM Features")
+slide_number(s, 12)
+
+txt(s, "OSM Features Downloaded — Role in Propagation Physics",
+    Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
+    size=26, bold=True, color=C_WHITE)
+divider(s, Inches(0.45), Inches(1.18), Inches(12.4))
+
+# Left — feature classes
+panel(s, Inches(0.35), Inches(1.35), Inches(6.1), Inches(5.7))
+rect(s, Inches(0.35), Inches(1.35), Inches(6.1), Inches(0.06), C_ACCENT)
+txt(s, "Feature Classes Downloaded", Inches(0.5), Inches(1.5),
+    Inches(5.8), Inches(0.4), size=12, bold=True, color=C_ACCENT)
+
+osm_features = [
+    (C_ACCENT,  "Buildings",        "building=*",               "52 248",  "Brick/Concrete/Glass/Metal/Wood"),
+    (C_LIGHT,   "Roads",            "highway=*",                "Full net", "Asphalt"),
+    (C_GREEN,   "Trees/Vegetation", "natural=tree, landuse=forest","~273",  "Vegetation"),
+    (C_ORANGE,  "Masts/Towers",     "man_made=mast/tower",      "100s",    "Metal"),
+    (C_ORANGE,  "Power pylons",     "power=tower",              "100s",    "Metal"),
+    (C_RED,     "Railways",         "railway=rail",             "Full net", "Metal"),
+    (C_LIGHT,   "Water bodies",     "natural=water, waterway=*","Polygons","Water"),
+    (C_LIGHT,   "Barriers/embank.", "barrier=*, embankment",    "Many",    "Concrete"),
+    (C_LIGHT,   "Car parks",        "amenity=parking",          "Many",    "Concrete"),
+]
+cy = Inches(2.05)
+for color, feat, tag, count, mat in osm_features:
+    rect(s, Inches(0.45), cy + Inches(0.09), Inches(0.04), Inches(0.3), color)
+    txt(s, feat,  Inches(0.55), cy, Inches(1.55), Inches(0.42), size=9.5, bold=True, color=color)
+    txt(s, tag,   Inches(2.1),  cy, Inches(1.9),  Inches(0.42), size=8.5, color=C_LIGHT, italic=True)
+    txt(s, count, Inches(4.0),  cy, Inches(0.65), Inches(0.42), size=9.5, color=C_WHITE, align=PP_ALIGN.CENTER)
+    txt(s, mat,   Inches(4.65), cy, Inches(1.65), Inches(0.42), size=9,   color=C_ACCENT2)
+    cy += Inches(0.52)
+
+# Right — propagation impact
+panel(s, Inches(6.6), Inches(1.35), Inches(6.45), Inches(5.7))
+rect(s, Inches(6.6), Inches(1.35), Inches(6.45), Inches(0.06), C_ORANGE)
+txt(s, "Propagation Impact per Feature", Inches(6.75), Inches(1.5),
+    Inches(6.1), Inches(0.4), size=12, bold=True, color=C_ORANGE)
+
+impacts = [
+    (C_ACCENT,  "Buildings",       "Diffraction + reflection — dominant NLOS loss",       "Primary"),
+    (C_ORANGE,  "Metal masts",     "Strong specular reflectors — secondary paths",         "+2–5 dB"),
+    (C_LIGHT,   "Roads",           "Ground bounce — 2-ray interference pattern",           "±3 dB"),
+    (C_GREEN,   "Vegetation",      "Absorption + scatter (P.833) up to 67 dB at 9 km",    "+12–27 dB"),
+    (C_RED,     "Railways",        "Specular waveguide along rail corridors",              "Elevated"),
+    (C_ACCENT2, "Water (Trent)",   "Near-specular reflection — local enhancement",         "Local +"),
+    (C_LIGHT,   "Barriers",        "Extra diffraction edges — additional shielding",       "+2–8 dB"),
+]
+cy2 = Inches(2.05)
+for color, feat, effect, impact in impacts:
+    rect(s, Inches(6.7), cy2 + Inches(0.09), Inches(0.04), Inches(0.3), color)
+    txt(s, feat,   Inches(6.82), cy2, Inches(1.5),  Inches(0.42), size=9.5, bold=True, color=color)
+    txt(s, effect, Inches(8.32), cy2, Inches(3.5),  Inches(0.42), size=9,   color=C_LIGHT)
+    txt(s, impact, Inches(11.82),cy2, Inches(1.1),  Inches(0.42), size=9.5, bold=True, color=color,
+        align=PP_ALIGN.RIGHT)
+    cy2 += Inches(0.68)
+
+# Key finding
+panel(s, Inches(0.35), Inches(7.1), Inches(12.7), Inches(0.0))
+txt(s, "Metal infrastructure (σ = 10⁷ S/m) added in scene_v2_infra — absent in flat baseline.  "
+       "At 915 MHz metal surfaces are near-perfect reflectors creating strong secondary paths.",
+    Inches(0.5), Inches(6.88), Inches(12.2), Inches(0.5),
+    size=10, color=C_ACCENT2, italic=True, align=PP_ALIGN.CENTER)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SLIDE 13 — TX/RX POSITIONING & RAY-CAST VALIDATION
+# ══════════════════════════════════════════════════════════════════════════════
+s = add_slide(); bg(s)
+accent_bar(s)
+section_tag(s, "TX / RX Setup")
+slide_number(s, 13)
+
+txt(s, "TX & RX Placement — GPS to Scene + Ray-Cast Validation",
+    Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
+    size=26, bold=True, color=C_WHITE)
+divider(s, Inches(0.45), Inches(1.18), Inches(12.4))
+
+# TX panel
+panel(s, Inches(0.35), Inches(1.35), Inches(4.0), Inches(3.2))
+rect(s, Inches(0.35), Inches(1.35), Inches(4.0), Inches(0.06), C_ORANGE)
+txt(s, "TX — Transmitter", Inches(0.5), Inches(1.5), Inches(3.7), Inches(0.4),
+    size=12, bold=True, color=C_ORANGE)
+
+tx_rows = [
+    ("GPS (WGS84)",    "−1.25590°,  52.98630°"),
+    ("Transform",      "WGS84 → UTM 30N → scene XY"),
+    ("Terrain Z",      "~79 m ODN  (EA LiDAR DTM)"),
+    ("AGL height",     "+17 m  (mast)"),
+    ("Scene Z",        "~96 m absolute"),
+    ("Antenna",        "Dipole — donut pattern"),
+    ("Ray-cast check", "Downward ray → above terrain ✅"),
+]
+cy = Inches(2.0)
+for k, v in tx_rows:
+    txt(s, k, Inches(0.5),  cy, Inches(1.5), Inches(0.38), size=9.5, color=C_ACCENT2, bold=True)
+    txt(s, v, Inches(2.0),  cy, Inches(2.2), Inches(0.38), size=9.5, color=C_WHITE)
+    cy += Inches(0.38)
+
+# RX pipeline
+panel(s, Inches(4.55), Inches(1.35), Inches(8.5), Inches(3.2))
+rect(s, Inches(4.55), Inches(1.35), Inches(8.5), Inches(0.06), C_GREEN)
+txt(s, "RX — 1200 Ofcom Receivers", Inches(4.7), Inches(1.5), Inches(8.2), Inches(0.4),
+    size=12, bold=True, color=C_GREEN)
+
+rx_steps = [
+    ("1", C_ACCENT,  "GPS (WGS84)",        "→  UTM Zone 30N (EPSG:32630)  →  local scene XY"),
+    ("2", C_ACCENT,  "DEM lookup",         "Bilinear interpolation at (x,y) → terrain Z from LiDAR DTM"),
+    ("3", C_GREEN,   "Height assignment",  "RX Z = terrain Z + 1.5 m AGL"),
+    ("4", C_ORANGE,  "Ray-cast check",     "Shoot ray downward → if first hit above RX → inside building"),
+    ("5", C_RED,     "Fix if invalid",     "Raise RX to building roof + 0.1 m  OR  exclude from solve"),
+]
+cy2 = Inches(2.0)
+for num, color, title, desc in rx_steps:
+    rect(s, Inches(4.68), cy2 + Inches(0.06), Inches(0.24), Inches(0.24), color)
+    txt(s, num,   Inches(4.68), cy2 + Inches(0.03), Inches(0.24), Inches(0.28),
+        size=9, bold=True, color=C_BG, align=PP_ALIGN.CENTER)
+    txt(s, title, Inches(5.0),  cy2, Inches(1.6), Inches(0.35), size=10, bold=True, color=color)
+    txt(s, desc,  Inches(6.6),  cy2, Inches(6.3), Inches(0.35), size=9.5, color=C_LIGHT)
+    cy2 += Inches(0.46)
+
+# Problems table
+panel(s, Inches(0.35), Inches(4.75), Inches(12.7), Inches(2.35))
+rect(s, Inches(0.35), Inches(4.75), Inches(12.7), Inches(0.06), C_RED)
+txt(s, "Why Positioning Validation Matters", Inches(0.5), Inches(4.88),
+    Inches(12.0), Inches(0.4), size=12, bold=True, color=C_RED)
+
+prob_rows = [
+    ("RX inside building footprint",  "Spawned in solid geometry → no paths → NaN RSSI",     "Ray-cast detects → adjust Z"),
+    ("TX near building face",         "Rays immediately blocked → unrealistic near-field",     "Minimum clearance check"),
+    ("DEM returns 0 at scene edge",   "RX at z=1.5 m → inside terrain → all paths blocked",  "Fallback to median terrain Z"),
+    ("Ofcom GPS imprecision ±3–10 m", "RX may be on wrong side of building wall",             "Accepted — statistical uncertainty"),
+]
+hx2 = [Inches(0.5), Inches(4.2), Inches(8.4)]
+hw2 = [Inches(3.6), Inches(4.1), Inches(4.5)]
+cy3 = Inches(5.35)
+for problem, consequence, fix in prob_rows:
+    txt(s, problem,     hx2[0], cy3, hw2[0], Inches(0.4), size=9.5, color=C_ORANGE)
+    txt(s, consequence, hx2[1], cy3, hw2[1], Inches(0.4), size=9.5, color=C_LIGHT)
+    txt(s, fix,         hx2[2], cy3, hw2[2], Inches(0.4), size=9.5, color=C_GREEN)
+    cy3 += Inches(0.42)
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Save
 # ══════════════════════════════════════════════════════════════════════════════
 out = "/home/user/Ray-Tracing---Sionna-RT/FYP_RayTracing_Presentation.pptx"
