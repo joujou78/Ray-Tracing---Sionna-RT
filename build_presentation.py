@@ -1540,23 +1540,36 @@ for h, hx, hw in zip(hdr_cols, hdr_x, hdr_w):
     txt(s, h, hx, cy_h, hw, Inches(0.4), size=9, bold=True, color=C_ACCENT2)
 cy_h += Inches(0.4)
 
+# Band rows: [band label, N rx, Flat RMSE, DEM RMSE, DEM++ RMSE (Incoh Scatter ON + P.833), Best Δ]
+# DEM++ = Sionna 2.0 DEM Incoherent Scatter ON + P.833 vegetation (Cell 7c, 2026-06-13)
+# Flat / DEM = TBD (run earlier stage notebooks to fill)
 band_rows2 = [
-    "< 0.5 km", "0.5–1.0 km", "1.0–1.5 km", "1.5–2.5 km", "2.5–4.0 km", "> 4.0 km", "All bands"
+    ("0–300 m",       "~180", "TBD", "TBD", "8.87",  "TBD"),
+    ("300–700 m",     "~350", "TBD", "TBD", "10.42", "TBD"),
+    ("700–1200 m",    "~280", "TBD", "TBD", "14.86", "TBD"),
+    ("1200–2000 m",   "~150", "TBD", "TBD", "12.26", "TBD"),
+    ("2000–3000 m",   "~50",  "TBD", "TBD", "16.68", "TBD"),
+    ("> 3000 m",      "~17",  "TBD", "TBD", "9.88",  "TBD"),
+    ("All bands",     "1027", "TBD", "TBD", "12.26", "TBD"),
 ]
-for ri, band in enumerate(band_rows2):
+for ri, row_data in enumerate(band_rows2):
+    band = row_data[0]
     row_col = RGBColor(0x0D,0x25,0x3A) if ri % 2 == 0 else C_PANEL
     is_total = (ri == len(band_rows2)-1)
     if is_total:
         rect(s, Inches(0.4), cy_h, Inches(8.35), Inches(0.42), RGBColor(0x0A,0x20,0x35))
     else:
         rect(s, Inches(0.4), cy_h, Inches(8.35), Inches(0.42), row_col)
-    row_vals = [band, "TBD", "TBD", "TBD", "TBD", "TBD"]
+    row_vals = list(row_data)
     for val, hx, hw in zip(row_vals, hdr_x, hdr_w):
         is_tbd = (val == "TBD")
+        # DEM++ column (index 4) gets green highlight
+        col_idx = row_vals.index(val) if row_vals.count(val) == 1 else row_vals.index(val, 0)
+        highlight = (not is_tbd and col_idx == 4)
         txt(s, val, hx, cy_h, hw, Inches(0.42),
             size=9 if not is_total else 10,
-            color=C_LIGHT if is_tbd else (C_ACCENT if is_total else C_WHITE),
-            bold=is_total, italic=is_tbd)
+            color=C_LIGHT if is_tbd else (C_ACCENT if is_total else (C_GREEN if highlight else C_WHITE)),
+            bold=is_total or highlight, italic=is_tbd)
     cy_h += Inches(0.42)
 
 # Note below table
@@ -1571,14 +1584,15 @@ txt(s, "Cumulative Summary", Inches(9.15), Inches(1.45),
     Inches(3.8), Inches(0.4), size=13, bold=True, color=C_GREEN)
 
 cumul_stages = [
-    ("Stage", "Flat", "DEM", "DEM++"),
-    ("N valid pairs",    "TBD", "490",  "TBD"),
-    ("Overall RMSE",     "TBD", "17.09 dB", "TBD"),
-    ("Overall MAE",      "TBD", "13.55 dB", "TBD"),
-    ("Solved / 1200",    "TBD", "724", "TBD"),
-    ("Ghost removed",    "TBD", "227", "TBD"),
-    ("Best scalar sf",   "—",   "−0.50 dB", "—"),
-    ("RMSE improvement", "—",   "baseline", "TBD"),
+    ("Stage",            "Flat",    "DEM",       "DEM++"),
+    ("N valid pairs",    "TBD",     "490",        "1027"),
+    ("Overall RMSE",     "TBD",     "17.09 dB",   "12.26 dB"),
+    ("Overall MAE",      "TBD",     "13.55 dB",   "9.53 dB"),
+    ("Bias",             "TBD",     "TBD",        "−5.43 dB"),
+    ("R²",               "TBD",     "TBD",        "+0.287"),
+    ("Solved / 1200",    "TBD",     "724",        "1027"),
+    ("Veg. correction",  "—",       "—",          "2.94 dB"),
+    ("RMSE vs DEM",      "—",       "baseline",   "−4.83 dB"),
 ]
 cy_c = Inches(2.0)
 col_colors = [C_ACCENT2, C_ORANGE, C_ACCENT, C_GREEN]
