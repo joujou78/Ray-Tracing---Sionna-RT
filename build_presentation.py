@@ -943,6 +943,316 @@ for problem, consequence, fix in prob_rows:
     cy3 += Inches(0.42)
 
 # ══════════════════════════════════════════════════════════════════════════════
+# SLIDE 14 — LOS / NLOS CLASSIFICATION
+# ══════════════════════════════════════════════════════════════════════════════
+s = add_slide(); bg(s)
+accent_bar(s)
+section_tag(s, "LOS / NLOS")
+slide_number(s, 14)
+
+txt(s, "Receiver Classification — LOS vs NLOS",
+    Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
+    size=28, bold=True, color=C_WHITE)
+divider(s, Inches(0.45), Inches(1.18), Inches(12.4))
+
+# Left — classification method + results
+panel(s, Inches(0.35), Inches(1.35), Inches(5.8), Inches(5.7))
+rect(s, Inches(0.35), Inches(1.35), Inches(5.8), Inches(0.06), C_ACCENT)
+txt(s, "Classification & Results", Inches(0.5), Inches(1.5),
+    Inches(5.5), Inches(0.4), size=12, bold=True, color=C_ACCENT)
+
+txt(s, "Method: LOS if direct path amplitude |a_LOS|² > 0 in solved paths",
+    Inches(0.5), Inches(2.0), Inches(5.5), Inches(0.38), size=10, color=C_LIGHT, italic=True)
+
+results_los = [
+    ("LOS",  "~20",   "1.7%",  "< 200 m · open streets", C_GREEN),
+    ("NLOS", "~1120", "98.3%", "All ranges · urban canyon", C_RED),
+]
+cy = Inches(2.55)
+for cls, count, pct, note, color in results_los:
+    panel(s, Inches(0.5), cy, Inches(5.4), Inches(0.82))
+    rect(s, Inches(0.5), cy, Inches(0.06), Inches(0.82), color)
+    txt(s, cls,   Inches(0.65), cy + Inches(0.12), Inches(0.9), Inches(0.5),
+        size=16, bold=True, color=color)
+    txt(s, count, Inches(1.55), cy + Inches(0.12), Inches(0.9), Inches(0.5),
+        size=16, bold=True, color=C_WHITE)
+    txt(s, pct,   Inches(2.45), cy + Inches(0.12), Inches(0.8), Inches(0.5),
+        size=14, color=color, bold=True)
+    txt(s, note,  Inches(3.25), cy + Inches(0.18), Inches(2.5), Inches(0.45),
+        size=9.5, color=C_LIGHT)
+    cy += Inches(1.0)
+
+# Ray type breakdown
+txt(s, "Ray Type Breakdown — 153 450 total rays",
+    Inches(0.5), Inches(4.72), Inches(5.5), Inches(0.35),
+    size=10, bold=True, color=C_ACCENT2)
+
+ray_types = [
+    ("Diffraction",       "110 618", "72.1%", C_ACCENT),
+    ("Multi-reflection",  "37 006",  "24.1%", C_ORANGE),
+    ("Reflection",        "3 190",   "2.1%",  C_LIGHT),
+    ("LOS",               "2 636",   "1.7%",  C_GREEN),
+]
+cy = Inches(5.12)
+bw_max = Inches(4.8)
+for rtype, count, pct, color in ray_types:
+    pct_val = float(pct.replace('%',''))
+    rect(s, Inches(0.5), cy + Inches(0.08), bw_max * pct_val / 72.1, Inches(0.3), color)
+    txt(s, f"{rtype}  {count}  ({pct})", Inches(0.5), cy, Inches(5.4), Inches(0.38),
+        size=9.5, color=C_WHITE)
+    cy += Inches(0.48)
+
+# Right — why it matters
+panel(s, Inches(6.4), Inches(1.35), Inches(6.6), Inches(5.7))
+rect(s, Inches(6.4), Inches(1.35), Inches(6.6), Inches(0.06), C_ORANGE)
+txt(s, "Why It Matters for Path Loss Modelling",
+    Inches(6.55), Inches(1.5), Inches(6.3), Inches(0.4),
+    size=12, bold=True, color=C_ORANGE)
+
+matters = [
+    (C_GREEN,  "LOS",            "Free-space + ground reflection\nFriis equation sufficient"),
+    (C_ORANGE, "NLOS < 500 m",   "Diffraction over 1–2 rooftops\nEdge diffraction critical"),
+    (C_RED,    "NLOS 500–2000 m","Multi-hop diffraction + scatter\nFull ray tracing essential"),
+    (C_ACCENT, "NLOS > 2000 m",  "Statistical scatter paths\n10M+ samples needed"),
+]
+cy2 = Inches(2.05)
+for color, cond, detail in matters:
+    rect(s, Inches(6.5), cy2 + Inches(0.1), Inches(0.05), Inches(0.8), color)
+    panel(s, Inches(6.55), cy2, Inches(6.3), Inches(1.0))
+    txt(s, cond,   Inches(6.7),  cy2 + Inches(0.08), Inches(2.2), Inches(0.42),
+        size=11, bold=True, color=color)
+    txt(s, detail, Inches(8.9),  cy2 + Inches(0.08), Inches(3.8), Inches(0.82),
+        size=10, color=C_LIGHT)
+    cy2 += Inches(1.1)
+
+txt(s, "98.3% NLOS — empirical models calibrated for mixed LOS/NLOS are fundamentally mismatched.\nRay tracing is necessary.",
+    Inches(6.55), Inches(6.42), Inches(6.3), Inches(0.55),
+    size=10, color=C_ACCENT2, italic=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SLIDE 15 — CELL 10b SCALAR CALIBRATION
+# ══════════════════════════════════════════════════════════════════════════════
+s = add_slide(); bg(s)
+accent_bar(s)
+section_tag(s, "Calibration · Stage 1")
+slide_number(s, 15)
+
+txt(s, "Stage 1 — Scalar Offset Calibration  (NVLabs ITU Materials Baseline)",
+    Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
+    size=24, bold=True, color=C_WHITE)
+divider(s, Inches(0.45), Inches(1.18), Inches(12.4))
+
+# Left — method
+panel(s, Inches(0.35), Inches(1.35), Inches(6.0), Inches(5.7))
+rect(s, Inches(0.35), Inches(1.35), Inches(6.0), Inches(0.06), C_ACCENT)
+txt(s, "Method", Inches(0.5), Inches(1.5), Inches(5.7), Inches(0.4),
+    size=13, bold=True, color=C_ACCENT)
+
+steps10b = [
+    ("1", "Pre-trace all receivers once — cache RSSI\n(no gradient — offline)"),
+    ("2", "Ghost path filter: remove PL_sim > PL_meas_max + 10 dB\n(physically impossible multi-bounce paths)"),
+    ("3", "Single trainable scalar: scaling_factor_db\nMinimise SMAPE loss on linear power (NVLabs standard)"),
+    ("4", "Best-RMSE checkpoint — save scalar at lowest RMSE step\n(not SMAPE-final — prevents overshoot)"),
+]
+cy = Inches(2.0)
+for num, desc in steps10b:
+    rect(s, Inches(0.5), cy + Inches(0.08), Inches(0.28), Inches(0.28), C_ACCENT)
+    txt(s, num, Inches(0.5), cy + Inches(0.05), Inches(0.3), Inches(0.3),
+        size=10, bold=True, color=C_BG, align=PP_ALIGN.CENTER)
+    txt(s, desc, Inches(0.9), cy, Inches(5.2), Inches(0.75), size=10, color=C_LIGHT)
+    cy += Inches(0.9)
+
+txt(s, "Reference: Hoydis et al. 2023 (arXiv:2311.18558) — ITU Materials scalar baseline",
+    Inches(0.5), Inches(6.42), Inches(5.7), Inches(0.4),
+    size=9.5, color=C_DIVIDER, italic=True)
+
+# Right — results
+panel(s, Inches(6.5), Inches(1.35), Inches(6.5), Inches(5.7))
+rect(s, Inches(6.5), Inches(1.35), Inches(6.5), Inches(0.06), C_GREEN)
+txt(s, "Results", Inches(6.65), Inches(1.5), Inches(6.2), Inches(0.4),
+    size=13, bold=True, color=C_GREEN)
+
+results10b = [
+    ("Receivers solved",        "383 / 1140  (34%)"),
+    ("Valid pairs after filter", "218"),
+    ("Ghost paths removed",     "165  (PL > 154.4 dB)"),
+    ("Pre-calibration RMSE",    "14.12 dB  ✅"),
+    ("Best-RMSE scalar",        "−0.50 dB  (≈ 0)"),
+    ("Post-calibration RMSE",   "14.43 dB"),
+    ("RMSE improvement",        "−0.31 dB"),
+]
+cy2 = Inches(2.05)
+for k, v in results10b:
+    is_key = "Pre-calibration" in k
+    txt(s, k, Inches(6.65), cy2, Inches(3.3), Inches(0.42),
+        size=10 if not is_key else 11, color=C_ACCENT2, bold=is_key)
+    txt(s, v, Inches(9.95), cy2, Inches(2.9), Inches(0.42),
+        size=10 if not is_key else 13, color=C_WHITE if not is_key else C_GREEN,
+        bold=is_key)
+    cy2 += Inches(0.58)
+
+panel(s, Inches(6.5), Inches(6.05), Inches(6.5), Inches(0.95))
+rect(s, Inches(6.5), Inches(6.05), Inches(6.5), Inches(0.05), C_ACCENT)
+txt(s, "Best scalar ≈ 0 dB — scene_v2_infra + DEM is already\nphysically well-calibrated. Scalar stage validates, not corrects.",
+    Inches(6.65), Inches(6.15), Inches(6.2), Inches(0.75),
+    size=10, color=C_WHITE)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SLIDE 16 — CELL 11b MATERIAL CALIBRATION
+# ══════════════════════════════════════════════════════════════════════════════
+s = add_slide(); bg(s)
+accent_bar(s)
+section_tag(s, "Calibration · Stage 2")
+slide_number(s, 16)
+
+txt(s, "Stage 2 — Differentiable Material Calibration  (Full NVLabs)",
+    Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
+    size=24, bold=True, color=C_WHITE)
+divider(s, Inches(0.45), Inches(1.18), Inches(12.4))
+
+# Left — method
+panel(s, Inches(0.35), Inches(1.35), Inches(5.5), Inches(5.7))
+rect(s, Inches(0.35), Inches(1.35), Inches(5.5), Inches(0.06), C_ORANGE)
+txt(s, "Method", Inches(0.5), Inches(1.5), Inches(5.2), Inches(0.4),
+    size=13, bold=True, color=C_ORANGE)
+
+method11b = [
+    ("Trainable params", "17 materials × 3 vars (εᵣ, σ, S) = 51 parameters"),
+    ("Gradient flow",    "compute_fields() inside GradientTape\n→ fully differentiable through RT"),
+    ("Loss",             "SMAPE on linear power\n+ Tikhonov regularisation → ITU-R P.2040-2"),
+    ("Optimizer",        "Adam  LR=0.05 → cosine decay → 0.001"),
+    ("Steps",            "300"),
+    ("Baseline",         "Initialised at ITU-R P.2040-2 Table 3 values"),
+]
+cy = Inches(2.0)
+for k, v in method11b:
+    txt(s, k, Inches(0.5),  cy, Inches(1.9), Inches(0.55), size=10, color=C_ACCENT2, bold=True)
+    txt(s, v, Inches(2.4),  cy, Inches(3.2), Inches(0.55), size=10, color=C_LIGHT)
+    cy += Inches(0.65)
+
+# Right — material table
+panel(s, Inches(6.0), Inches(1.35), Inches(7.0), Inches(5.7))
+rect(s, Inches(6.0), Inches(1.35), Inches(7.0), Inches(0.06), C_ACCENT2)
+txt(s, "17 Materials — ITU-R P.2040-2 Initial Values",
+    Inches(6.15), Inches(1.5), Inches(6.7), Inches(0.4),
+    size=11, bold=True, color=C_ACCENT2)
+
+mat_header_y = Inches(1.98)
+for j, hdr in enumerate(["Material", "εᵣ", "σ (S/m)", "S"]):
+    hx3 = [Inches(6.15), Inches(8.85), Inches(9.85), Inches(11.05)]
+    hw3 = [Inches(2.6), Inches(0.9), Inches(1.1), Inches(0.8)]
+    txt(s, hdr, hx3[j], mat_header_y, hw3[j], Inches(0.35),
+        size=9.5, bold=True, color=C_ACCENT)
+divider(s, Inches(6.15), Inches(2.35), Inches(6.7))
+
+mats11b = [
+    ("itu_concrete",   "5.31",  "0.0304", "0.30"),
+    ("itu_brick",      "3.91",  "0.0238", "0.25"),
+    ("itu_glass",      "6.27",  "0.0039", "0.08"),
+    ("itu_metal",      "1.00",  "1.0×10⁷","0.05"),
+    ("itu_asphalt",    "2.56",  "0.0050", "0.30"),
+    ("itu_vegetation", "1.50",  "0.0019", "0.40"),
+    ("itu_wet_ground", "31.07", "0.1338", "0.35"),
+    ("itu_water",      "80.00", "0.0100", "0.03"),
+    ("itu_wood",       "1.99",  "0.0043", "0.15"),
+]
+cy3 = Inches(2.48)
+for i, (mat, er, sig, s_val) in enumerate(mats11b):
+    row_color = C_PANEL if i % 2 == 0 else C_BG
+    rect(s, Inches(6.0), cy3, Inches(7.0), Inches(0.38), row_color)
+    for j, val in enumerate([mat, er, sig, s_val]):
+        hx3 = [Inches(6.15), Inches(8.85), Inches(9.85), Inches(11.05)]
+        hw3 = [Inches(2.6), Inches(0.9), Inches(1.1), Inches(0.8)]
+        txt(s, val, hx3[j], cy3 + Inches(0.04), hw3[j], Inches(0.32),
+            size=9, color=C_LIGHT if j > 0 else C_WHITE)
+    cy3 += Inches(0.38)
+
+txt(s, "Target: RMSE < 10 dB  (from 14.12 dB baseline)",
+    Inches(6.15), cy3 + Inches(0.1), Inches(6.7), Inches(0.38),
+    size=11, bold=True, color=C_ORANGE)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SLIDE 17 — ANTENNA CONFIGURATION
+# ══════════════════════════════════════════════════════════════════════════════
+s = add_slide(); bg(s)
+accent_bar(s)
+section_tag(s, "Antenna Config")
+slide_number(s, 17)
+
+txt(s, "Antenna Configuration — TX & RX Specifications",
+    Inches(0.45), Inches(0.5), Inches(12.5), Inches(0.7),
+    size=28, bold=True, color=C_WHITE)
+divider(s, Inches(0.45), Inches(1.18), Inches(12.4))
+
+# TX panel
+panel(s, Inches(0.35), Inches(1.35), Inches(5.9), Inches(3.5))
+rect(s, Inches(0.35), Inches(1.35), Inches(5.9), Inches(0.06), C_ORANGE)
+txt(s, "TX — Transmitter Antenna", Inches(0.5), Inches(1.5),
+    Inches(5.6), Inches(0.4), size=13, bold=True, color=C_ORANGE)
+
+tx_specs = [
+    ("Type",            "Collinear omni (simulated as dipole)"),
+    ("Pattern",         "Donut — omni in azimuth, null at zenith"),
+    ("Gain",            "1.3 dBi"),
+    ("Polarisation",    "Vertical"),
+    ("Height",          "17 m AGL on mast"),
+    ("Sionna model",    "pattern='dipole'"),
+    ("Conducted power", "49.0 dBm"),
+    ("EIRP",            "49.0 + 1.3 = 50.3 dBm"),
+]
+cy = Inches(2.05)
+for k, v in tx_specs:
+    txt(s, k, Inches(0.5),  cy, Inches(2.0), Inches(0.38), size=10, color=C_ACCENT2, bold=True)
+    txt(s, v, Inches(2.5),  cy, Inches(3.6), Inches(0.38), size=10, color=C_WHITE)
+    cy += Inches(0.38)
+
+# RX panel
+panel(s, Inches(0.35), Inches(5.05), Inches(5.9), Inches(2.6))
+rect(s, Inches(0.35), Inches(5.05), Inches(5.9), Inches(0.06), C_GREEN)
+txt(s, "RX — Receiver Antenna", Inches(0.5), Inches(5.2),
+    Inches(5.6), Inches(0.4), size=13, bold=True, color=C_GREEN)
+
+rx_specs = [
+    ("Type",          "Isotropic"),
+    ("Pattern",       "Uniform — equal gain all directions"),
+    ("Gain",          "0 dBi"),
+    ("Height",        "1.5 m AGL (IoT device)"),
+    ("Sionna model",  "pattern='iso'"),
+    ("Noise floor",   "−124 dBm"),
+]
+cy2 = Inches(5.7)
+for k, v in rx_specs:
+    txt(s, k, Inches(0.5),  cy2, Inches(2.0), Inches(0.38), size=10, color=C_ACCENT2, bold=True)
+    txt(s, v, Inches(2.5),  cy2, Inches(3.6), Inches(0.38), size=10, color=C_WHITE)
+    cy2 += Inches(0.33)
+
+# Justification panel
+panel(s, Inches(6.5), Inches(1.35), Inches(6.5), Inches(6.0))
+rect(s, Inches(6.5), Inches(1.35), Inches(6.5), Inches(0.06), C_ACCENT)
+txt(s, "Why These Choices", Inches(6.65), Inches(1.5),
+    Inches(6.2), Inches(0.4), size=13, bold=True, color=C_ACCENT)
+
+justifications = [
+    (C_ORANGE, "TX dipole\n(not iso)",
+     "Real Ofcom mast uses collinear omni —\ndonut pattern matches real radiation shape"),
+    (C_GREEN,  "RX isotropic",
+     "IoT devices vary widely in orientation\n→ iso avoids assuming device direction"),
+    (C_ACCENT, "RX iso = Sionna 2.0",
+     "Cross-notebook consistency —\nboth use same RX model for fair comparison"),
+    (C_ACCENT2,"Noise −124 dBm",
+     "Covers full Ofcom RSSI range\n(−118 to −22.9 dBm) — no valid meas. excluded"),
+]
+cy3 = Inches(2.05)
+for color, title, reason in justifications:
+    panel(s, Inches(6.55), cy3, Inches(6.3), Inches(1.1))
+    rect(s, Inches(6.55), cy3, Inches(0.05), Inches(1.1), color)
+    txt(s, title,  Inches(6.7), cy3 + Inches(0.1), Inches(1.8), Inches(0.9),
+        size=10, bold=True, color=color)
+    txt(s, reason, Inches(8.5), cy3 + Inches(0.1), Inches(4.2), Inches(0.9),
+        size=10, color=C_LIGHT)
+    cy3 += Inches(1.2)
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Save
 # ══════════════════════════════════════════════════════════════════════════════
 out = "/home/user/Ray-Tracing---Sionna-RT/FYP_RayTracing_Presentation.pptx"
