@@ -27,15 +27,15 @@
     <rgb name="reflectance" value="0.5 0.5 0.5"/>
   </bsdf>
 
-  <bsdf type="diffuse" id="mat_asphalt">
+  <bsdf type="diffuse" id="itu_asphalt">
     <rgb name="reflectance" value="0.5 0.5 0.5"/>
   </bsdf>
 
-  <bsdf type="diffuse" id="mat_vegetation">
+  <bsdf type="diffuse" id="itu_vegetation">
     <rgb name="reflectance" value="0.5 0.5 0.5"/>
   </bsdf>
 
-  <bsdf type="diffuse" id="mat_water">
+  <bsdf type="diffuse" id="itu_water">
     <rgb name="reflectance" value="0.5 0.5 0.5"/>
   </bsdf>
 
@@ -47,7 +47,7 @@
   </shape>
   <shape type="ply" id="mesh-road_itu_asphalt">
     <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/road_itu_asphalt.ply"/>
-    <ref id="mat_asphalt" name="bsdf"/>
+    <ref id="itu_asphalt" name="bsdf"/>
     <boolean name="face_normals" value="true"/>
   </shape>
   <shape type="ply" id="mesh-bld_itu_brick">
@@ -157,17 +157,17 @@
   </shape>
   <shape type="ply" id="mesh-trees_itu_vegetation">
     <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/trees_itu_vegetation.ply"/>
-    <ref id="mat_vegetation" name="bsdf"/>
+    <ref id="itu_vegetation" name="bsdf"/>
     <boolean name="face_normals" value="true"/>
   </shape>
   <shape type="ply" id="mesh-veg_itu_vegetation">
     <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/veg_itu_vegetation.ply"/>
-    <ref id="mat_vegetation" name="bsdf"/>
+    <ref id="itu_vegetation" name="bsdf"/>
     <boolean name="face_normals" value="true"/>
   </shape>
   <shape type="ply" id="mesh-water_itu_water">
     <string name="filename" value="/home/georgeskai/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v2_infra/meshes/water_itu_water.ply"/>
-    <ref id="mat_water" name="bsdf"/>
+    <ref id="itu_water" name="bsdf"/>
     <boolean name="face_normals" value="true"/>
   </shape>
   <shape type="ply" id="mesh-bld_itu_wood">
