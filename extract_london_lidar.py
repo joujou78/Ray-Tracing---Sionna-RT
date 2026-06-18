@@ -73,9 +73,11 @@ def merge(tiles, out_path, label):
         print(f'{label}: {os.path.basename(out_path)} already exists, skipping merge.')
         return
     print(f'\n{label}: merging {len(tiles)} tiles -> {os.path.basename(out_path)} ...')
+    # No -a_nodata override: that float32-max literal rounds up to -inf
+    # when GDAL casts it, corrupting NoData pixels. Let gdal_merge.py use
+    # each source tile's own embedded NoData value instead.
     cmd = ['gdal_merge.py', '-o', out_path, '-of', 'GTiff',
-           '-co', 'COMPRESS=LZW', '-co', 'TILED=YES',
-           '-a_nodata', '-3.4028235e+38'] + tiles
+           '-co', 'COMPRESS=LZW', '-co', 'TILED=YES'] + tiles
     ret = subprocess.run(cmd)
     if ret.returncode != 0:
         print(f'[ERROR] gdal_merge.py failed for {label} (exit {ret.returncode}). Is GDAL installed?')
