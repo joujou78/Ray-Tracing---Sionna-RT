@@ -73,25 +73,41 @@ def merge(tiles, out_path, label):
         print(f'{label}: {os.path.basename(out_path)} already exists, skipping merge.')
         return
     print(f'\n{label}: merging {len(tiles)} tiles -> {os.path.basename(out_path)} ...')
-    # The merge canvas is much larger than the tile coverage (e.g. 625 km^2
-    # canvas vs ~475 km^2 of actual tiles), so most of the output has no
-    # source data. gdal_merge fills those gaps with the source tiles' own
-    # NoData sentinel, which for EA LiDAR is the extreme float32-min value
-    # (-3.4028234663852886e+38) -- any arithmetic GDAL does on that later
-    # (stats, mean) overflows to -inf/nan. Explicitly mark that exact value
-    # as "ignore on input" (-n) and write a numerically safe sentinel
-    # (-9999) for gaps in the output instead.
-    import rasterio as _rio
-    with _rio.open(tiles[0]) as _ds0:
-        _src_nodata = _ds0.nodata
+    # Deliberately no -n / -a_nodata here: passing -n with the source
+    # tiles' extreme float32-min NoData sentinel made gdal_merge write
+    # an entirely empty (all-NoData) output instead of the real tile
+    # data. Plain gdal_merge correctly copies real elevation values, so
+    # we sanitize the NoData sentinel ourselves afterwards in Python,
+    # where we can verify the result directly instead of trusting CLI
+    # flag interactions.
     cmd = ['gdal_merge.py', '-o', out_path, '-of', 'GTiff',
-           '-co', 'COMPRESS=LZW', '-co', 'TILED=YES',
-           '-n', repr(_src_nodata), '-a_nodata', '-9999'] + tiles
+           '-co', 'COMPRESS=LZW', '-co', 'TILED=YES'] + tiles
     ret = subprocess.run(cmd)
     if ret.returncode != 0:
         print(f'[ERROR] gdal_merge.py failed for {label} (exit {ret.returncode}). Is GDAL installed?')
         sys.exit(1)
     print(f'  -> wrote {out_path}')
+
+    import numpy as np
+    import rasterio as _rio
+    with _rio.open(out_path) as ds:
+        profile = ds.profile
+        arr = ds.read(1)
+    bad = ~np.isfinite(arr) | (np.abs(arr) > 1e30)
+    n_bad = int(bad.sum())
+    arr[bad] = -9999.0
+    profile.update(nodata=-9999.0)
+    with _rio.open(out_path, 'w', **profile) as ds:
+        ds.write(arr, 1)
+    print(f'  sanitized {n_bad} bad/sentinel pixel(s) -> -9999, nodata set to -9999')
+    valid = arr[arr != -9999.0]
+    if valid.size:
+        print(f'  valid data range: {valid.min():.1f} .. {valid.max():.1f}  '
+              f'({valid.size}/{arr.size} pixels, {100*valid.size/arr.size:.1f}% coverage)')
+    else:
+        print(f'  [ERROR] {label} has NO valid data after sanitizing — merge produced an empty file.')
+        sys.exit(1)
+
 
 
 merge(dtm_tiles, os.path.join(LIDAR_DIR, 'dem.tif'), 'DTM')
