@@ -73,11 +73,20 @@ def merge(tiles, out_path, label):
         print(f'{label}: {os.path.basename(out_path)} already exists, skipping merge.')
         return
     print(f'\n{label}: merging {len(tiles)} tiles -> {os.path.basename(out_path)} ...')
-    # No -a_nodata override: that float32-max literal rounds up to -inf
-    # when GDAL casts it, corrupting NoData pixels. Let gdal_merge.py use
-    # each source tile's own embedded NoData value instead.
+    # The merge canvas is much larger than the tile coverage (e.g. 625 km^2
+    # canvas vs ~475 km^2 of actual tiles), so most of the output has no
+    # source data. gdal_merge fills those gaps with the source tiles' own
+    # NoData sentinel, which for EA LiDAR is the extreme float32-min value
+    # (-3.4028234663852886e+38) -- any arithmetic GDAL does on that later
+    # (stats, mean) overflows to -inf/nan. Explicitly mark that exact value
+    # as "ignore on input" (-n) and write a numerically safe sentinel
+    # (-9999) for gaps in the output instead.
+    import rasterio as _rio
+    with _rio.open(tiles[0]) as _ds0:
+        _src_nodata = _ds0.nodata
     cmd = ['gdal_merge.py', '-o', out_path, '-of', 'GTiff',
-           '-co', 'COMPRESS=LZW', '-co', 'TILED=YES'] + tiles
+           '-co', 'COMPRESS=LZW', '-co', 'TILED=YES',
+           '-n', repr(_src_nodata), '-a_nodata', '-9999'] + tiles
     ret = subprocess.run(cmd)
     if ret.returncode != 0:
         print(f'[ERROR] gdal_merge.py failed for {label} (exit {ret.returncode}). Is GDAL installed?')
