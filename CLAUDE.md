@@ -10,6 +10,24 @@ Ray tracing simulation of the Ofcom 2018 Nottingham 915 MHz dataset using Sionna
 
 ---
 
+## Results Reference (correct coordinate system — post terrain rebuild)
+
+| Step | Scene | TX height | Bias (dB) | RMSE (dB) | R² |
+|------|-------|-----------|-----------|-----------|-----|
+| 1 | Buildings + terrain only | 42.7m (correct) | -15.81 | 18.99 | 0.07 |
+| 2 | + Vegetation / trees | TBD | TBD | TBD | TBD |
+| 3 | Full scene | TBD | TBD | TBD | TBD |
+
+**Important:** The previously reported R²=0.601 was computed with a stale terrain.ply
+built at SCENE_WEST=-1.293205 (852m wrong centre). Terrain and buildings were internally
+consistent at the wrong coordinates — the result was valid within that system but not
+geographically accurate. After terrain rebuild at the correct SCENE_WEST=-1.267685:
+- TX terrain height changed from 96m → 25.7m (correct Nottingham elevation)
+- Old R²=0.601 is NOT directly comparable to the new step-by-step results
+- The new Step 1/2/3 results are the true baseline from a geographically correct scene
+
+---
+
 ## Critical Rules (never break these)
 
 1. **SCENE_WEST must match exactly** between scene builder and simulation notebook.
