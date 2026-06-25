@@ -10,21 +10,20 @@ Ray tracing simulation of the Ofcom 2018 Nottingham 915 MHz dataset using Sionna
 
 ---
 
-## Results Reference (correct coordinate system — post terrain rebuild)
+## Results Reference
 
 | Step | Scene | TX height | Bias (dB) | RMSE (dB) | R² |
 |------|-------|-----------|-----------|-----------|-----|
-| 1 | Buildings + terrain only | 42.7m (correct) | -15.81 | 18.99 | 0.07 |
+| 1 | Buildings + terrain only (full accuracy — PC + oblique) | TBD | TBD | TBD | TBD |
 | 2 | + Vegetation / trees | TBD | TBD | TBD | TBD |
 | 3 | Full scene | TBD | TBD | TBD | TBD |
 
 **Important:** The previously reported R²=0.601 was computed with a stale terrain.ply
-built at SCENE_WEST=-1.293205 (852m wrong centre). Terrain and buildings were internally
-consistent at the wrong coordinates — the result was valid within that system but not
-geographically accurate. After terrain rebuild at the correct SCENE_WEST=-1.267685:
-- TX terrain height changed from 96m → 25.7m (correct Nottingham elevation)
-- Old R²=0.601 is NOT directly comparable to the new step-by-step results
-- The new Step 1/2/3 results are the true baseline from a geographically correct scene
+built at SCENE_WEST=-1.293205 (852m wrong centre). All prior step results are invalid.
+Current confirmed state (terrain bbox check passed, 4941m half-span):
+- TX at (-1.2559, 52.9863): terrain_z=79.2m, tx_z=96.2m (correct — western Nottingham high ground)
+- origin_elev_asl = 50.55m ASL (EA LiDAR DTM at scene centre)
+- Step 1 must be rerun with full accuracy data (PC + oblique now confirmed present)
 
 ---
 
@@ -157,5 +156,7 @@ To reset calibration: delete both files and set `USE_CALIBRATED_FILES = False` i
 | `VEG_HEIGHT_CAP_M` | None | data-driven, no cap |
 | `TERRAIN_GRID_N` | 500 | 500×500 terrain mesh (~20m grid spacing) |
 | `TERRAIN_PAD_M` | 3000 | terrain extends 3km beyond scene bbox |
-| `origin_elev_asl_m` | 63.18 m | scene centre elevation (Nottingham) |
+| `origin_elev_asl_m` | 50.55 m | scene centre elevation (EA LiDAR DTM, confirmed) |
+| `TX terrain_z` | 79.2 m | TX above scene datum — correct for western Nottingham high ground |
+| `TX scene-local Z` | 96.2 m | terrain_z + TX_AGL_M (17m) |
 | `PROJ_EPSG` | 27700 | British National Grid |
