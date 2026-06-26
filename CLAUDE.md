@@ -12,11 +12,36 @@ Ray tracing simulation of the Ofcom 2018 Nottingham 915 MHz dataset using Sionna
 
 ## Results Reference
 
-| Step | Scene | TX height | Bias (dB) | RMSE (dB) | R² |
-|------|-------|-----------|-----------|-----------|-----|
-| 1 | Buildings + terrain only (full accuracy — PC + oblique) | TBD | TBD | TBD | TBD |
-| 2 | + Vegetation / trees | TBD | TBD | TBD | TBD |
-| 3 | Full scene | TBD | TBD | TBD | TBD |
+Best method across all runs: **ON incoh** (scattering ON, incoherent sum).
+
+### Step 1 — Buildings + terrain only (ON incoh, uncalibrated)
+
+| Range | N | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|---|-----------|-----------|-----|-------|
+| 0-500m | 44 | -8.1 | 10.9 | -0.107 | |
+| 0-750m | 67 | -3.1 | 11.0 | +0.447 | |
+| 0-900m | 78 | -1.1 | 12.0 | +0.394 | |
+| 0-1000m | 87 | +0.6 | 12.6 | +0.416 | near-zero bias |
+| 0-1250m | 173 | +8.9 | 17.9 | +0.006 | |
+
+> **Pre terrain-fix baseline** (building bases at Z=0, not terrain-anchored).
+> Rerun after terrain-height bug fixes for corrected Step 1 baseline.
+
+### Step 2 — + Vegetation / trees (ON incoh, uncalibrated)
+
+| Range | N | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|---|-----------|-----------|-----|-------|
+| 0-300m | 26 | +6.1 | 11.6 | -2.795 | |
+| 0-500m | 44 | +9.6 | 15.3 | -1.172 | |
+| 0-750m | 67 | +15.2 | 21.0 | -1.016 | |
+
+> Pre terrain-fix, building bases Z=0. Growing positive bias at long range.
+
+### Step 3 — Full scene
+
+| Step | Scene | Bias (dB) | RMSE (dB) | R² |
+|------|-------|-----------|-----------|-----|
+| 3 | + Roads / water / bridges / railways | TBD | TBD | TBD |
 
 **Important:** The previously reported R²=0.601 was computed with a stale terrain.ply
 built at SCENE_WEST=-1.293205 (852m wrong centre). All prior step results are invalid.
