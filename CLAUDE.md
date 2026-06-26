@@ -69,8 +69,8 @@ Current confirmed state (terrain bbox check passed, 4941m half-span):
    - Never keep terrain.ply from a different bbox configuration.
 
 3. **CELL 3 must always run after every kernel restart** — even when terrain.ply already exists.
-   - It defines `local_z` from `dem.tif`. Without it, CELL 4 falls back to Z=0 for all building bases.
-   - CELL 3 skips the terrain rebuild (fast, ~2s) but still restores `local_z`.
+   - It defines `center_utm`. CELL 4's terrain PLY interpolator needs it to convert BNG coords to scene-local.
+   - CELL 3 skips the terrain rebuild (fast, ~2s) but still restores `center_utm`.
 
 4. **Never change config without permission.** No bias tweaks, no hardcoded offsets.
    - All height caps must be None-aware: `_bld_cap = float(X) if X is not None else float('inf')`
@@ -161,6 +161,7 @@ For each step: change flags in CELL 0 → delete non-terrain PLYs → CELL 4 →
 | `2bdcec4` | scene builder CELL 4 | All 5 building height clips hardcoded — replaced with None-aware `_bld_cap` / `_veg_cap` |
 | `285eb13` | simulation CELL CAL | Memory leak: PathSolver result not deleted — swap filled at ~680 evals |
 | `6e2b4e2` | simulation CELL CAL | DrJIT kernel caching: flat RMSE across all evals — added 3-probe sensitivity check |
+| `2bec77c` | scene builder CELL 4 | Buildings below ground: `local_z` unreliable from CELL 3 state — replaced with terrain PLY `RegularGridInterpolator` (WGS84 -> BNG 27700 -> scene-local), overrides all 15+ call sites |
 
 ---
 
