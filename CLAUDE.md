@@ -16,16 +16,22 @@ Best method across all runs: **ON incoh** (scattering ON, incoherent sum).
 
 ### Step 1 — Buildings + terrain only (ON incoh, uncalibrated)
 
-| Range | N | Bias (dB) | RMSE (dB) | R² | Notes |
-|-------|---|-----------|-----------|-----|-------|
-| 0-500m | 44 | -8.1 | 10.9 | -0.107 | |
-| 0-750m | 67 | -3.1 | 11.0 | +0.447 | |
-| 0-900m | 78 | -1.1 | 12.0 | +0.394 | |
-| 0-1000m | 87 | +0.6 | 12.6 | +0.416 | near-zero bias |
-| 0-1250m | 173 | +8.9 | 17.9 | +0.006 | |
+#### Pre terrain-fix (building bases Z=0)
+| Range | N | Bias (dB) | RMSE (dB) | R² |
+|-------|---|-----------|-----------|-----|
+| 0-500m | 44 | -8.1 | 10.9 | -0.107 |
+| 0-750m | 67 | -3.1 | 11.0 | +0.447 |
+| 0-900m | 78 | -1.1 | 12.0 | +0.394 |
+| 0-1000m | 87 | +0.6 | 12.6 | +0.416 |
+| 0-1250m | 173 | +8.9 | 17.9 | +0.006 |
+| 0-1500m | 215 | +7.0 | 16.9 | -0.028 |
+| 0-1750m | 283 | +3.9 | 16.4 | -0.159 |
+| 0-2000m | 349 | +2.0 | 15.5 | -0.134 |
 
-> **Pre terrain-fix baseline** (building bases at Z=0, not terrain-anchored).
-> Rerun after terrain-height bug fixes for corrected Step 1 baseline.
+> Building bases at Z=0 (terrain-height bug). Rerun after fixes for corrected baseline.
+> Scattering OFF loses 50+ receivers beyond 1250m (N=121 vs 173 at 1250m).
+
+#### Post terrain-fix (building bases terrain-anchored) — TBD
 
 ### Step 2 — + Vegetation / trees (ON incoh, uncalibrated)
 
