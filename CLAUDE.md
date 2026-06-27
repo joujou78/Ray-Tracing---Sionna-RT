@@ -14,34 +14,34 @@ Ray tracing simulation of the Ofcom 2018 Nottingham 915 MHz dataset using Sionna
 
 Best method across all runs: **ON incoh** (scattering ON, incoherent sum).
 
-### Step 1 — Buildings + terrain only (ON incoh, uncalibrated)
+### Step 1 — Buildings + terrain only (ON incoh, calibrated + scalar)
 
-#### Pre terrain-fix (building bases Z=0)
+#### Post terrain-fix, calibrated materials, scalar_factor_db = +3.248 dB
 | Range | N | Bias (dB) | RMSE (dB) | R² |
 |-------|---|-----------|-----------|-----|
-| 0-500m | 44 | -8.1 | 10.9 | -0.107 |
-| 0-750m | 67 | -3.1 | 11.0 | +0.447 |
-| 0-900m | 78 | -1.1 | 12.0 | +0.394 |
-| 0-1000m | 87 | +0.6 | 12.6 | +0.416 |
-| 0-1250m | 173 | +8.9 | 17.9 | +0.006 |
-| 0-1500m | 215 | +7.0 | 16.9 | -0.028 |
-| 0-1750m | 283 | +3.9 | 16.4 | -0.159 |
-| 0-2000m | 349 | +2.0 | 15.5 | -0.134 |
+| 0-300m | 26 | -3.7 | 6.0 | -0.020 |
+| 0-500m | 44 | -5.8 | 8.4 | +0.337 |
+| 0-750m | 67 | -2.6 | 7.9 | **+0.716** |
+| 0-900m | 78 | -0.2 | 9.2 | +0.643 |
+| 0-1000m | 87 | +0.9 | 9.3 | **+0.679** |
+| 0-1250m | 168 | +6.0 | 12.8 | +0.496 |
 
-> Building bases at Z=0 (terrain-height bug). Rerun after fixes for corrected baseline.
-> Scattering OFF loses 50+ receivers beyond 1250m (N=121 vs 173 at 1250m).
+> Calibrated materials: itu_brick S=0.878, itu_concrete S=0.821, itu_wet_ground S=0.744
+> scalar_factor_db = +3.248 dB (saved in scalar_offset_915mhz.json)
+> Best zone 0-1000m. Cliff at 1000-1250m (+5 dB bias jump) — vegetation needed.
 
-#### Post terrain-fix (building bases terrain-anchored) — TBD
+### Step 2 — + Vegetation / trees (ON incoh)
 
-### Step 2 — + Vegetation / trees (ON incoh, uncalibrated)
-
+#### FAILED run — veg_itu_wet_ground.ply used wrong material (itu_wet_ground, sigma=1.47)
 | Range | N | Bias (dB) | RMSE (dB) | R² | Notes |
 |-------|---|-----------|-----------|-----|-------|
-| 0-300m | 26 | +6.1 | 11.6 | -2.795 | |
-| 0-500m | 44 | +9.6 | 15.3 | -1.172 | |
-| 0-750m | 67 | +15.2 | 21.0 | -1.016 | |
+| 0-1000m | 87 | +14.7 | 17.5 | -0.136 | 102/482 valid CAL paths |
 
-> Pre terrain-fix, building bases Z=0. Growing positive bias at long range.
+> Root cause: veg_itu_wet_ground.ply (56,904 faces) used calibrated itu_wet_ground (sigma=1.47)
+> placed on top of terrain — killed ground-bounce paths, avg_rays halved.
+> Fix applied (commit): both VOM low-class and OSM grass/meadow → itu_vegetation (ITU-R P.833)
+> CAL_MAX_DIST_KM reduced to 1.0 km for vegetation scene.
+> Rebuild required: delete non-terrain PLYs → CELL 4 → CELL B3 → CELL CAL → CELL 8e.
 
 ### Step 3 — Full scene
 
