@@ -183,16 +183,18 @@ Three complementary sources — together cover all green areas:
 |--------|-----------------|----------|
 | OSM polygons | Parks, forests, scrub, named green areas | Discs (VEG_DISC_SPACING_M grid) |
 | VOM polygons | LiDAR-detected canopy (EA data) | Discs (VEG_DISC_SPACING_M grid) |
-| nDSM extra | Road verges, garden trees, motorway belts, M1 corridor | Solid slabs (walls + top) |
+| nDSM extra | Road verges, garden trees, motorway belts, M1 corridor | Discs (VEG_NDMS_EXTRA_RES_M grid) |
 
 Key parameters:
 - `VEG_DISC_SPACING_M = 20.0` — grid spacing for OSM/VOM discs
 - `VEG_MAX_DISCS_PER_POLYGON = 500` — was 10 (caused M1 belt to get only 10 discs for 500m polygon)
-- `VEG_NDMS_EXTRA_RES_M = 10.0` — grid spacing for nDSM extra slabs
+- `VEG_NDMS_EXTRA_RES_M = 10.0` — grid spacing for nDSM extra discs
 - `VEG_NDMS_MIN_H_M = 2.0` — minimum nDSM height to classify as vegetation
 
-nDSM extra geometry: solid vertical box slabs (terrain base → canopy top, VEG_NDMS_EXTRA_RES_M footprint).
-Side walls intercept horizontal rays passing through tree belts — disc approach only intercepts rays from above.
+nDSM extra geometry: flat discs at canopy top — same as OSM/VOM approach.
+Sionna RT uses surface interactions not volumetric absorption: discs scatter rays that hit them.
+Weissberger model handles bulk attenuation (post-processing in CELL 8e).
+Solid slabs rejected: Sionna has no path-integral absorption — a box just adds more scattering surfaces.
 
 ---
 
