@@ -25,12 +25,13 @@ Ray tracing simulation of the Ofcom 2018 Nottingham 915 MHz dataset using Sionna
 | Bridges (man_made) | bld_itu_concrete_bridges.ply | itu_concrete |
 | Highway bridges | infra_itu_concrete_hwy_bridges.ply | itu_concrete |
 | Railways | rail_itu_metal.ply | itu_metal |
+| Vegetation terrain | terrain_veg.ply | itu_vegetation (er=17, S=0) |
 
 ### RT parameters
 | Parameter | Value |
 |-----------|-------|
-| MAX_DEPTH | 12 |
-| NUM_SAMPLES_PS | 50,000,000 |
+| MAX_DEPTH | 8 |
+| NUM_SAMPLES_PS | 500,000 |
 | diffraction | True |
 | edge_diffraction | True |
 | CAL_MAX_DIST_KM | 1.5 |
@@ -67,6 +68,8 @@ Best method across all runs: **ON incoh** (scattering ON, incoherent sum).
 | **Full scene cal d=8, 500k, 1km** | **0.680** | **0.639** | 0.167 | scalar=-0.064 dB |
 | Full scene d=12, 50M (stale cal) | 0.640 | 0.598 | 0.235 | cal done at d=8 |
 | Full scene cal d=12, 500k, 1.5km | TBD | TBD | TBD | running now |
+| Full scene d=8, 2M cal, clean+Weissberger (stale cal) | 0.570 | 0.448 | — | scatter flood from high-S cal |
+| Full scene d=8, 500k cal, clean+Weissberger+terrain_veg | TBD | TBD | TBD | running now |
 
 > Best scalar: -0.064 dB (full scene calibrated, d=8) — geometry predicts correct absolute power.
 > Far-range gap (+8 dB bias at 1250m+) root cause: M1 tree belt disc cap was 10 (now 500) + nDSM extra fills OSM/VOM gaps.
@@ -184,6 +187,7 @@ Three complementary sources — together cover all green areas:
 | OSM polygons | Parks, forests, scrub, named green areas | Discs (VEG_DISC_SPACING_M grid) |
 | VOM polygons | LiDAR-detected canopy (EA data) | Discs (VEG_DISC_SPACING_M grid) |
 | nDSM extra | Road verges, garden trees, motorway belts, M1 corridor | Discs (VEG_NDMS_EXTRA_RES_M grid) |
+| Two-material terrain | Vegetation-covered ground (itu_vegetation, S=0) | DTM triangles in vegetation zones |
 
 Key parameters:
 - `VEG_DISC_SPACING_M = 20.0` — grid spacing for OSM/VOM discs
@@ -211,6 +215,19 @@ Solid slabs rejected: Sionna has no path-integral absorption — a box just adds
 | `2bec77c` | scene builder CELL 4 | Buildings below ground: `local_z` unreliable — replaced with terrain PLY RegularGridInterpolator |
 | `c1d08d3` | scene builder CELL 4 | VEG_MAX_DISCS_PER_POLYGON=10 capped large polygons (M1 belt) to 10 discs — now 500 |
 | `c1d08d3` | scene builder CELL 4 | nDSM extra scan added — captures vegetation not in OSM/VOM (road verges, motorway belts) |
+| `7c8bd5c` | CELL 8e | O(n_rx × 67292) Weissberger loop — replaced with STRtree spatial index |
+| `1b02870` | scene builder CELL 3 | terrain_veg.ply moved from CELL 4 to CELL 3 (no full rebuild needed) |
+
+---
+
+## Permanently Ruled Out
+| Approach | Reason |
+|----------|--------|
+| Disc PLYs (any S > 0) | Scatter flood 700×+ ON/OFF ratio |
+| Disc PLYs S=0 | Over-blocking +7.7 dB |
+| VEG_AUGMENT_TERRAIN | wet_ground S=0.30 → scatter flood |
+| MAX_DEPTH > 8 | Extra bounces → spatial noise, R² drops to 0.555 |
+| NUM_SAMPLES_PS > 2M | Calibration-evaluation mismatch |
 
 ---
 
