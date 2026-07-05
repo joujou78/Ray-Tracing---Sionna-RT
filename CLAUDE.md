@@ -34,13 +34,13 @@ Ray tracing simulation of the Ofcom 2018 Nottingham 915 MHz dataset using Sionna
 | NUM_SAMPLES_PS | 500,000 |
 | diffraction | True |
 | edge_diffraction | True |
-| CAL_MAX_DIST_KM | 1.5 |
+| CAL_MAX_DIST_KM | 1.25 |
 | VEG_DISC_SPACING_M | 20.0 |
 | VEG_MAX_DISCS_PER_POLYGON | 500 |
 | VEG_NDMS_EXTRA | True |
 | VEG_NDMS_MIN_H_M | 2.0 |
 | VEG_NDMS_EXTRA_RES_M | 10.0 |
-| TERRAIN_GRID_N | 500 |
+| TERRAIN_GRID_N | 1000 |
 
 ---
 
@@ -65,15 +65,14 @@ Best method across all runs: **ON incoh** (scattering ON, incoherent sum).
 | +grid disc veg (d=8) | 0.692 | 0.691 | 0.383 | |
 | +roads+water+veg (d=8, all cal) | 0.696 | 0.609 | 0.401 | |
 | +bridges+rails uncal (d=8) | 0.555 | 0.530 | 0.487 | before recal |
-| **Full scene cal d=8, 500k, 1km** | **0.680** | **0.639** | 0.167 | scalar=-0.064 dB |
-| Full scene d=12, 50M (stale cal) | 0.640 | 0.598 | 0.235 | cal done at d=8 |
-| Full scene cal d=12, 500k, 1.5km | TBD | TBD | TBD | running now |
-| Full scene d=8, 2M cal, clean+Weissberger (stale cal) | 0.570 | 0.448 | — | scatter flood from high-S cal |
-| Full scene d=8, 500k cal, clean+Weissberger+terrain_veg | TBD | TBD | TBD | running now |
+| Full scene cal d=8, 500k, 1km | 0.680 | 0.639 | 0.167 | scalar=-0.064 dB |
+| Full scene cal d=8, 2M, 0.1km floor | 0.625 | 0.738 | 0.673 | 8.32 dB cal |
+| Full scene cal d=8, 2M, 0.25km floor | 0.660 | 0.763 | 0.681 | 9.72 dB cal |
+| **Full scene cal d=8, 2M, 0.15km floor** | **0.742** | **0.803** | **0.683** | **9.92 dB cal — best** |
 
-> Best scalar: -0.064 dB (full scene calibrated, d=8) — geometry predicts correct absolute power.
-> Far-range gap (+8 dB bias at 1250m+) root cause: M1 tree belt disc cap was 10 (now 500) + nDSM extra fills OSM/VOM gaps.
-> Calibration running: 2M/5M samples, 221 receivers, 1.5 km, depth=12.
+> Best cal: 9.92 dB RMSE, CAL_MIN_DIST_KM=0.15, d=8, 2M samples — beats baseline simultaneously on all key ranges.
+> Bias: -2.0 dB @1km, +0.6 dB @1750m — well-centred across full route.
+> Near-range (0-300m): R²<0 from 8 LOS mast-shadow receivers — structural, not a calibration issue.
 
 ---
 
