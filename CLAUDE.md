@@ -172,8 +172,8 @@ Current config is **Full scene** (all features enabled).
 | 2 | + Vegetation (OSM + VOM + nDSM extra) | done |
 | 3 | + Roads + water + bridges + railways | done |
 | 4 | nDSM slab geometry (solid vertical boxes) | implemented |
-| 5 | TERRAIN_GRID_N=1000 (finer terrain) | pending |
-| 6 | OS road polygons (true widths) | pending |
+| 5 | TERRAIN_GRID_N=1000 (finer terrain) | config updated — needs terrain rebuild |
+| 6 | OS road polygon widths (motorway 30m, trunk 18m, primary 12m) | done — ROAD_WIDTH_M updated |
 
 ---
 
@@ -254,7 +254,7 @@ Expected RMSE target: < 10 dB (was 10.34 dB at depth=8, 500k, 1km).
 | `SCENE_NORTH` | 53.003037 | |
 | `CITY_MAX_HEIGHT_M` | 40.0 | nDSM artefact cap — do not set to None |
 | `VEG_HEIGHT_CAP_M` | None | data-driven, no cap |
-| `TERRAIN_GRID_N` | 500 | 500×500 terrain mesh (~20m grid spacing) |
+| `TERRAIN_GRID_N` | 1000 | 1000×1000 terrain mesh (~10m grid spacing) |
 | `TERRAIN_PAD_M` | 3000 | terrain extends 3km beyond scene bbox |
 | `origin_elev_asl_m` | 50.55 m | scene centre elevation (EA LiDAR DTM, confirmed) |
 | `TX terrain_z` | 79.2 m | TX above scene datum — correct for western Nottingham high ground |
