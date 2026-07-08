@@ -173,7 +173,7 @@ Current config is **Full scene** (all features enabled).
 | 3 | + Roads + water + bridges + railways | done |
 | 4 | nDSM slab geometry (solid vertical boxes) | implemented |
 | 5 | TERRAIN_GRID_N=1000 (finer terrain) | config updated — needs terrain rebuild |
-| 6 | OS road polygon widths (motorway 30m, trunk 18m, primary 12m) | done — ROAD_WIDTH_M updated |
+| 6 | OS road polygons (true widths) | pending |
 
 ---
 
