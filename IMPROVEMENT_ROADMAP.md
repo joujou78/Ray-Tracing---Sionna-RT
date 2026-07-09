@@ -4,6 +4,14 @@
 **Target:** Beat 8.27 dB RMSE and improve R² at all distances (0–1750m)  
 **Scene:** Sionna RT 2.0, full Nottingham scene, MAX_DEPTH=8, ITU-R P.2040-2 materials
 
+## Standing Rules (apply to every change)
+
+| Rule | Detail |
+|------|--------|
+| **Snapshot before every change** | `git tag snapshot/nottingham-<description>` before touching any notebook — always a named revert point |
+| **No hardcoded values** | Every parameter in CELL 0 (scene builder) or CELL 1 (simulation) — no magic numbers buried in cells |
+| **Portable** | Every feature must work for any city — no fixed bbox, no UK-only assumptions, CRS auto-detected, all paths from `SCENARIO_NAME` |
+
 ---
 
 ## Tier 1 — Immediate, High Impact
