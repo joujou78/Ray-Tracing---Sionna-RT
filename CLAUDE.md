@@ -68,11 +68,14 @@ Best method across all runs: **ON incoh** (scattering ON, incoherent sum).
 | Full scene cal d=8, 500k, 1km | 0.680 | 0.639 | 0.167 | scalar=-0.064 dB |
 | Full scene cal d=8, 2M, 0.1km floor | 0.625 | 0.738 | 0.673 | 8.32 dB cal |
 | Full scene cal d=8, 2M, 0.25km floor | 0.660 | 0.763 | 0.681 | 9.72 dB cal |
-| **Full scene cal d=8, 2M, 0.15km floor** | **0.742** | **0.803** | **0.683** | **9.92 dB cal — best** |
+| Full scene cal d=8, 2M, 0.15km floor | 0.742 | 0.803 | 0.683 | 9.92 dB cal |
+| **Full scene cal d=8, 100M eval, 0.15km floor** | **0.835** | **0.813** | **0.741** | **6.0 dB RMSE — best** |
 
-> Best cal: 9.92 dB RMSE, CAL_MIN_DIST_KM=0.15, d=8, 2M samples — beats baseline simultaneously on all key ranges.
-> Bias: -2.0 dB @1km, +0.6 dB @1750m — well-centred across full route.
-> Near-range (0-300m): R²<0 from 8 LOS mast-shadow receivers — structural, not a calibration issue.
+> Best result: RMSE 6.0 dB @ 0-750m, CAL_MIN_DIST_KM=0.15, d=8, 100M eval samples.
+> Full table (ON incoh, 100M samples): 0-300m R²=0.007 | 0-500m R²=0.664 | 0-750m R²=0.835 | 0-900m R²=0.797 | 0-1000m R²=0.813 | 0-1250m R²=0.741
+> Bias: +0.8 dB @750m, +1.0 dB @1km — well-centred.
+> Near-range (0-300m): R²~0 from 8 LOS mast-shadow receivers — structural, not a calibration issue.
+> Key finding: 100M eval samples is optimal — 90M/200M give identical or slightly worse results.
 
 ---
 
@@ -172,8 +175,9 @@ Current config is **Full scene** (all features enabled).
 | 2 | + Vegetation (OSM + VOM + nDSM extra) | done |
 | 3 | + Roads + water + bridges + railways | done |
 | 4 | nDSM slab geometry (solid vertical boxes) | implemented |
-| 5 | TERRAIN_GRID_N=1000 (finer terrain) | config updated — needs terrain rebuild |
-| 6 | OS road polygons (true widths) | pending |
+| 5 | TERRAIN_GRID_N=1000 (finer terrain) | done |
+| 6 | Road junction union fix (clean overlaps) | done — road_itu_asphalt.ply rebuilt |
+| 7 | OS road polygons (true widths, OS Open Roads) | pending |
 
 ---
 
@@ -227,6 +231,8 @@ Solid slabs rejected: Sionna has no path-integral absorption — a box just adds
 | VEG_AUGMENT_TERRAIN | wet_ground S=0.30 → scatter flood |
 | MAX_DEPTH > 8 | Extra bounces → spatial noise, R² drops to 0.555 |
 | NUM_SAMPLES_PS > 2M | Calibration-evaluation mismatch |
+| CAL_MIN_DIST_KM = 0.30 | Worse than 0.15km — Powell converges to ~12.7 dB, far above 0.15km record |
+| MAX eval samples > 100M | No systematic gain — 90M/100M/200M statistically equivalent |
 
 ---
 
