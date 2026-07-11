@@ -22,3 +22,6 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local snapshots (not for version control)
+*_PRE_*.ipynb
