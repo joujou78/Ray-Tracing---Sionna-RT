@@ -34,7 +34,7 @@ Ray tracing simulation of the Ofcom 2018 Nottingham 915 MHz dataset using Sionna
 | NUM_SAMPLES_PS | 500,000 |
 | diffraction | True |
 | edge_diffraction | True |
-| CAL_MAX_DIST_KM | 1.25 |
+| CAL_MAX_DIST_KM | 1.25 | hard ceiling — do not extend to 1.5 km (Powell diverges on hard receivers) |
 | VEG_DISC_SPACING_M | 20.0 |
 | VEG_MAX_DISCS_PER_POLYGON | 500 |
 | VEG_NDMS_EXTRA | True |
@@ -233,6 +233,7 @@ Solid slabs rejected: Sionna has no path-integral absorption — a box just adds
 | NUM_SAMPLES_PS > 2M | Calibration-evaluation mismatch |
 | CAL_MIN_DIST_KM = 0.30 | Worse than 0.15km — Powell converges to ~12.7 dB, far above 0.15km record |
 | MAX eval samples > 100M | No systematic gain — 90M/100M/200M statistically equivalent |
+| CAL_MAX_DIST_KM = 1.5 | Powell diverges — 1387 evals, only 1.06 dB improvement, bad material params |
 
 ---
 
@@ -245,8 +246,9 @@ Solid slabs rejected: Sionna has no path-integral absorption — a box just adds
 
 To reset calibration: delete both files and set `USE_CALIBRATED_FILES = False` in simulation CELL 1.
 
-Current calibration run: 2M/5M samples, 221 receivers, CAL_MAX_DIST_KM=1.5, depth=12.
-Expected RMSE target: < 10 dB (was 10.34 dB at depth=8, 500k, 1km).
+Calibration settings: NUM_SAMPLES_PS=2M, CAL_MIN_DIST_KM=0.15, CAL_MAX_DIST_KM=1.25 (hard ceiling).
+CAL_MAX_DIST_KM=1.5 caused Powell divergence (1387 evals, only 1.06 dB improvement, R²=-1.77 at 0-500m).
+Expected calibration RMSE floor: ~10-11 dB on calibration set (evaluation RMSE is much lower at 100M samples).
 
 ---
 
