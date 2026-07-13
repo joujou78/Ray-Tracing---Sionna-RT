@@ -1,0 +1,385 @@
+<title>terrain.ply — Grid Construction</title>
+<style>
+:root {
+  --bg: #0b0f1a;
+  --panel: #131929;
+  --border: #1e2d45;
+  --text-1: #dde4f0;
+  --text-2: #7a90b0;
+  --accent: #5ba4f5;
+  --green: #4bc97a;
+  --yellow: #e0b84a;
+  --mono: 'Courier New', Courier, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #eef1f6;
+    --panel: #ffffff;
+    --border: #c8d3e0;
+    --text-1: #1a2133;
+    --text-2: #5a6a80;
+    --accent: #1a6fd4;
+    --green: #1e8a4a;
+    --yellow: #8a6200;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#0b0f1a;--panel:#131929;--border:#1e2d45;
+  --text-1:#dde4f0;--text-2:#7a90b0;--accent:#5ba4f5;--green:#4bc97a;--yellow:#e0b84a;
+}
+:root[data-theme="light"] {
+  --bg:#eef1f6;--panel:#ffffff;--border:#c8d3e0;
+  --text-1:#1a2133;--text-2:#5a6a80;--accent:#1a6fd4;--green:#1e8a4a;--yellow:#8a6200;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text-1);font-family:var(--sans);padding:20px 24px;min-height:100vh}
+.wrap{max-width:940px;margin:0 auto}
+header{margin-bottom:18px}
+h1{font-size:1rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent);margin-bottom:2px}
+.sub{font-size:0.78rem;color:var(--text-2);font-family:var(--mono)}
+.layout{display:grid;grid-template-columns:1fr 210px;gap:14px;align-items:start}
+@media(max-width:620px){.layout{grid-template-columns:1fr}}
+.canvas-wrap{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+canvas{display:block;width:100%;height:auto}
+.sidebar{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:11px 13px}
+.card-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-2);margin-bottom:3px}
+.card-val{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.card-sub{font-size:0.68rem;color:var(--text-2);font-family:var(--mono);margin-top:2px;line-height:1.5}
+.steps{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px 13px}
+.steps-title{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-2);margin-bottom:9px}
+.step{display:flex;gap:8px;margin-bottom:8px;font-size:0.74rem;line-height:1.45}
+.step:last-child{margin-bottom:0}
+.snum{width:17px;height:17px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;flex-shrink:0;margin-top:1px}
+.snum.g{background:var(--green)}
+.snum.y{background:var(--yellow)}
+.sm{font-family:var(--mono);font-size:0.68rem;color:var(--accent)}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>terrain.ply — Grid Construction</h1>
+    <p class="sub">CELL 3 · dem.tif → N×N sample grid → binary PLY mesh</p>
+  </header>
+
+  <div class="layout">
+    <div class="canvas-wrap">
+      <canvas id="c" width="680" height="440"></canvas>
+    </div>
+
+    <div class="sidebar">
+      <div class="card">
+        <div class="card-label">Grid resolution</div>
+        <div class="card-val">1000 × 1000</div>
+        <div class="card-sub">= 1,000,000 vertices</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Cell spacing</div>
+        <div class="card-val">~9.9 × 6.7 m</div>
+        <div class="card-sub">X × Y from scene bbox</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Triangle faces</div>
+        <div class="card-val">1,998,002</div>
+        <div class="card-sub">2 triangles per quad</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Z source</div>
+        <div class="card-val" style="font-size:0.82rem">dem.tif</div>
+        <div class="card-sub">EA LiDAR DTM<br>EPSG:27700 · bilinear</div>
+      </div>
+
+      <div class="steps">
+        <div class="steps-title">CELL 3 — build order</div>
+        <div class="step">
+          <div class="snum">1</div>
+          <div>Compute <span class="sm">x_span, y_span</span> from bbox in metres</div>
+        </div>
+        <div class="step">
+          <div class="snum">2</div>
+          <div>Linspace → <span class="sm">N×N</span> (X,Y) grid centred at <span class="sm">center_utm</span></div>
+        </div>
+        <div class="step">
+          <div class="snum g">3</div>
+          <div>Sample Z from <span class="sm">dem.tif</span> per point, subtract <span class="sm">origin_elev_asl</span></div>
+        </div>
+        <div class="step">
+          <div class="snum y">4</div>
+          <div>Quad → 2 triangles, write binary PLY + save <span class="sm">origin_elev2.json</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const W = 680, H = 440;
+
+  // Grid patch to render
+  const N = 22;
+  const CELL = 19;
+  const ELEV = 0.45;
+  const OX = W * 0.50;
+  const OY = H * 0.46;
+  const ANGLE = Math.PI / 6;
+  const CA = Math.cos(ANGLE), SA = Math.sin(ANGLE);
+
+  function iso(i, j, z) {
+    return [
+      OX + (i - j) * CELL * CA,
+      OY + (i + j) * CELL * SA - z * ELEV
+    ];
+  }
+
+  // Generate plausible terrain
+  function genH(i, j) {
+    const x = i / N, y = j / N;
+    return (
+      Math.sin(x * Math.PI * 2.4 + 0.3) * Math.cos(y * Math.PI * 1.9) * 16 +
+      Math.sin(x * Math.PI * 5.8 + 1.1) * Math.cos(y * Math.PI * 4.5 + 0.7) * 7 +
+      Math.sin(x * Math.PI * 12 + 2.2) * Math.sin(y * Math.PI * 10) * 2.5
+    );
+  }
+
+  const ht = [];
+  let minH = Infinity, maxH = -Infinity;
+  for (let i = 0; i <= N; i++) {
+    ht[i] = [];
+    for (let j = 0; j <= N; j++) {
+      const h = genH(i, j);
+      ht[i][j] = h;
+      if (h < minH) minH = h;
+      if (h > maxH) maxH = h;
+    }
+  }
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  function elevRGB(h, dark) {
+    const t = (h - minH) / (maxH - minH);
+    let r, g, b;
+    if (t < 0.30) {
+      const s = t / 0.30;
+      r = lerp(38, 85, s); g = lerp(90, 130, s); b = lerp(68, 55, s);
+    } else if (t < 0.60) {
+      const s = (t - 0.30) / 0.30;
+      r = lerp(85, 150, s); g = lerp(130, 130, s); b = lerp(55, 72, s);
+    } else {
+      const s = (t - 0.60) / 0.40;
+      r = lerp(150, 195, s); g = lerp(130, 180, s); b = lerp(72, 145, s);
+    }
+    if (!dark) { r = Math.min(255, r+28); g = Math.min(255, g+28); b = Math.min(255, b+28); }
+    return `rgb(${r|0},${g|0},${b|0})`;
+  }
+
+  function shadedColor(h, i, j, dark) {
+    // Simple shading: faces at higher i+j are slightly darker
+    const base = elevRGB(h, dark);
+    return base;
+  }
+
+  function isDark() {
+    const dt = document.documentElement.dataset.theme;
+    if (dt === 'dark') return true;
+    if (dt === 'light') return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function drawCallout(ctx, x1, y1, x2, y2, text, dark, align='left') {
+    ctx.save();
+    ctx.strokeStyle = dark ? 'rgba(91,164,245,0.8)' : 'rgba(26,111,212,0.85)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // dot at anchor
+    ctx.fillStyle = dark ? '#5ba4f5' : '#1a6fd4';
+    ctx.beginPath(); ctx.arc(x1, y1, 3, 0, Math.PI*2); ctx.fill();
+
+    // label box
+    ctx.font = '600 10.5px Courier New, monospace';
+    const tw = ctx.measureText(text).width;
+    const pad = 5, bh = 18;
+    const bx = align === 'left' ? x2 : x2 - tw - pad*2;
+    const by = y2 - bh/2;
+    ctx.fillStyle = dark ? 'rgba(19,25,41,0.92)' : 'rgba(255,255,255,0.95)';
+    ctx.strokeStyle = dark ? '#1e2d45' : '#c8d3e0';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.roundRect(bx-pad, by, tw+pad*2, bh, 3);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = dark ? '#dde4f0' : '#1a2133';
+    ctx.fillText(text, bx, by + bh - 5);
+    ctx.restore();
+  }
+
+  function draw() {
+    const dark = isDark();
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = dark ? '#0b0f1a' : '#eef1f6';
+    ctx.fillRect(0, 0, W, H);
+
+    // Sort back to front
+    const cells = [];
+    for (let i = 0; i < N; i++)
+      for (let j = 0; j < N; j++)
+        cells.push({i, j, d: i + j});
+    cells.sort((a, b) => a.d - b.d);
+
+    const edgeCol = dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,20,0.10)';
+    const highlightI = 11, highlightJ = 9;
+
+    for (const {i, j} of cells) {
+      const ha = ht[i][j], hb = ht[i+1][j], hc = ht[i][j+1], hd = ht[i+1][j+1];
+      const [ax,ay] = iso(i,j,ha), [bx,by] = iso(i+1,j,hb);
+      const [cx,cy] = iso(i,j+1,hc), [dx,dy] = iso(i+1,j+1,hd);
+
+      const isHL = (i === highlightI && j === highlightJ);
+
+      // Tri 1: a,b,d
+      ctx.beginPath();
+      ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.lineTo(dx,dy); ctx.closePath();
+      if (isHL) {
+        ctx.fillStyle = dark ? 'rgba(91,164,245,0.45)' : 'rgba(26,111,212,0.35)';
+      } else {
+        ctx.fillStyle = elevRGB((ha+hb+hd)/3, dark);
+      }
+      ctx.fill();
+      ctx.strokeStyle = isHL ? (dark ? '#5ba4f5' : '#1a6fd4') : edgeCol;
+      ctx.lineWidth = isHL ? 1.5 : 0.5;
+      ctx.stroke();
+
+      // Tri 2: a,d,c
+      ctx.beginPath();
+      ctx.moveTo(ax,ay); ctx.lineTo(dx,dy); ctx.lineTo(cx,cy); ctx.closePath();
+      if (isHL) {
+        ctx.fillStyle = dark ? 'rgba(75,201,122,0.35)' : 'rgba(30,138,74,0.28)';
+      } else {
+        ctx.fillStyle = elevRGB((ha+hd+hc)/3, dark);
+      }
+      ctx.fill();
+      ctx.strokeStyle = isHL ? (dark ? '#4bc97a' : '#1e8a4a') : edgeCol;
+      ctx.lineWidth = isHL ? 1.5 : 0.5;
+      ctx.stroke();
+
+      // Diagonal of highlighted quad
+      if (isHL) {
+        ctx.beginPath();
+        ctx.moveTo(ax, ay); ctx.lineTo(dx, dy);
+        ctx.strokeStyle = dark ? 'rgba(255,220,80,0.8)' : 'rgba(140,100,0,0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    // === Annotations ===
+    const hi = highlightI, hj = highlightJ;
+    const [vx, vy] = iso(hi, hj, ht[hi][hj]);
+    const [bx2, by2] = iso(hi+1, hj, ht[hi+1][hj]);
+    const [cx2, cy2] = iso(hi, hj+1, ht[hi][hj+1]);
+    const [dx2, dy2] = iso(hi+1, hj+1, ht[hi+1][hj+1]);
+
+    // Grid vertex dot
+    ctx.fillStyle = dark ? '#ffcc44' : '#a07000';
+    ctx.beginPath(); ctx.arc(vx, vy, 4, 0, Math.PI*2); ctx.fill();
+
+    // Callout: vertex
+    drawCallout(ctx, vx, vy, vx - 75, vy - 55, 'vertex (X, Y, Z)', dark, 'left');
+
+    // Callout: triangle 1 centroid
+    const t1x = (vx + bx2 + dx2) / 3;
+    const t1y = (vy + by2 + dy2) / 3;
+    drawCallout(ctx, t1x, t1y, t1x + 60, t1y - 40, 'triangle 1', dark, 'left');
+
+    // Callout: triangle 2 centroid
+    const t2x = (vx + dx2 + cx2) / 3;
+    const t2y = (vy + dy2 + cy2) / 3;
+    drawCallout(ctx, t2x, t2y, t2x - 78, t2y + 38, 'triangle 2', dark, 'right');
+
+    // Callout: cell spacing
+    const midX = (vx + bx2) / 2;
+    const midY = (vy + by2) / 2;
+    drawCallout(ctx, midX, midY, midX + 65, midY + 48, '~9.9 m', dark, 'left');
+
+    // === Axis arrows ===
+    const axO = [OX + (0 - N) * CELL * CA - 14, OY + N * CELL * SA + 18];
+    const axI = [axO[0] + 4*CELL*CA, axO[1] + 4*CELL*SA];
+    const axJ = [axO[0] - 4*CELL*CA, axO[1] + 4*CELL*SA];
+    const axZ = [axO[0], axO[1] - 4*CELL*ELEV*2.0];
+
+    function arrow(x1,y1,x2,y2,col,lbl,lx,ly) {
+      ctx.save();
+      ctx.strokeStyle = col; ctx.fillStyle = col;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      const angle = Math.atan2(y2-y1, x2-x1);
+      ctx.translate(x2,y2); ctx.rotate(angle);
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-7,3); ctx.lineTo(-7,-3); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.font = 'bold 10px Courier New, monospace';
+      ctx.fillStyle = col;
+      ctx.fillText(lbl, lx, ly);
+    }
+
+    arrow(axO[0],axO[1],axI[0],axI[1], dark?'#5ba4f5':'#1a6fd4', 'X →', axI[0]+4, axI[1]+4);
+    arrow(axO[0],axO[1],axJ[0],axJ[1], dark?'#4bc97a':'#1e8a4a', '← Y', axJ[0]-28, axJ[1]+4);
+    arrow(axO[0],axO[1],axZ[0],axZ[1], dark?'#e0b84a':'#8a6200', 'Z ↑', axZ[0]+4, axZ[1]-4);
+
+    // === Colorbar ===
+    const cbX = W - 28, cbY = 55, cbH = 140;
+    const grad = ctx.createLinearGradient(0, cbY, 0, cbY + cbH);
+    grad.addColorStop(0, elevRGB(maxH, dark));
+    grad.addColorStop(0.5, elevRGB((minH+maxH)/2, dark));
+    grad.addColorStop(1, elevRGB(minH, dark));
+    ctx.fillStyle = grad;
+    ctx.fillRect(cbX, cbY, 12, cbH);
+    ctx.strokeStyle = dark ? '#1e2d45' : '#c8d3e0';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(cbX, cbY, 12, cbH);
+
+    ctx.font = '9px Courier New, monospace';
+    ctx.fillStyle = dark ? '#7a90b0' : '#5a6a80';
+    ctx.textAlign = 'left';
+    ctx.fillText('high Z', cbX + 16, cbY + 4);
+    ctx.fillText('low Z', cbX + 16, cbY + cbH);
+    ctx.font = '8px Courier New, monospace';
+    ctx.fillText('dem.tif', cbX + 14, cbY + cbH/2 + 3);
+    ctx.textAlign = 'left';
+
+    // === Title overlay ===
+    ctx.font = '600 11px -apple-system, system-ui, sans-serif';
+    ctx.fillStyle = dark ? 'rgba(221,228,240,0.9)' : 'rgba(26,33,51,0.9)';
+    ctx.fillText(`${N}×${N} patch shown  (full grid: 1000×1000)`, 12, H - 12);
+
+    // Legend for highlighted quad
+    const lgY = H - 32;
+    ctx.font = '10px Courier New, monospace';
+    ctx.fillStyle = dark ? 'rgba(91,164,245,0.9)' : 'rgba(26,111,212,0.9)';
+    ctx.fillText('■', 12, lgY + 4); ctx.fillStyle = dark?'#dde4f0':'#1a2133';
+    ctx.fillText(' tri 1', 22, lgY + 4);
+    ctx.fillStyle = dark ? 'rgba(75,201,122,0.9)' : 'rgba(30,138,74,0.9)';
+    ctx.fillText('■', 70, lgY + 4); ctx.fillStyle = dark?'#dde4f0':'#1a2133';
+    ctx.fillText(' tri 2', 80, lgY + 4);
+    ctx.fillStyle = dark ? 'rgba(255,220,80,0.9)' : 'rgba(140,100,0,0.9)';
+    ctx.fillText('--', 128, lgY + 4); ctx.fillStyle = dark?'#dde4f0':'#1a2133';
+    ctx.fillText(' quad diagonal', 146, lgY + 4);
+  }
+
+  draw();
+
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  mq.addEventListener('change', draw);
+  const obs = new MutationObserver(draw);
+  obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+})();
+</script>
