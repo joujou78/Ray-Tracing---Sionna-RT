@@ -26,3 +26,4 @@ Thumbs.db
 # Local snapshots (not for version control)
 *_PRE_*.ipynb
 *_SNAPSHOT_*.ipynb
+sionna019_1802mhz_scene_builder_SNAPSHOT_*.ipynb
