@@ -11,9 +11,9 @@ Downloads DTM 1m + DSM 1m for all 169 SU tiles covering Winchester scene bbox.
 import os, sys, time, argparse
 import urllib.request
 
-# Winchester scene BNG bbox (from receiver coverage + 1km pad)
-BNG_W, BNG_E = 438275, 450147
-BNG_S, BNG_N = 121883, 133761
+# Winchester scene BNG bbox (3km radius from TX + 500m pad)
+BNG_W, BNG_E = 440696, 447696
+BNG_S, BNG_N = 124316, 131316
 
 # DEFRA WCS endpoints
 WCS_DTM = "https://environment.data.gov.uk/arcgis/services/EA/LidarComposite_DTM_1m/ImageServer/WCSServer"
