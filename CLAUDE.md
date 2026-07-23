@@ -79,6 +79,16 @@ Best method across all runs: **ON incoh** (scattering ON, incoherent sum).
 
 ---
 
+## PERMANENT DO-NOT-TOUCH FILES (never edit, never patch, never modify under any circumstance)
+
+- `sionna2_915mhz_dem_simulation.ipynb` — 915 MHz Nottingham simulation, FROZEN
+- `sionna019_scene_builder.ipynb` — 915 MHz scene builder, FROZEN
+- `sionna019_1802mhz_scene_builder.ipynb` — 1802 MHz scene builder, FROZEN
+
+These files must never be opened for writing by Claude. Any task that would patch "all notebooks" must explicitly exclude these three files.
+
+---
+
 ## Critical Rules (never break these)
 
 1. **SCENE_WEST must match exactly** between scene builder and simulation notebook.
