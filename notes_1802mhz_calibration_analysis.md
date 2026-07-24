@@ -78,12 +78,39 @@ Exposes the warm-up divisor as a configurable param for future use.
 
 ---
 
+## CELL 8e Baseline Results — Pre-fix (warm-up calibration, scalar=-8.94 dB, 100M samples)
+
+Calibration: warm-up params at 7.5M samples (eval 134, RMSE=12.447 dB), scalar=-8.9415 dB.  
+Best method switches from ON coherent (short range) to ON best/incoh (long range, crossover ~1000-1250m).
+
+| Range | N | ON coh R² | ON incoh R² | ON best R² | RMSE (best) | Bias (best) |
+|-------|---|-----------|-------------|------------|-------------|-------------|
+| 0-500m | 385 | **0.438** | 0.077 | -0.038 | 7.3 dB | -2.7 dB |
+| 0-750m | 537 | **0.414** | 0.136 | 0.047 | 8.8 dB | -2.1 dB |
+| 0-900m | 635 | **0.371** | 0.180 | 0.144 | 9.3 dB | -2.7 dB |
+| 0-1000m | 701 | **0.395** | 0.308 | 0.296 | 10.0 dB | -3.6 dB |
+| 0-1250m | 767 | 0.447 | 0.443 | 0.437 | 11.3 dB | +0.5 dB |
+| 0-1500m | 808 | 0.404 | **0.437** | **0.444** | 12.1 dB | +0.5 dB |
+| 0-1750m | 857 | 0.327 | 0.396 | **0.411** | 12.8 dB | -0.7 dB |
+| 0-2000m | 985 | 0.371 | 0.432 | **0.450** | 12.5 dB | -1.0 dB |
+
+Notes:
+- Bias grows with range for ON coh (-2.7 → -7.0 dB at 1750m) — coherent phase summation adds destructive interference not present in real channel at long range
+- ON best/incoh stays nearly unbiased beyond 1250m (±1 dB)
+- R² peaks at 0-2000m (0.450) — more receiver diversity improves fit
+- 0-1750m and beyond are outside CAL_MAX_DIST_KM=1.5 (extrapolated)
+- These results are suboptimal: scalar miscalibrated due to 7.5M/30M landscape mismatch
+
+---
+
 ## Expected Impact After Fix
 
 | Metric | Pre-fix | Expected |
 |--------|---------|----------|
 | Calibration RMSE | ~15.2 dB (stuck) | ~14.0-15.0 dB (physics floor — structural) |
-| CELL 8e RMSE (100M) | not yet run | **10-13 dB** (eval historically << cal) |
+| CELL 8e RMSE @ 0-750m | 8.8 dB (ON coh) | 7-8 dB |
+| CELL 8e R² @ 0-750m | 0.414 | 0.50+ |
+| Bias | -2.1 to -3.6 dB | < ±1 dB |
 | Powell convergence | oscillating, no exit | Converges in 30-50 evals |
 | Runtime | ongoing (stuck) | ~6-8 hours |
 
