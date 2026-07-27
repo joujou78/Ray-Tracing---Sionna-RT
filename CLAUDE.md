@@ -10,6 +10,16 @@ Ray tracing simulation of the Ofcom 2018 Nottingham 915 MHz dataset using Sionna
 
 ---
 
+## 1802 MHz Pending Tests (after current CELL CAL finishes)
+
+| Priority | Test | How | Expected |
+|----------|------|-----|----------|
+| 1 | CELL 4A → CELL 8e (100M, no Weissberger) | `CAL_APPLY_WEISSBERGER=False` | baseline eval R² |
+| 2 | CELL 8e with Weissberger | `CAL_APPLY_WEISSBERGER=True` in CELL 8e | compare R²/RMSE vs without |
+| Note | 3D cones model surface scatter/diffraction only — Weissberger adds missing volumetric bulk loss for rays passing through canopy (er=1.5 → nearly transparent) | | |
+
+---
+
 ## Current Scene State (snapshot)
 
 ### Features enabled
