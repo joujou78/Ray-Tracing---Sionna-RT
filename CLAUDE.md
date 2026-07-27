@@ -17,6 +17,7 @@ Ray tracing simulation of the Ofcom 2018 Nottingham 915 MHz dataset using Sionna
 | 1 | CELL 4A → CELL 8e (100M, no Weissberger) | `CAL_APPLY_WEISSBERGER=False` | baseline eval R² |
 | 2 | CELL 8e with Weissberger | `CAL_APPLY_WEISSBERGER=True` in CELL 8e | compare R²/RMSE vs without |
 | Note | 3D cones model surface scatter/diffraction only — Weissberger adds missing volumetric bulk loss for rays passing through canopy (er=1.5 → nearly transparent) | | |
+| 3 | LiDAR crown detection → 3D trees rebuild | nDSM peak detection or EA point cloud → 5,000–15,000 trees vs current 486 OSM-only | major NLOS improvement |
 
 ---
 
