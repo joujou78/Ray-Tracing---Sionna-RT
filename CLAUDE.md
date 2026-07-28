@@ -10,14 +10,33 @@ Ray tracing simulation of the Ofcom 2018 Nottingham 915 MHz dataset using Sionna
 
 ---
 
-## 1802 MHz Pending Tests (after current CELL CAL finishes)
+## 1802 MHz Results (old 486-tree cal applied to 15,486-tree scene — pre-recalibration baseline)
+
+Best method: **ON coh** at short-medium range (0-1250m); **ON incoh** competitive at 1500m+
+
+| Range | N | Method | Bias (dB) | RMSE (dB) | R² |
+|-------|---|--------|-----------|-----------|-----|
+| 0-500m | 385 | ON coh | -2.0 | 7.1 | **0.465** |
+| 0-750m | 537 | ON coh | -1.1 | 8.0 | **0.515** |
+| 0-1000m | 701 | ON coh | -2.7 | 9.3 | **0.476** |
+| 0-1250m | 767 | ON coh | -4.1 | 10.6 | **0.508** |
+| 0-1500m | 808 | ON coh | -5.1 | 11.8 | **0.469** |
+| 0-2000m | 985 | ON best | -0.4 | 12.4 | **0.456** |
+| 0-2500m | 1177 | ON coh | -3.7 | 13.9 | **0.452** |
+
+Notes:
+- ON incoh has +3-4 dB positive bias at 0-750m — calibration was for 486-tree scene, now 15,486 trees changes scatter budget
+- ON coh consistently better than incoh at 1802 MHz (shorter wavelength → stronger coherent interference)
+- Crossover at ~1750m: incoh and coh converge, incoh slightly better beyond
+- Weissberger already applied in CELL 8e (always on regardless of CAL_APPLY_WEISSBERGER flag)
+- **Next: recalibrate with 15,486-tree scene → expect significant R² improvement**
+
+## 1802 MHz Pending Tests
 
 | Priority | Test | How | Expected |
 |----------|------|-----|----------|
-| 1 | CELL 4A → CELL 8e (100M, no Weissberger) | `CAL_APPLY_WEISSBERGER=False` | baseline eval R² |
-| 2 | CELL 8e with Weissberger | `CAL_APPLY_WEISSBERGER=True` in CELL 8e | compare R²/RMSE vs without |
-| Note | 3D cones model surface scatter/diffraction only — Weissberger adds missing volumetric bulk loss for rays passing through canopy (er=1.5 → nearly transparent) | | |
-| 3 | LiDAR crown detection → 3D trees rebuild | nDSM peak detection or EA point cloud → 5,000–15,000 trees vs current 486 OSM-only | major NLOS improvement |
+| 1 | Recalibrate with 15,486-tree scene | CELL CAL (10M/N_AVG=1) → CELL 4A → CELL 8e (100M) | major R² improvement |
+| 2 | LiDAR crown detection further tuning | Adjust LIDAR_TREE_MIN_DIST_M / MIN_H_M | density vs false-positive tradeoff |
 
 ---
 
