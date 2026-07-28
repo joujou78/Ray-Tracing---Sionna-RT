@@ -31,12 +31,43 @@ Notes:
 - Weissberger already applied in CELL 8e (always on regardless of CAL_APPLY_WEISSBERGER flag)
 - **Next: recalibrate with 15,486-tree scene → expect significant R² improvement**
 
+## 1802 MHz Calibration — 15,486-tree scene (IN PROGRESS)
+
+**Settings:** 30M samples / N_AVG=1 / CAL_FIX_SCATTER=True / DISABLE_VEG_DISCS=True / 14 free params (7 mats × 2)
+
+| Phase | RMSE (dB) | Scalar (dB) | Notes |
+|-------|-----------|-------------|-------|
+| Before calibration | 14.75 | — | 0.9 dB better than 486-tree uncal (15.64) |
+| After Phase 0 scalar | 13.83 | -5.124 | smaller scalar vs -9.77 dB — trees supplying missing signal |
+| After Powell (expected) | ~10.5-11.5 | TBD | IN PROGRESS |
+
+Key insight: scalar -5.1 dB vs -9.77 dB previous — 15,486 trees add scatter budget, simulation closer to measurements before calibration.
+
+**Expected CELL 8e results after recalibration:**
+| Range | Old cal R² | Expected new cal R² |
+|-------|-----------|---------------------|
+| 0-750m ON coh | 0.515 | 0.60-0.70 |
+| 0-1000m ON coh | 0.476 | 0.55-0.65 |
+| 0-1250m | 0.508 | 0.55-0.65 |
+
 ## 1802 MHz Pending Tests
 
 | Priority | Test | How | Expected |
 |----------|------|-----|----------|
-| 1 | Recalibrate with 15,486-tree scene | CELL CAL (10M/N_AVG=1) → CELL 4A → CELL 8e (100M) | major R² improvement |
-| 2 | LiDAR crown detection further tuning | Adjust LIDAR_TREE_MIN_DIST_M / MIN_H_M | density vs false-positive tradeoff |
+| 1 | CELL 4A → CELL 8e after current CELL CAL | 100M eval | target R²>0.60 at 0-750m |
+| 2 | LiDAR crown detection tuning | Adjust LIDAR_TREE_MIN_DIST_M / MIN_H_M | density vs false-positive tradeoff |
+
+## Key Findings So Far (1802 MHz)
+
+| Finding | Detail |
+|---------|--------|
+| ON coh > ON incoh at 1802 MHz | Shorter wavelength (16.7cm) → coherent interference dominates |
+| Crossover at ~1750m | incoh becomes competitive beyond this range |
+| LiDAR trees: 486 → 15,486 | nDSM peak detection, 5m min spacing, 3-30m height filter, building exclusion |
+| DISABLE_VEG_DISCS=True | Disc veg (itu_ceiling_board) transparent; 3D canopy (canopy_itu_vegetation) active |
+| Weissberger always on in CELL 8e | CAL_APPLY_WEISSBERGER flag only affects CELL CAL, not CELL 8e |
+| Phase 3 bug fixed | Comparison was inverted — now correctly keeps Phase 3 if RMSE improves |
+| Convergence plot fixed | _mat_names truncated to _ph_arr.shape[1]//3 to avoid IndexError |
 
 ---
 
