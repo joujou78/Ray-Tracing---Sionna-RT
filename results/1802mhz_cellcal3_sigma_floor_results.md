@@ -66,3 +66,22 @@
 ## Next: Calibration 4
 Add _SIG_MAX_PER_MAT = {'itu_brick': 0.20, 'itu_concrete': 0.20}
 Constrains Powell to physical range [0.030, 0.20] S/m for both materials.
+
+## Extended Ranges (added after initial save)
+
+| Range   | N   | Method    | Bias (dB) | RMSE (dB) | STD (dB) | R²     |
+|---------|-----|-----------|-----------|-----------|----------|--------|
+| 0-1750m | 857 | ON incoh  | -2.4      | 11.8      | 11.5     | 0.503  |
+| 0-1750m | 857 | ON coh    | -7.3      | 12.4      | 10.0     | 0.447  |
+| 0-2000m | 984 | ON incoh  | -2.2      | 11.7      | 11.5     | **0.516** |
+| 0-2000m | 984 | ON coh    | -6.3      | 12.2      | 10.5     | 0.474  |
+
+## Full Comparison vs Old Calibration (486 trees)
+
+| Range   | Old cal R² | Cal 3 R²  | Delta  | Winner  |
+|---------|------------|-----------|--------|---------|
+| 0-750m  | 0.515      | 0.388     | -0.127 | Old cal |
+| 0-1000m | 0.476      | 0.427     | -0.049 | Old cal |
+| 0-1250m | 0.508      | **0.530** | +0.022 | Cal 3   |
+| 0-1500m | 0.469      | **0.533** | +0.064 | Cal 3   |
+| 0-2000m | 0.456      | **0.516** | +0.060 | Cal 3   |
