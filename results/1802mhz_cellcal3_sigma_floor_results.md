@@ -137,3 +137,34 @@ np.log(min(_SIG_MAX_PER_MAT.get(_mn, _SIG_MAX), _p['sig0']*100))
 - Coherent bias returns to ~0 dB (concrete σ back to 0.05–0.15 S/m)
 
 If Cal 4 achieves 0–750m ≥ 0.47 AND 0–1250m ≥ 0.52 simultaneously, it will be the **best full-range result across all calibrations and scene configurations.**
+
+---
+
+## 7. Final Ranges (appended after initial save)
+
+| Range | N | Method | Bias (dB) | RMSE (dB) | STD (dB) | R² |
+|-------|---|--------|-----------|-----------|----------|----|
+| 0–2250m | 1108 | ON incoh | −0.8 | 12.2 | 12.2 | 0.528 |
+| 0–2250m | 1108 | ON coh | −4.4 | 12.7 | 11.9 | 0.489 |
+| 0–2500m | 1176 | ON incoh | −0.7 | 12.5 | 12.5 | **0.561** |
+| 0–2500m | 1176 | ON coh | −4.0 | 13.1 | 12.4 | 0.517 |
+| 0–2500m | 1067 | OFF incoh | +0.3 | 17.2 | 17.2 | 0.064 |
+
+## 8. Complete R² Profile — Cal 3 Best Method per Range
+
+| Range | N | Best R² | Method | Bias | RMSE |
+|-------|---|---------|--------|------|------|
+| 0–500m | 385 | 0.320 | ON coh | −4.6 dB | 8.0 dB |
+| 0–750m | 537 | 0.388 | ON coh | −3.9 dB | 9.0 dB |
+| 0–1000m | 701 | 0.427 | ON incoh | +0.4 dB | 9.7 dB |
+| 0–1250m | 767 | 0.530 | ON incoh | −0.6 dB | 10.4 dB |
+| 0–1500m | 808 | 0.533 | ON incoh | −1.4 dB | 11.1 dB |
+| 0–1750m | 857 | 0.503 | ON incoh | −2.4 dB | 11.8 dB |
+| 0–2000m | 984 | 0.516 | ON incoh | −2.2 dB | 11.7 dB |
+| 0–2250m | 1108 | 0.528 | ON incoh | −0.8 dB | 12.2 dB |
+| **0–2500m** | **1176** | **0.561** | **ON incoh** | **−0.7 dB** | **12.5 dB** |
+
+**Peak result: R²=0.561 at 0–2500m — best single result across all calibrations.**
+
+### Scattering ON vs OFF at 0–2500m
+ON incoh R²=0.561 vs OFF incoh R²=0.064 — scattering accounts for **0.497 R²** at 2.5km. Without scattering the model essentially fails. Diffuse scatter is the dominant propagation mechanism at this range.
