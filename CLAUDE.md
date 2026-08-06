@@ -31,30 +31,43 @@ Notes:
 - Weissberger already applied in CELL 8e (always on regardless of CAL_APPLY_WEISSBERGER flag)
 - **Next: recalibrate with 15,486-tree scene → expect significant R² improvement**
 
-## 1802 MHz Calibration — 15,486-tree scene (IN PROGRESS)
+## 1802 MHz Calibration — 15,486-tree scene (SECOND RUN — in progress as of 2026-08-06)
 
-**Settings:** 30M samples / N_AVG=1 / CAL_FIX_SCATTER=True / DISABLE_VEG_DISCS=True / 14 free params (7 mats × 2)
+**Settings:** CAL_FIX_SCATTER=False / DISABLE_VEG_DISCS=True / CAL_FIXED_SEED=42 / CAL_MAX_DIST_KM=1.5 / CAL_MIN_DIST_KM=0.15 / 19 free params (6 mats × 3 + scalar) / 30M samples / N_AVG=1
 
 | Phase | RMSE (dB) | Scalar (dB) | Notes |
 |-------|-----------|-------------|-------|
-| Before calibration | 14.75 | — | 0.9 dB better than 486-tree uncal (15.64) |
-| After Phase 0 scalar | 13.83 | -5.124 | smaller scalar vs -9.77 dB — trees supplying missing signal |
-| After Powell (expected) | ~10.5-11.5 | TBD | IN PROGRESS |
+| Before calibration | 15.97 | — | 721 RX, 1.55 km auto-range |
+| After Phase 0 scalar | ~15.47 | -4.521 | analytic scalar (fixed from minimize_scalar) |
+| Powell eval 1-9 | 15.315-15.330 | — | MC noise oscillation only |
+| Powell eval 10 | **15.179** | — | real descent found — Powell working |
+| Powell eval 11-12 | 15.321-15.330 | — | exploring neighbourhood |
+| After Powell (expected) | ~13.5-14.5 | TBD | still running |
 
-Key insight: scalar -5.1 dB vs -9.77 dB previous — 15,486 trees add scatter budget, simulation closer to measurements before calibration.
+Key insight: scalar -4.5 dB vs -9.77 dB previous — S unlocked (CAL_FIX_SCATTER=False) gives Powell 3× more leverage vs. S locked.
+
+**CELL CAL fixes applied in this session (all committed to cool-cori-rrWbY):**
+| Commit | Fix |
+|--------|-----|
+| `76a7523` | Sensitivity probe threshold 0.40 dB → 0.15 dB (brick was blocked at 0.307 dB) |
+| `d282640` | CAL_SKIP_PROBE double-assignment — bottom override block was silently winning |
+| `7d928e7` | Phase 0 stale `_res_sf.fun` NameError — replaced with analytic `_rmse()` call |
+| `b81b7b9` | CAL_MAX_DIST_KM reverted 2.0 → 1.5 km (2.0 km receivers diffraction-dominated, < 0.3 dB material sensitivity) |
 
 **Expected CELL 8e results after recalibration:**
 | Range | Old cal R² | Expected new cal R² |
 |-------|-----------|---------------------|
-| 0-750m ON coh | 0.515 | 0.60-0.70 |
-| 0-1000m ON coh | 0.476 | 0.55-0.65 |
-| 0-1250m | 0.508 | 0.55-0.65 |
+| 0-750m ON coh | 0.515 | 0.45-0.55 (S unlocked may shift vs S locked) |
+| 0-1000m ON coh | 0.476 | 0.42-0.52 |
+| 0-1250m | 0.508 | 0.40-0.50 |
+
+Note: targets revised downward — S=False + 19 params introduces more MC noise; physics floor at 1802 MHz confirmed by literature at R²~0.5.
 
 ## 1802 MHz Pending Tests
 
 | Priority | Test | How | Expected |
 |----------|------|-----|----------|
-| 1 | CELL 4A → CELL 8e after current CELL CAL | 100M eval | target R²>0.60 at 0-750m |
+| 1 | CELL 4A → CELL 8e after current CELL CAL | 100M eval | compare vs old 0.515 baseline |
 | 2 | LiDAR crown detection tuning | Adjust LIDAR_TREE_MIN_DIST_M / MIN_H_M | density vs false-positive tradeoff |
 
 ## Key Findings So Far (1802 MHz)
@@ -68,6 +81,84 @@ Key insight: scalar -5.1 dB vs -9.77 dB previous — 15,486 trees add scatter bu
 | Weissberger always on in CELL 8e | CAL_APPLY_WEISSBERGER flag only affects CELL CAL, not CELL 8e |
 | Phase 3 bug fixed | Comparison was inverted — now correctly keeps Phase 3 if RMSE improves |
 | Convergence plot fixed | _mat_names truncated to _ph_arr.shape[1]//3 to avoid IndexError |
+| Physics floor confirmed by literature | Dense urban outdoor 1.8 GHz: R²~0.5 ceiling for pure geometry+material cal (arXiv:2507.19653) |
+| CAL_SKIP_PROBE must stay True | Warm prior S=0.35 biases sensitivity probe low — probe blocks Powell unless skipped |
+| CAL_FIXED_SEED=42 required | Without it: ±4 dB systematic drift between evals, Powell cannot find gradient |
+| _SIG_MAX_PER_MAT applied | brick/concrete σ ≤ 0.20 — uncapped Cal-3 produced σ=3.94 (unphysical) |
+
+---
+
+## London 915 MHz Status (sionna2_915mhz_dem_simulation_london.ipynb)
+
+**Calibration run as of 2026-08-06 — near termination (FTOL):**
+
+| Phase | RMSE (dB) | Notes |
+|-------|-----------|-------|
+| TX AGL scan | AGL=45m selected | 92% valid paths (206/223); AGL=25m had only 52% — rejected by coverage filter |
+| Phase 0 scalar | 13.547 dB | scalar=+12.253 dB |
+| Phase 2 eval 1 (probe) | 10.145 dB | accidental good point from probe |
+| Phase 2 evals 2-41 | 10.910-10.941 dB | oscillating — MC noise floor (37 params, 20M samples, ±0.21 dB noise) |
+| Expected termination | ~10.9 dB cal RMSE | FTOL natural stop |
+
+**London CELL CAL fixes (all committed):**
+
+| Commit | Fix |
+|--------|-----|
+| `484ef6c` | TX AGL selection: added coverage filter TX_AGL_MIN_COVERAGE=0.80 — AGL=25m rejected (52% paths) |
+| `7d928e7` | Phase 0 stale `_res_sf.fun` NameError |
+| `a4ed73f` | Post-priming re-scalar stale `_res_pgs.fun` NameError |
+| `011d92b` | Warm-prior `_res_wp.fun` + Phase 3 `_res_sf2.fun` NameErrors |
+
+**London CELL 1 additions:**
+```python
+TX_AGL_SCAN_M       = [25, 30, 35, 40, 45]
+TX_AGL_MIN_COVERAGE = 0.80   # min valid-path fraction for AGL selection
+CAL_SCALAR_BOUNDS   = (-60.0, 60.0)
+TX_CONDUCTED_DBM    = 49.0
+```
+
+**Expected CELL 8e (after London Powell terminates):**
+- RMSE: ~7-9 dB at 0-750m (eval at 100M samples much better than cal RMSE)
+- R²: ~0.35-0.45 at 0-750m (London has more NLOS + complex urban canyon)
+- Eval at 100M samples needed before drawing conclusions
+
+---
+
+## Physics Floor Research — Key Literature Findings (2025)
+
+### Root causes of 14-15 dB uncalibrated floor at 1802 MHz:
+
+| Source | Magnitude | Fixable? |
+|--------|-----------|---------|
+| Missing dynamic clutter (cars, furniture) | ~4-6 dB | No — not in static scene |
+| Uniform material assignment per type | ~6-12 dB | Partially — 5 categories already implemented |
+| Antenna pattern uncertainty | ~2-4 dB | Requires measured pattern |
+
+### Literature RMSE benchmarks (urban outdoor):
+- **Wireless InSite** indoor: 5.0 dB @ 2.4 GHz, 5.1 dB @ 5 GHz (heavily material-dependent)
+- **NYURay** calibrated outdoor: 3.2 dB LOS / 5.8 dB NLOS @ 6.75/16.95 GHz — uses per-building material classification from LiDAR
+- **Sionna RT** at 2.8 GHz urban: significant improvement with photogrammetric point clouds + semantic segmentation (ground/buildings/vegetation/fences/cars)
+- **R² ceiling**: ~0.5 for pure geometry+material calibration; ~0.7-0.8 requires hybrid RT+neural correction
+
+### NVLabs calibration approaches (diff-rt-calibration repo):
+- `ITU_Materials.ipynb` — scalar only (same as our Phase 0)
+- `Learned_Materials.ipynb` — gradient descent on raw ε/σ/S (smoother than Powell, ~2-3 dB better)
+- `Neural_Materials.ipynb` — NN parametrizes material properties (most expressive)
+- `instant-rm/Calibration.ipynb` — Path Replay Backpropagation for city-scale fitting
+- **All validated indoors (DICHASUS dataset, Stuttgart, 2.4 GHz) — not urban outdoor**
+
+### Improvement options (post current-cal):
+
+| Option | Expected gain | Complexity | Notes |
+|--------|--------------|-----------|-------|
+| N_AVG=2 in CELL CAL | -1 to -2 dB cal RMSE | Low — 1 config change | Halves MC noise variance |
+| Gradient-based cal (diff-rt) | -2 to -3 dB vs Powell | High — new pipeline | Needs Sionna autograd enabled |
+| Separate LOS/NLOS scalar | -1 to -2 dB eval RMSE | Medium — CELL 8e change | NYURay achieves 3.2/5.8 dB this way |
+| Per-building material diversity | -1 to -2 dB | Very High — scene rebuild needed | Requires new scene builder (1802 MHz builder is FROZEN) |
+| Hybrid RT+NN residual correction | R² 0.7-0.8 achievable | Very High — needs training data | Post-thesis research direction |
+
+### Per-building material diversity — status:
+Current scene already has 5 building PLY files (brick/concrete/glass/metal/wood) — one level of diversity. True per-building calibration (each building own material) requires scene builder changes. **1802 MHz scene builder is FROZEN — this cannot be implemented without a new builder.** Not recommended before seeing current cal CELL 8e results.
 
 ---
 
