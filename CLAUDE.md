@@ -88,6 +88,64 @@ Note: targets revised downward — S=False + 19 params introduces more MC noise;
 
 ---
 
+## Scar Hill 915 MHz Status (sionna2_915mhz_dem_simulation_scarhill.ipynb)
+
+**Notebooks created 2026-08-07 — scene not yet built. Ready to run.**
+
+### Site parameters (from scarhill915.csv header)
+| Parameter | Value |
+|-----------|-------|
+| Site name | Scar Hill, Aberdeenshire, Scotland |
+| TX lat/lon | 57.1887 / -2.8547 |
+| BNG grid ref | NJ 483 111 (Lumphanan/Torphins area) |
+| Frequency | 915.95 MHz |
+| TX AGL | 17 m |
+| EIRP | 46.9 dBm (TX_CONDUCTED_DBM=45.6 + 1.3 dBi antenna) |
+| RX AGL | 1.5 m |
+| Noise floor | -124 dBm |
+| Records | 143,541 (max range ~32 km — rural Aberdeenshire) |
+
+### Scene configuration
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| SCENE_WEST/EAST | -2.9374 / -2.7720 | ~10 km wide |
+| SCENE_SOUTH/NORTH | 57.1435 / 57.2339 | ~10 km tall |
+| TERRAIN_PAD_M | 3000 | 3 km beyond scene bbox |
+| CRS | EPSG:27700 (BNG) | valid for all Great Britain |
+| TERRAIN_SOURCE | auto → srtm (30m) | Scotland north of EA LiDAR boundary (55.9°N) |
+| NDSM_PROVIDER | auto → opentopo | same reason |
+| CAL_MAX_DIST_KM | 5.0 | rural — larger effective range than urban |
+| CAL_MIN_DIST_KM | 0.15 | same near-field exclusion |
+| TX_AGL_SCAN_M | [15, 17, 20, 25, 30] | TX height auto-selection |
+| RX_EXTRA_GAIN_DB | -7.8 dB | same Ofcom measurement chain as London |
+
+### Scottish LiDAR (1m — better than SRTM 30m)
+Download from **lidar.scot** — 4 OS 10km squares cover full scene + 3km terrain padding:
+
+| Square | Absolute BNG | Contents |
+|--------|-------------|---------|
+| **NJ40** | E:340-350k, N:800-810k | SW quadrant |
+| **NJ41** | E:340-350k, N:810-820k | W of TX |
+| **NJ50** | E:350-360k, N:800-810k | S of TX |
+| **NJ51** | E:350-360k, N:810-820k | TX area |
+
+Tile names: `NJ4003_1m_DTM.tif` → `NJ5619_1m_DTM.tif` — 272 DTM + 272 DSM = 544 files
+
+After download + merge:
+```bash
+gdal_merge.py -o ~/sionna_rt/scarhill_ofcom_915mhz_dem/dem.tif NJ4*_1m_DTM.tif NJ5*_1m_DTM.tif
+gdal_merge.py -o ~/sionna_rt/scarhill_ofcom_915mhz_dem/lidar_dsm.tif NJ4*_1m_DSM.tif NJ5*_1m_DSM.tif
+```
+Then set `TERRAIN_SOURCE = 'ea_lidar'` and `NDSM_PROVIDER = 'ea'` in scene builder CELL 0.
+
+### Run sequence (same as London)
+```
+Scene builder: CELL 0 → CELL 1 → CELL 2 → CELL 2b → CELL 4 → CELL B3
+Simulation:    CELL 0 → CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CELL 8e (100M)
+```
+
+---
+
 ## London 915 MHz Status (sionna2_915mhz_dem_simulation_london.ipynb)
 
 **Calibration run as of 2026-08-06 — near termination (FTOL):**
