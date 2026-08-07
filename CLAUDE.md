@@ -43,6 +43,16 @@ Notes:
 | 0-1250m | 767 | ON incoh | -2.4 | 10.6 | **0.509** |
 | 0-1250m | 767 | ON coh | -8.2 | 13.4 | 0.220 |
 
+Full 0-1500m summary (ON incoh — best method):
+
+| Range | N | Bias (dB) | RMSE (dB) | R² |
+|-------|---|-----------|-----------|-----|
+| 0-1000m | 701 | -1.4 | 9.6 | **0.442** |
+| 0-1250m | 767 | -2.4 | 10.6 | **0.509** |
+| 0-1500m | 808 | -3.3 | 11.6 | **0.488** |
+
+Trend: R² peaks at 0-1250m; negative bias grows with range (-1.4 → -2.4 → -3.3 dB) — model over-predicts signal at longer ranges (diffraction-dominated paths beyond 1250m).
+
 Full 0-1000m breakdown (N=701, avg ON rays=32313, OFF rays=140):
 
 | Method | Bias (dB) | RMSE (dB) | STD (dB) | R² |
@@ -53,6 +63,17 @@ Full 0-1000m breakdown (N=701, avg ON rays=32313, OFF rays=140):
 | OFF coh | +0.7 | 10.5 | 10.5 | 0.327 |
 | ON best | -0.5 | 9.7 | 9.6 | 0.433 |
 | OFF best | -0.5 | 9.8 | 9.8 | 0.417 |
+
+Full 0-1500m breakdown (N=808, avg ON rays=29070, OFF rays=129):
+
+| Method | Bias (dB) | RMSE (dB) | STD (dB) | R² |
+|--------|-----------|-----------|----------|-----|
+| ON incoh | -3.3 | 11.6 | 11.1 | **0.488** |
+| OFF incoh | -3.0 | 12.0 | 11.6 | 0.453 |
+| ON coh | -9.1 | 14.4 | 11.2 | 0.212 |
+| OFF coh | -1.1 | 12.6 | 12.6 | 0.396 |
+| ON best | -2.2 | 11.6 | 11.4 | 0.490 |
+| OFF best | -2.0 | 11.8 | 11.7 | 0.468 |
 
 Full 0-1250m breakdown (N=767, avg ON rays=30209, OFF rays=133):
 
