@@ -114,10 +114,13 @@ Note: targets revised downward — S=False + 19 params introduces more MC noise;
 | CRS | EPSG:27700 (BNG) | valid for all Great Britain |
 | TERRAIN_SOURCE | auto → srtm (30m) | Scotland north of EA LiDAR boundary (55.9°N) |
 | NDSM_PROVIDER | auto → opentopo | same reason |
-| CAL_MAX_DIST_KM | 5.0 | rural — larger effective range than urban |
+| CAL_MAX_DIST_KM | 1.5 | same as Nottingham 915 — auto-discover finds effective range |
 | CAL_MIN_DIST_KM | 0.15 | same near-field exclusion |
+| CAL_MIN_VALID_FRAC | 0.65 | same as Nottingham 915 |
+| CAL_SAMPLES_PS | 10_000_000 | same as Nottingham 915 |
+| NUM_SAMPLES_PS | 2_000_000 | same as Nottingham 915 (100M override in CELL 4A for final eval) |
 | TX_AGL_SCAN_M | [15, 17, 20, 25, 30] | TX height auto-selection |
-| RX_EXTRA_GAIN_DB | -7.8 dB | same Ofcom measurement chain as London |
+| RX_EXTRA_GAIN_DB | 0.0 dB | same as Nottingham 915 (no chain loss applied) |
 
 ### Scottish LiDAR (1m — better than SRTM 30m)
 Download from **lidar.scot** — 4 OS 10km squares cover full scene + 3km terrain padding:
