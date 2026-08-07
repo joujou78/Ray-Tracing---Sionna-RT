@@ -51,7 +51,7 @@ Full 0-1500m summary (ON incoh — best method):
 | 0-1250m | 767 | -2.4 | 10.6 | **0.509** |
 | 0-1500m | 808 | -3.3 | 11.6 | **0.488** |
 
-Trend: R² peaks at 0-1250m; negative bias grows with range (-1.4 → -2.4 → -3.3 → -4.4 dB) — model over-predicts signal at longer ranges (diffraction-dominated paths beyond 1250m).
+Trend: R² peaks at 0-1250m; negative bias grows then stabilises (-1.4 → -2.4 → -3.3 → -4.4 → -4.0 dB); R² recovers slightly at 2000m (0.448 vs 0.428 at 1750m) — 1750-2000m band well-predicted.
 
 | Range | N | Bias (dB) | RMSE (dB) | R² |
 |-------|---|-----------|-----------|-----|
@@ -59,6 +59,7 @@ Trend: R² peaks at 0-1250m; negative bias grows with range (-1.4 → -2.4 → -
 | 0-1250m | 767 | -2.4 | 10.6 | **0.509** |
 | 0-1500m | 808 | -3.3 | 11.6 | 0.488 |
 | 0-1750m | 857 | -4.4 | 12.6 | 0.428 |
+| 0-2000m | 985 | -4.0 | 12.5 | 0.448 |
 
 Full 0-1000m breakdown (N=701, avg ON rays=32313, OFF rays=140):
 
