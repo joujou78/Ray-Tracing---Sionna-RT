@@ -29,53 +29,82 @@ Notes:
 - ON coh consistently better than incoh at 1802 MHz (shorter wavelength → stronger coherent interference)
 - Crossover at ~1750m: incoh and coh converge, incoh slightly better beyond
 - Weissberger already applied in CELL 8e (always on regardless of CAL_APPLY_WEISSBERGER flag)
-- **Next: recalibrate with 15,486-tree scene → expect significant R² improvement**
 
-## 1802 MHz Calibration — 15,486-tree scene (SECOND RUN — in progress as of 2026-08-06)
+## 1802 MHz Results — 15,486-tree scene (SECOND RUN — CAL_FIX_SCATTER=False, N_AVG=1)
 
-**Settings:** CAL_FIX_SCATTER=False / DISABLE_VEG_DISCS=True / CAL_FIXED_SEED=42 / CAL_MAX_DIST_KM=1.5 / CAL_MIN_DIST_KM=0.15 / 19 free params (6 mats × 3 + scalar) / 30M samples / N_AVG=1
+**Settings:** CAL_FIX_SCATTER=False / DISABLE_VEG_DISCS=True / CAL_FIXED_SEED=42 / CAL_MAX_DIST_KM=1.5 / CAL_MIN_DIST_KM=0.15 / 100M eval samples
+**Note:** CAL_FAR_WEIGHT was 0.0 in this run (bug — overridden at line 300). Fixed to 1.0 for third run.
 
-| Phase | RMSE (dB) | Scalar (dB) | Notes |
-|-------|-----------|-------------|-------|
-| Before calibration | 15.97 | — | 721 RX, 1.55 km auto-range |
-| After Phase 0 scalar | ~15.47 | -4.521 | analytic scalar (fixed from minimize_scalar) |
-| Powell eval 1-9 | 15.315-15.330 | — | MC noise oscillation only |
-| Powell eval 10 | **15.179** | — | real descent found — Powell working |
-| Powell eval 11-12 | 15.321-15.330 | — | exploring neighbourhood |
-| After Powell (expected) | ~13.5-14.5 | TBD | still running |
+**Best method: ON incoh** (ON coh collapsed — 15,486 trees destroy coherent phase)
 
-Key insight: scalar -4.5 dB vs -9.77 dB previous — S unlocked (CAL_FIX_SCATTER=False) gives Powell 3× more leverage vs. S locked.
+| Range | N | Method | Bias (dB) | RMSE (dB) | R² |
+|-------|---|--------|-----------|-----------|-----|
+| 0-1000m | 701 | ON incoh | -1.4 | 9.6 | **0.442** |
+| 0-1000m | 701 | ON coh | -6.6 | 11.6 | 0.187 |
+| 0-1250m | 767 | ON incoh | -2.4 | 10.6 | **0.509** |
+| 0-1250m | 767 | ON coh | -8.2 | 13.4 | 0.220 |
 
-**CELL CAL fixes applied in this session (all committed to cool-cori-rrWbY):**
-| Commit | Fix |
-|--------|-----|
-| `76a7523` | Sensitivity probe threshold 0.40 dB → 0.15 dB (brick was blocked at 0.307 dB) |
-| `d282640` | CAL_SKIP_PROBE double-assignment — bottom override block was silently winning |
-| `7d928e7` | Phase 0 stale `_res_sf.fun` NameError — replaced with analytic `_rmse()` call |
-| `b81b7b9` | CAL_MAX_DIST_KM reverted 2.0 → 1.5 km (2.0 km receivers diffraction-dominated, < 0.3 dB material sensitivity) |
+Full 0-1000m breakdown (N=701, avg ON rays=32313, OFF rays=140):
 
-**Expected CELL 8e results after recalibration:**
-| Range | Old cal R² | Expected new cal R² |
-|-------|-----------|---------------------|
-| 0-750m ON coh | 0.515 | 0.45-0.55 (S unlocked may shift vs S locked) |
-| 0-1000m ON coh | 0.476 | 0.42-0.52 |
-| 0-1250m | 0.508 | 0.40-0.50 |
+| Method | Bias (dB) | RMSE (dB) | STD (dB) | R² |
+|--------|-----------|-----------|----------|-----|
+| ON incoh | -1.4 | 9.6 | 9.5 | **0.442** |
+| OFF incoh | -1.3 | 9.9 | 9.8 | 0.407 |
+| ON coh | -6.6 | 11.6 | 9.5 | 0.187 |
+| OFF coh | +0.7 | 10.5 | 10.5 | 0.327 |
+| ON best | -0.5 | 9.7 | 9.6 | 0.433 |
+| OFF best | -0.5 | 9.8 | 9.8 | 0.417 |
 
-Note: targets revised downward — S=False + 19 params introduces more MC noise; physics floor at 1802 MHz confirmed by literature at R²~0.5.
+Full 0-1250m breakdown (N=767, avg ON rays=30209, OFF rays=133):
+
+| Method | Bias (dB) | RMSE (dB) | STD (dB) | R² |
+|--------|-----------|-----------|----------|-----|
+| ON incoh | -2.4 | 10.6 | 10.4 | **0.509** |
+| OFF incoh | -2.1 | 11.1 | 10.8 | 0.470 |
+| ON coh | -8.2 | 13.4 | 10.6 | 0.220 |
+| OFF coh | -0.2 | 11.7 | 11.7 | 0.407 |
+| ON best | -1.3 | 10.7 | 10.7 | 0.500 |
+| OFF best | -1.2 | 11.0 | 10.9 | 0.475 |
+
+**Key findings:**
+- ON coh collapsed (R²=0.187 at 0-1000m) — 15,486 trees generate massive destructive interference at 1802 MHz (16.7cm wavelength)
+- ON incoh is the best method for 1802 MHz with 15,486-tree scene
+- R²=0.442 at 0-1000m, 0.509 at 0-1250m — matches old 486-tree ON coh baseline (~0.476/0.508)
+- Small negative bias (-1.4 to -2.4 dB) — slight over-prediction at both ranges
+- CAL_FAR_WEIGHT=0.0 bug active during this run — may have limited Powell convergence
+- avg_rays ON=32313 vs OFF=140 — scattering active and providing the dominant propagation mechanism
+- Third run (FAR_WEIGHT=1.0, N_AVG=4) is next — expect improvement on R²
+
+**Comparison vs old 486-tree baseline:**
+| Range | Old (ON coh) | New (ON incoh) | Delta |
+|-------|-------------|----------------|-------|
+| 0-1000m | 0.476 | 0.442 | -0.034 |
+| 0-1250m | 0.508 | 0.509 | +0.001 |
+
+Result: same R² as old 486-tree baseline — CAL_FAR_WEIGHT=0.0 bug likely limited Powell. Third run (FAR_WEIGHT=1.0, N_AVG=4) still pending — may improve further.
+
+## 1802 MHz Calibration History
+
+| Run | Settings | Cal RMSE | Eval R² (0-1000m) | Best method |
+|-----|----------|----------|-------------------|-------------|
+| Run 1 (486-tree scene) | S locked, 7 params | ~8 dB | 0.476 | ON coh |
+| Run 2 (15,486-tree) | S unlocked, CAL_FAR_WEIGHT=0.0 (bug), N_AVG=1 | ~13.5-14.5 dB | **0.442** | ON incoh |
+| **Run 3 (15,486-tree)** | S locked, CAL_FAR_WEIGHT=1.0, N_AVG=4 | **PENDING** | — | — |
 
 ## 1802 MHz Pending Tests
 
 | Priority | Test | How | Expected |
 |----------|------|-----|----------|
-| 1 | CELL 4A → CELL 8e after current CELL CAL | 100M eval | compare vs old 0.515 baseline |
-| 2 | LiDAR crown detection tuning | Adjust LIDAR_TREE_MIN_DIST_M / MIN_H_M | density vs false-positive tradeoff |
+| 1 | LiDAR crown detection tuning | Adjust LIDAR_TREE_MIN_DIST_M / MIN_H_M | density vs false-positive tradeoff |
+| 2 | Separate LOS/NLOS scalar in CELL 8e | Medium complexity | -1 to -2 dB RMSE (NYURay approach) |
 
 ## Key Findings So Far (1802 MHz)
 
 | Finding | Detail |
 |---------|--------|
-| ON coh > ON incoh at 1802 MHz | Shorter wavelength (16.7cm) → coherent interference dominates |
-| Crossover at ~1750m | incoh becomes competitive beyond this range |
+| ON incoh best for 15,486-tree scene | ON coh collapsed (R²=0.187) — tree coherent interference destroys phase at 1802 MHz |
+| Physics floor candidate: R²~0.44-0.51 | Two runs converge here; third run (FAR_WEIGHT=1.0, N_AVG=4) pending before confirming floor |
+| Crossover at ~1750m | incoh becomes competitive beyond this range (old 486-tree finding, still valid) |
 | LiDAR trees: 486 → 15,486 | nDSM peak detection, 5m min spacing, 3-30m height filter, building exclusion |
 | DISABLE_VEG_DISCS=True | Disc veg (itu_ceiling_board) transparent; 3D canopy (canopy_itu_vegetation) active |
 | Weissberger always on in CELL 8e | CAL_APPLY_WEISSBERGER flag only affects CELL CAL, not CELL 8e |
