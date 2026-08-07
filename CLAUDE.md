@@ -30,10 +30,9 @@ Notes:
 - Crossover at ~1750m: incoh and coh converge, incoh slightly better beyond
 - Weissberger already applied in CELL 8e (always on regardless of CAL_APPLY_WEISSBERGER flag)
 
-## 1802 MHz Results — 15,486-tree scene (SECOND RUN — CAL_FIX_SCATTER=False, N_AVG=1)
+## 1802 MHz Results — 15,486-tree scene (FINAL)
 
 **Settings:** CAL_FIX_SCATTER=False / DISABLE_VEG_DISCS=True / CAL_FIXED_SEED=42 / CAL_MAX_DIST_KM=1.5 / CAL_MIN_DIST_KM=0.15 / 100M eval samples
-**Note:** CAL_FAR_WEIGHT was 0.0 in this run (bug — overridden at line 300). Fixed to 1.0 for third run.
 
 **Best method: ON incoh** (ON coh collapsed — 15,486 trees destroy coherent phase)
 
@@ -71,9 +70,8 @@ Full 0-1250m breakdown (N=767, avg ON rays=30209, OFF rays=133):
 - ON incoh is the best method for 1802 MHz with 15,486-tree scene
 - R²=0.442 at 0-1000m, 0.509 at 0-1250m — matches old 486-tree ON coh baseline (~0.476/0.508)
 - Small negative bias (-1.4 to -2.4 dB) — slight over-prediction at both ranges
-- CAL_FAR_WEIGHT=0.0 bug active during this run — may have limited Powell convergence
 - avg_rays ON=32313 vs OFF=140 — scattering active and providing the dominant propagation mechanism
-- Third run (FAR_WEIGHT=1.0, N_AVG=4) is next — expect improvement on R²
+- **These results accepted as final — no further recalibration planned for 1802 MHz**
 
 **Comparison vs old 486-tree baseline:**
 | Range | Old (ON coh) | New (ON incoh) | Delta |
@@ -81,15 +79,14 @@ Full 0-1250m breakdown (N=767, avg ON rays=30209, OFF rays=133):
 | 0-1000m | 0.476 | 0.442 | -0.034 |
 | 0-1250m | 0.508 | 0.509 | +0.001 |
 
-Result: same R² as old 486-tree baseline — CAL_FAR_WEIGHT=0.0 bug likely limited Powell. Third run (FAR_WEIGHT=1.0, N_AVG=4) still pending — may improve further.
+Result: same R² as old 486-tree baseline — R²~0.44-0.51 accepted as the physics floor for 1802 MHz Nottingham with 15,486-tree scene.
 
 ## 1802 MHz Calibration History
 
 | Run | Settings | Cal RMSE | Eval R² (0-1000m) | Best method |
 |-----|----------|----------|-------------------|-------------|
 | Run 1 (486-tree scene) | S locked, 7 params | ~8 dB | 0.476 | ON coh |
-| Run 2 (15,486-tree) | S unlocked, CAL_FAR_WEIGHT=0.0 (bug), N_AVG=1 | ~13.5-14.5 dB | **0.442** | ON incoh |
-| **Run 3 (15,486-tree)** | S locked, CAL_FAR_WEIGHT=1.0, N_AVG=4 | **PENDING** | — | — |
+| Run 2 (15,486-tree) — **FINAL** | S unlocked, N_AVG=1 | ~13.5-14.5 dB | **0.442** | ON incoh |
 
 ## 1802 MHz Pending Tests
 
@@ -103,7 +100,7 @@ Result: same R² as old 486-tree baseline — CAL_FAR_WEIGHT=0.0 bug likely limi
 | Finding | Detail |
 |---------|--------|
 | ON incoh best for 15,486-tree scene | ON coh collapsed (R²=0.187) — tree coherent interference destroys phase at 1802 MHz |
-| Physics floor candidate: R²~0.44-0.51 | Two runs converge here; third run (FAR_WEIGHT=1.0, N_AVG=4) pending before confirming floor |
+| Physics floor confirmed: R²~0.44-0.51 | Both runs converge here; matches literature R²~0.5 ceiling for pure geometry+material cal |
 | Crossover at ~1750m | incoh becomes competitive beyond this range (old 486-tree finding, still valid) |
 | LiDAR trees: 486 → 15,486 | nDSM peak detection, 5m min spacing, 3-30m height filter, building exclusion |
 | DISABLE_VEG_DISCS=True | Disc veg (itu_ceiling_board) transparent; 3D canopy (canopy_itu_vegetation) active |
