@@ -173,7 +173,7 @@ Result: same R² as old 486-tree baseline — R²~0.44-0.51 accepted as the phys
 | CAL_MIN_DIST_KM | 0.15 | same near-field exclusion |
 | CAL_MIN_VALID_FRAC | 0.65 | same as Nottingham 915 |
 | CAL_SAMPLES_PS | 10_000_000 | same as Nottingham 915 |
-| NUM_SAMPLES_PS | 2_000_000 | same as Nottingham 915 (100M override in CELL 4A for final eval) |
+| NUM_SAMPLES_PS | 10_000_000 | matches CAL_SAMPLES_PS=10M — skip CELL 4A for rural scenes (scatter mismatch at 100M) |
 | TX_AGL_SCAN_M | [15, 17, 20, 25, 30] | TX height auto-selection |
 | RX_EXTRA_GAIN_DB | 0.0 dB | same as Nottingham 915 (no chain loss applied) |
 
