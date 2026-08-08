@@ -145,7 +145,26 @@ Result: same R² as old 486-tree baseline — R²~0.44-0.51 accepted as the phys
 
 ## Scar Hill 915 MHz Status (sionna2_915mhz_dem_simulation_scarhill.ipynb)
 
-**Notebooks created 2026-08-07 — scene not yet built. Ready to run.**
+**Scene built 2026-08-08 — CELL CAL completed (10.71 dB, iteration 1). CELL 8e run at 10M samples.**
+
+### Results (SRTM 30m terrain, 10M eval samples, ON incoh best method)
+
+| Range | N | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|---|-----------|-----------|-----|-------|
+| 0-500m | 75 | +0.7 | 12.0 | -3.43 | near-field scatter noise |
+| 0-1000m | 140 | +4.7 | 12.4 | -0.11 | over-prediction mid-range |
+| **0-1250m** | **179** | **+0.9** | **15.1** | **+0.083** | **best — bias-centred** |
+| 0-1500m | 202 | +2.5 | 15.8 | -0.10 | |
+| 0-3000m | 375 | -1.9 | 16.6 | -0.007 | near-zero bias |
+| 0-3500m | 441 | -6.1 | 19.3 | +0.055 | |
+
+**Key findings:**
+- R²=0.083 peak (0-1250m) — SRTM 30m physics floor for rural hilltop site
+- avg_rays ON=19k-40k vs OFF=55 — scatter dominant (DISABLE_VEG_DISCS=False, S=0.50)
+- Calibration centred (+0.9 dB at 0-1250m) — cal correct, R² limited by terrain resolution
+- CELL CAL: 10.71 dB (820 evals, single iteration, no auto-retry)
+- NUM_SAMPLES_PS=10M matches CAL_SAMPLES_PS=10M — fair eval (100M causes scatter mismatch)
+- **Only meaningful improvement: Scottish LiDAR 1m DTM (lidar.scot NJ40/41/50/51)**
 
 ### Site parameters (from scarhill915.csv header)
 | Parameter | Value |
@@ -163,7 +182,7 @@ Result: same R² as old 486-tree baseline — R²~0.44-0.51 accepted as the phys
 ### Scene configuration
 | Parameter | Value | Notes |
 |-----------|-------|-------|
-| SCENE_WEST/EAST | -2.9374 / -2.7720 | ~10 km wide |
+| SCENE_WEST/EAST | -2.9374 / -2.65 | ~15 km wide (expanded to cover all 1200 receivers) |
 | SCENE_SOUTH/NORTH | 57.1435 / 57.2339 | ~10 km tall |
 | TERRAIN_PAD_M | 3000 | 3 km beyond scene bbox |
 | CRS | EPSG:27700 (BNG) | valid for all Great Britain |
