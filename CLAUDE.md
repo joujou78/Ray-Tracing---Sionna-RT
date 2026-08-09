@@ -223,6 +223,62 @@ Simulation:    CELL 0 → CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CE
 
 ---
 
+## Nottingham 2695 MHz Status (sionna2_2695mhz_dem_simulation.ipynb)
+
+**Notebook created 2026-08-09 — ready to run. Scene reused from 1802 MHz (no rebuild needed).**
+
+### Site parameters (from nottingham2695.csv header)
+| Parameter | Value |
+|-----------|-------|
+| Site name | Nottingham |
+| TX lat/lon | 52.9863 / -1.2559 (same mast as 1802 MHz) |
+| Frequency | 2695 MHz |
+| TX AGL | 17 m |
+| TX amplifier power | 49.2 dBm |
+| TX cable loss | 2.2 dB |
+| TX antenna gain | 2.2 dBi |
+| TX EIRP | 56 dBm (TX_CONDUCTED_DBM=53.8 + 2.2 dBi) |
+| RX AGL | 1.5 m |
+| RX chain (total) | -9.3 dB (antenna -1 + cable -0.3 + splitter -6.3 + BPF -1.7) |
+| Noise floor | -120 dBm |
+| Records | 261,967 (36,351 within scene bbox; 12,594 within 1.5 km cal range) |
+
+### Scene and simulation configuration
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| SCENE_BASE_DIR | nottingham_ofcom2018_1802mhz_dem | reuse existing scene — no rebuild |
+| BASE_DIR | nottingham_ofcom2018_2695mhz_dem | all outputs go here |
+| SCENE_WEST/EAST | -1.294229 / -1.218595 | same as 1802 MHz |
+| SCENE_SOUTH/NORTH | 52.963691 / 53.008909 | same as 1802 MHz |
+| FREQUENCY_HZ | 2695e6 | 2695 MHz |
+| VEG_CONDUCTIVITY | 0.15 S/m | ITU-R P.833 at 2.7 GHz (0.05→0.10→0.15 at 0.9→1.8→2.7 GHz) |
+| VEG_RELATIVE_PERMITTIVITY | 17.0 | ITU-R P.833 — portable 0.9-3.6 GHz |
+| DISABLE_VEG_DISCS | True | all disc/tree geometry transparent; Weissberger post-hoc in CELL 8e |
+| CAL_FIX_SCATTER | False | S free (er+sigma+S calibrated jointly) |
+| CAL_N_AVG_SOLVE | 1 | fixed seed sufficient |
+| CAL_SAMPLES_PS | 10_000_000 | 10M — same as 1802 MHz second run |
+| NUM_SAMPLES_PS | 100_000_000 | 100M eval (optimal per 915 MHz benchmark) |
+| CAL_MAX_DIST_KM | 1.5 | 12,594 cal receivers within range |
+| CAL_MIN_DIST_KM | 0.15 | near-field exclusion |
+| NOISE_FLOOR_DBM | -120.0 | from CSV header |
+| Sigma bounds | frequency-derived | _SIG_MIN/MAX_PER_MAT computed from ITU-R P.2040-2 at 2695 MHz |
+| Weissberger | auto-scales | uses FREQUENCY_HZ/1e9 — 12% more attenuation/m than 1802 MHz |
+| Calibration files | calibrated_materials_2695mhz.json + scalar_offset_2695mhz.json | saved to BASE_DIR |
+
+### Pre-run setup (on your machine)
+```bash
+mkdir -p ~/sionna_rt/nottingham_ofcom2018_2695mhz_dem/results
+cp nottingham2695.csv ~/sionna_rt/nottingham_ofcom2018_2695mhz_dem/
+```
+
+### Run sequence
+```
+NO scene builder needed — reuses 1802 MHz scene directly.
+Simulation: CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CELL 8e
+```
+
+---
+
 ## London 915 MHz Status (sionna2_915mhz_dem_simulation_london.ipynb)
 
 **Calibration run as of 2026-08-06 — near termination (FTOL):**
