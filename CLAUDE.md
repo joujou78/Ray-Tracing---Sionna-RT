@@ -225,7 +225,7 @@ Simulation:    CELL 0 → CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CE
 
 ## Nottingham 2695 MHz Status (sionna2_2695mhz_dem_simulation.ipynb)
 
-**Run 2 CELL 8e in progress (2026-08-09). Best result so far: R²=0.515 at 0-1000m (ON incoh) — beats Run 1 by 27 points.**
+**Run 2 CELL 8e complete (2026-08-09). Best result: R²=0.574 at 0-1250m (ON incoh) — beats 1802 MHz at same range (R²=0.509).**
 
 ### Site parameters (from nottingham2695.csv header)
 | Parameter | Value |
@@ -291,11 +291,12 @@ Simulation:    CELL 0 → CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CE
 
 **Best method: ON incoh** — scattering provides 45+ R² points vs OFF incoh at 0-1000m
 
-| Range | N | Bias (dB) | RMSE (dB) | R² (ON incoh) | R² (OFF incoh) | Notes |
-|-------|---|-----------|-----------|---------------|----------------|-------|
-| 0-750m | 198 | +1.5 | 11.8 | **0.321** | 0.251 | |
-| 0-900m | 233 | +2.5 | 11.5 | **0.408** | 0.171 | |
-| 0-1000m | 256 | +2.7 | 11.1 | **0.515** | 0.063 | peak — within calibrated range |
+| Range | N (ON) | Bias (dB) | RMSE (dB) | R² (ON incoh) | R² (OFF incoh) | Notes |
+|-------|--------|-----------|-----------|---------------|----------------|-------|
+| 0-750m | 198 | +1.5 | 11.8 | 0.321 | 0.251 | |
+| 0-900m | 233 | +2.5 | 11.5 | 0.408 | 0.171 | |
+| 0-1000m | 256 | +2.7 | 11.1 | 0.515 | 0.063 | within calibrated range |
+| **0-1250m** | **324** | **+4.8** | **12.7** | **0.574** | **0.070** | **peak R² — beats 1802 MHz (0.509)** |
 
 Full 0-1000m breakdown (N=256, avg ON rays=17702, OFF rays=80):
 
@@ -307,18 +308,30 @@ Full 0-1000m breakdown (N=256, avg ON rays=17702, OFF rays=80):
 | OFF coh | +7.3 | 16.5 | -0.065 |
 | ON best | +5.5 | 12.9 | 0.351 |
 
-**Key findings (Run 2):**
-- CAL_MAX_DIST_KM=1.0 (below Rbp=916m) eliminates dual-slope sign-flip — R² jumps from 0.246 to 0.515 at 0-1000m
-- Scattering is critical: ON incoh (0.515) vs OFF incoh (0.063) — 45 point gap; without scatter the model fails
-- ON coh competitive (0.376) — unlike 1802 MHz where coherent collapsed; fewer trees with DISABLE_CANOPY=True
-- Bias well-centred at +2.7 dB — slight over-prediction across LOS range
-- RMSE=11.1 dB — 3.3 dB above physics floor (σ_SF=7.82 dB); mainly MC noise from 10M cal samples
-- Near-field (0-100m, N=24): R²=-12 — below CAL_MIN_DIST_KM floor; excluded from cal but drag cumulative stats
+Full 0-1250m breakdown (N=324 ON / 264 OFF, avg ON rays=12398, OFF rays=55):
 
-**Next step: Run 3 (30M samples, EVAL_MIN_DIST_KM=0.15)**
+| Method | Bias (dB) | RMSE (dB) | R² |
+|--------|-----------|-----------|-----|
+| ON incoh | +4.8 | 12.7 | **0.574** |
+| OFF incoh | +6.4 | 15.8 | 0.070 |
+| ON coh | -3.7 | 14.6 | 0.436 |
+| OFF coh | +7.6 | 16.9 | -0.058 |
+| ON best | +7.5 | 14.4 | 0.447 |
+
+**Key findings (Run 2):**
+- CAL_MAX_DIST_KM=1.0 (below Rbp=916m) eliminates dual-slope sign-flip — R² jumps from 0.246 (Run 1) to 0.574 at 0-1250m
+- Scattering is critical: ON incoh (0.574) vs OFF incoh (0.070) — 50 point gap; model fails without scatter
+- 50 receivers in 0-1250m have scatter-only paths (no LOS/specular) — would be coverage holes with scattering OFF
+- ON coh competitive (0.436) — unlike 1802 MHz where coherent collapsed; DISABLE_CANOPY=True reduces destructive interference
+- Bias grows with range: +2.7 dB at 0-1000m → +4.8 dB at 0-1250m — slight over-prediction in NLOS regime
+- RMSE=11.1 dB at 0-1000m — 3.3 dB above physics floor (σ_SF=7.82 dB); mainly MC noise from 10M cal samples
+- R² peaks at 0-1250m (0.574) — 1000-1250m band well-predicted despite being beyond calibrated range
+- Beats 1802 MHz at 0-1250m: 2695 MHz R²=0.574 vs 1802 MHz R²=0.509
+
+**Next step: Run 3 (30M samples, EVAL_MIN_DIST_KM=0.15) — already configured**
 - CAL_SAMPLES_PS=30M already committed — reduces MC noise floor ±0.21→±0.12 dB
 - EVAL_MIN_DIST_KM=0.15 already committed — removes near-field noise from stats
-- Expected: cal RMSE ~11-12 dB, eval RMSE ~9-10 dB, R² > 0.55 at 0-1000m
+- Expected: cal RMSE ~11-12 dB, eval RMSE ~9-10 dB at 0-1000m, R² > 0.60 at 0-1250m
 - After Run 3: implement separate LOS/NLOS scalar in CELL 8e (-1 to -2 dB RMSE)
 
 ### Dual-slope breakpoint analysis (ITU-R P.1411)
