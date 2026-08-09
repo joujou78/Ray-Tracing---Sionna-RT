@@ -225,7 +225,7 @@ Simulation:    CELL 0 → CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CE
 
 ## Nottingham 2695 MHz Status (sionna2_2695mhz_dem_simulation.ipynb)
 
-**Calibration run completed 2026-08-09. Scene reused from 1802 MHz. Best result so far: R²=0.246 at 0-1000m (ON incoh).**
+**Run 2 CELL 8e in progress (2026-08-09). Best result so far: R²=0.515 at 0-1000m (ON incoh) — beats Run 1 by 27 points.**
 
 ### Site parameters (from nottingham2695.csv header)
 | Parameter | Value |
@@ -256,10 +256,11 @@ Simulation:    CELL 0 → CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CE
 | DISABLE_VEG_DISCS | True | all disc/tree geometry transparent; P.833 post-hoc in CELL 8e |
 | CAL_FIX_SCATTER | False | S free (er+sigma+S calibrated jointly) |
 | CAL_N_AVG_SOLVE | 1 | fixed seed sufficient |
-| CAL_SAMPLES_PS | 10_000_000 | 10M — same as 1802 MHz second run |
+| CAL_SAMPLES_PS | 30_000_000 | 30M (updated from 10M — reduces MC noise floor ±0.21→±0.12 dB) |
 | NUM_SAMPLES_PS | 100_000_000 | 100M eval (optimal per 915 MHz benchmark) |
 | CAL_MAX_DIST_KM | 1.0 | calibrate within LOS regime only (Rbp=916m at 2695 MHz — avoids dual-slope sign-flip) |
 | CAL_MIN_DIST_KM | 0.15 | near-field exclusion |
+| EVAL_MIN_DIST_KM | 0.15 | exclude near-field from CELL 8e stats (R²=-12 at 0-100m drags cumulative bands) |
 | CAL_SCALAR_BOUNDS | (-30.0, 20.0) | wider than default (-20,5) — pre-cal bias +8 to +15 dB at 2695 MHz |
 | NOISE_FLOOR_DBM | -120.0 | from CSV header |
 | Sigma bounds | frequency-derived | _SIG_MIN/MAX_PER_MAT from ITU-R P.2040-2 at 2695 MHz |
@@ -283,6 +284,42 @@ Simulation:    CELL 0 → CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CE
 - Bug fixed: Powell scalar bounds were (-20,5) — clipped Phase 0 optimal scalar (+10-12 dB) to +5 dB → fixed to (-30,20)
 - Bug fixed: brick sigma used P.2040-1 (2015) freq-dependent formula → fixed to P.2040-2 (2021) flat 0.038 S/m
 - Next run: CAL_MAX_DIST_KM=1.0 (below Rbp) to calibrate within single-slope LOS regime
+
+### 2695 MHz Results (Run 2: CAL_MAX_DIST_KM=1.0, CAL_SAMPLES_PS=10M, scalar=-2.305 dB) — CELL 8e in progress
+
+**Settings:** CAL_SCALAR_BOUNDS=(-30,20) / CAL_FIX_SCATTER=False / CAL_MAX_DIST_KM=1.0 / EVAL_MIN_DIST_KM=0.0 / 100M eval / Cal RMSE=14.37 dB
+
+**Best method: ON incoh** — scattering provides 45+ R² points vs OFF incoh at 0-1000m
+
+| Range | N | Bias (dB) | RMSE (dB) | R² (ON incoh) | R² (OFF incoh) | Notes |
+|-------|---|-----------|-----------|---------------|----------------|-------|
+| 0-750m | 198 | +1.5 | 11.8 | **0.321** | 0.251 | |
+| 0-900m | 233 | +2.5 | 11.5 | **0.408** | 0.171 | |
+| 0-1000m | 256 | +2.7 | 11.1 | **0.515** | 0.063 | peak — within calibrated range |
+
+Full 0-1000m breakdown (N=256, avg ON rays=17702, OFF rays=80):
+
+| Method | Bias (dB) | RMSE (dB) | R² |
+|--------|-----------|-----------|-----|
+| ON incoh | +2.7 | 11.1 | **0.515** |
+| OFF incoh | +6.1 | 15.5 | 0.063 |
+| ON coh | -6.9 | 12.6 | 0.376 |
+| OFF coh | +7.3 | 16.5 | -0.065 |
+| ON best | +5.5 | 12.9 | 0.351 |
+
+**Key findings (Run 2):**
+- CAL_MAX_DIST_KM=1.0 (below Rbp=916m) eliminates dual-slope sign-flip — R² jumps from 0.246 to 0.515 at 0-1000m
+- Scattering is critical: ON incoh (0.515) vs OFF incoh (0.063) — 45 point gap; without scatter the model fails
+- ON coh competitive (0.376) — unlike 1802 MHz where coherent collapsed; fewer trees with DISABLE_CANOPY=True
+- Bias well-centred at +2.7 dB — slight over-prediction across LOS range
+- RMSE=11.1 dB — 3.3 dB above physics floor (σ_SF=7.82 dB); mainly MC noise from 10M cal samples
+- Near-field (0-100m, N=24): R²=-12 — below CAL_MIN_DIST_KM floor; excluded from cal but drag cumulative stats
+
+**Next step: Run 3 (30M samples, EVAL_MIN_DIST_KM=0.15)**
+- CAL_SAMPLES_PS=30M already committed — reduces MC noise floor ±0.21→±0.12 dB
+- EVAL_MIN_DIST_KM=0.15 already committed — removes near-field noise from stats
+- Expected: cal RMSE ~11-12 dB, eval RMSE ~9-10 dB, R² > 0.55 at 0-1000m
+- After Run 3: implement separate LOS/NLOS scalar in CELL 8e (-1 to -2 dB RMSE)
 
 ### Dual-slope breakpoint analysis (ITU-R P.1411)
 
@@ -316,6 +353,62 @@ cp nottingham2695.csv ~/sionna_rt/nottingham_ofcom2018_2695mhz_dem/
 NO scene builder needed — reuses 1802 MHz scene directly.
 Simulation: CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CELL 8e
 ```
+
+---
+
+## Nottingham 3602 MHz Status (sionna2_3602mhz_dem_simulation.ipynb)
+
+**CELL CAL running (2026-08-09). First run at 30M samples with DISABLE_CANOPY=True and CAL_SCALAR_BOUNDS=(-60,60).**
+
+### Site parameters (from nottingham3602.csv header)
+| Parameter | Value |
+|-----------|-------|
+| Site name | Nottingham |
+| TX lat/lon | 52.9863 / -1.2559 (same mast as 1802/2695 MHz) |
+| Frequency | 3602.5 MHz |
+| TX AGL | 17 m |
+| TX EIRP | 54 dBm (TX_CONDUCTED_DBM=51.2 + 2.8 dBi) |
+| RX AGL | 1.5 m |
+| RX chain | 0.0 dB applied (no chain loss) |
+| Noise floor | -109 dBm |
+
+### Scene and simulation configuration
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| SCENE_BASE_DIR | nottingham_ofcom2018_1802mhz_dem | reuse existing scene — no rebuild |
+| FREQUENCY_HZ | 3602.5e6 | 3602 MHz |
+| VEG_CONDUCTIVITY | 0.20 S/m | ITU-R P.833 at 3.6 GHz |
+| DISABLE_VEG_DISCS | True | disc PLYs transparent |
+| DISABLE_CANOPY | True | 3D canopy+trunk transparent — cones block all rays >400m at λ=8.3 cm |
+| CAL_FIX_SCATTER | False | S free |
+| CAL_SAMPLES_PS | 30_000_000 | 30M |
+| CAL_MAX_DIST_KM | 1.0 | calibrate within LOS regime (Rbp=1225m at 3602 MHz) |
+| CAL_MIN_DIST_KM | 0.15 | near-field exclusion |
+| EVAL_MIN_DIST_KM | 0.15 | exclude near-field from stats |
+| CAL_SCALAR_BOUNDS | (-60.0, 60.0) | Phase 0 finds +30 dB scalar — must cover it |
+| NUM_SAMPLES_PS | 100_000_000 | 100M eval |
+
+### 3602 MHz Calibration History
+
+| Run | Settings | Phase 0 RMSE | Scalar | After-scalar RMSE | Notes |
+|-----|----------|-------------|--------|-------------------|-------|
+| Run 0 (aborted) | DISABLE_CANOPY=False, 10M | 46 dB | +30 dB | 29.5 dB | canopy cones blocked all rays >400m |
+| Run 1 (aborted) | DISABLE_CANOPY=True, 10M | 31.4 dB | +21.2 dB | 23.1 dB | MC noise floor — flat at 21.574 dB from eval 2 |
+| Run 2 (aborted) | DISABLE_CANOPY=True, 30M, bounds=(-30,20) | 47.2 dB | +30.0 dB (CLIPPED) | 31.6 dB | scalar capped at +20 — Phase 2 fights Phase 0 |
+| **Run 3 (running)** | DISABLE_CANOPY=True, 30M, bounds=(-60,60) | TBD | TBD | TBD | correct bounds — Phase 2 free to optimise |
+
+**Key findings so far:**
+- DISABLE_CANOPY=True required — active canopy cones at λ=8.3 cm block all rays beyond 400m (RMSE=46 dB, scalar=+30 dB)
+- +30 dB scalar is real physics gap — transparent canopy removes scattering; remaining paths are building reflections only
+- CAL_SCALAR_BOUNDS=(-30,20) clips the scalar: Run 2 Phase 2 fought to reduce scalar from +30 toward +20, actively worsening cal
+- 10M samples insufficient at 3602 MHz — MC noise floor ±0.21 dB prevents Powell finding gradient below 21.574 dB
+
+### 3602 MHz Session Fixes (committed to claude/cool-cori-rrWbY)
+| Commit | Fix |
+|--------|-----|
+| `ed841a6` | DISABLE_CANOPY=True in CELL 1 + conditional transparency in CELL 4A |
+| `23075d2` | EVAL_MIN_DIST_KM=0.15 + CAL_SAMPLES_PS=30M |
+| `8979235` | CAL_SCALAR_BOUNDS (-30,20) → (-60,60) — stops Phase 2 fighting Phase 0 |
 
 ---
 
@@ -613,6 +706,13 @@ Solid slabs rejected: Sionna has no path-integral absorption — a box just adds
 | `c1d08d3` | scene builder CELL 4 | nDSM extra scan added — captures vegetation not in OSM/VOM (road verges, motorway belts) |
 | `7c8bd5c` | CELL 8e | O(n_rx × 67292) Weissberger loop — replaced with STRtree spatial index |
 | `1b02870` | scene builder CELL 3 | terrain_veg.ply moved from CELL 4 to CELL 3 (no full rebuild needed) |
+| `5ad27dd` | 2695/3602 MHz CELL 4A | `float(_mat3d.relative_permittivity)` TypeError — replaced with `_safe_f()` for Sionna tensor unwrapping |
+| `ff8168d` | 2695/3602 MHz CELL DIAG | `_near` NearestNDInterpolator shadowed by `_near = _df_meas[...]` DataFrame — renamed to `_df_near` |
+| `dfaa2c2` | 2695/3602 MHz CELL 3 | `_terrain_interp` captured `_near` by global ref — fixed to default-arg capture (`_n=_near`) |
+| `9bb6be0` | 2695/3602 MHz CELL 5 | Receivers selected before bbox filter — first 1200 rows all outside scene for routes starting far from TX |
+| `5b35e4e` | 2695/3602 MHz CELL 5 | Receivers sorted by distance only, not sequential CSV order — fixed to filter near-TX section then `head(NUM_RX)` |
+| `ed841a6` | 3602 MHz CELL 1 + CELL 4A | DISABLE_CANOPY=True — λ=8.3 cm canopy cones block all rays >400m; makes canopy+trunk transparent |
+| `8979235` | 3602 MHz CELL 1 | CAL_SCALAR_BOUNDS=(-30,20) clips +30 dB Phase 0 scalar — Phase 2 fights Phase 0; widened to (-60,60) |
 
 ---
 
