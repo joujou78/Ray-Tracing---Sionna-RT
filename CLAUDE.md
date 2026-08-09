@@ -225,7 +225,7 @@ Simulation:    CELL 0 → CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CE
 
 ## Nottingham 2695 MHz Status (sionna2_2695mhz_dem_simulation.ipynb)
 
-**Notebook created 2026-08-09 — ready to run. Scene reused from 1802 MHz (no rebuild needed).**
+**Calibration run completed 2026-08-09. Scene reused from 1802 MHz. Best result so far: R²=0.246 at 0-1000m (ON incoh).**
 
 ### Site parameters (from nottingham2695.csv header)
 | Parameter | Value |
@@ -253,17 +253,57 @@ Simulation:    CELL 0 → CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CE
 | FREQUENCY_HZ | 2695e6 | 2695 MHz |
 | VEG_CONDUCTIVITY | 0.15 S/m | ITU-R P.833 at 2.7 GHz (0.05→0.10→0.15 at 0.9→1.8→2.7 GHz) |
 | VEG_RELATIVE_PERMITTIVITY | 17.0 | ITU-R P.833 — portable 0.9-3.6 GHz |
-| DISABLE_VEG_DISCS | True | all disc/tree geometry transparent; Weissberger post-hoc in CELL 8e |
+| DISABLE_VEG_DISCS | True | all disc/tree geometry transparent; P.833 post-hoc in CELL 8e |
 | CAL_FIX_SCATTER | False | S free (er+sigma+S calibrated jointly) |
 | CAL_N_AVG_SOLVE | 1 | fixed seed sufficient |
 | CAL_SAMPLES_PS | 10_000_000 | 10M — same as 1802 MHz second run |
 | NUM_SAMPLES_PS | 100_000_000 | 100M eval (optimal per 915 MHz benchmark) |
-| CAL_MAX_DIST_KM | 1.5 | 12,594 cal receivers within range |
+| CAL_MAX_DIST_KM | 1.0 | calibrate within LOS regime only (Rbp=916m at 2695 MHz — avoids dual-slope sign-flip) |
 | CAL_MIN_DIST_KM | 0.15 | near-field exclusion |
+| CAL_SCALAR_BOUNDS | (-30.0, 20.0) | wider than default (-20,5) — pre-cal bias +8 to +15 dB at 2695 MHz |
 | NOISE_FLOOR_DBM | -120.0 | from CSV header |
-| Sigma bounds | frequency-derived | _SIG_MIN/MAX_PER_MAT computed from ITU-R P.2040-2 at 2695 MHz |
-| Weissberger | auto-scales | uses FREQUENCY_HZ/1e9 — 12% more attenuation/m than 1802 MHz |
+| Sigma bounds | frequency-derived | _SIG_MIN/MAX_PER_MAT from ITU-R P.2040-2 at 2695 MHz |
+| Vegetation formula | ITU-R P.833-10 | _p833_atten_db() preferred at 2-3 GHz (Weissberger under-estimates ~40%) |
 | Calibration files | calibrated_materials_2695mhz.json + scalar_offset_2695mhz.json | saved to BASE_DIR |
+
+### 2695 MHz Results (Run 1: CAL_MAX_DIST_KM=1.5, P.833 vegetation, brick P.2040-2 fix)
+
+**Settings:** CAL_SCALAR_BOUNDS=(-30,20) / CAL_FIX_SCATTER=False / CAL_MAX_DIST_KM=1.5 / P.833 vegetation / 100M eval
+
+| Range | N | Method | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|---|--------|-----------|-----------|-----|-------|
+| 0-1000m | 256 | ON incoh | -6.5 | 13.9 | **0.246** | LOS regime dominant |
+| 0-1250m | 328 | ON incoh | 0.0 | 17.8 | 0.173 | dual-slope sign-flip |
+
+**Key findings:**
+- Dual-slope breakpoint at Rbp = 916m (4 × hBS × hUT × f/c = 4×17×1.5×2695e6/3e8)
+- 0-1000m bias = -6.5 dB (under-predicts) vs 1000-1250m bias = +23.1 dB (massively over-predicts)
+- Calibration averages to 0.0 dB at 0-1250m — masks sign-flip, suppresses R² from 0.246 to 0.173
+- 3GPP TR 38.901 UMa NLOS shadow fading floor: σ_SF = 7.82 dB (physics minimum RMSE)
+- Bug fixed: Powell scalar bounds were (-20,5) — clipped Phase 0 optimal scalar (+10-12 dB) to +5 dB → fixed to (-30,20)
+- Bug fixed: brick sigma used P.2040-1 (2015) freq-dependent formula → fixed to P.2040-2 (2021) flat 0.038 S/m
+- Next run: CAL_MAX_DIST_KM=1.0 (below Rbp) to calibrate within single-slope LOS regime
+
+### Dual-slope breakpoint analysis (ITU-R P.1411)
+
+Rbp = 4 × hBS × hUT × f / c — frequency comparison:
+
+| Frequency | Rbp | LOS regime | NLOS regime |
+|-----------|-----|------------|-------------|
+| 915 MHz | 311 m | 0-311m | 311m+ |
+| 1802 MHz | 613 m | 0-613m | 613m+ |
+| **2695 MHz** | **916 m** | **0-916m** | **916m+** |
+
+At 2695 MHz the breakpoint falls WITHIN the 0-1.5km evaluation range — calibrating across it mixes two physics regimes and destroys R².
+
+### Literature fixes applied (committed `fe21b29`)
+
+| Fix | Formula | Impact |
+|-----|---------|--------|
+| ITU-R P.833-10 vegetation | A = Am × (1 − exp(−d × γ/Am)); Am=25 dB, γ=2.0 dB/m at ~3 GHz | 8.3 dB at 5m depth vs Weissberger 4.0 dB — 40% more attenuation |
+| ITU-R P.2040-2 (2021) brick | σ = 0.038 S/m, freq-independent (d=0) | Corrects 47% overcalculation at 2695 MHz vs old P.2040-1 value |
+| 3GPP TR 38.901 UMa reference | LOS PL=28.0+22·log10(d3D)+20·log10(fc); NLOS σ_SF=7.82 dB | Sets physics floor expectation in CELL 8e output |
+| CAL_SCALAR_BOUNDS=(-30,20) | Wider Powell scalar range | Prevents Phase 0 +10-12 dB optimal scalar from being clipped to +5 dB |
 
 ### Pre-run setup (on your machine)
 ```bash
