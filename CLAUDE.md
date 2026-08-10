@@ -328,6 +328,27 @@ Full 0-1250m breakdown (N=324 ON / 264 OFF, avg ON rays=12398, OFF rays=55):
 - R² peaks at 0-1250m (0.574) — 1000-1250m band well-predicted despite being beyond calibrated range
 - Beats 1802 MHz at 0-1250m: 2695 MHz R²=0.574 vs 1802 MHz R²=0.509
 
+Full distance breakdown (ON incoh — best method):
+
+| Range | N (ON) | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|--------|-----------|-----------|-----|-------|
+| 0-500m | 132 | +0.1 | 13.3 | -0.536 | near-field noise (below CAL_MIN_DIST_KM floor) |
+| 0-750m | 198 | +1.5 | 11.8 | 0.321 | |
+| 0-900m | 233 | +2.5 | 11.5 | 0.408 | |
+| 0-1000m | 256 | +2.7 | 11.1 | **0.515** | calibrated range ceiling |
+| 0-1250m | 324 | +4.8 | 12.7 | **0.574** | peak R² |
+| 0-1500m | 504 | +1.3 | 16.8 | 0.282 | dual-slope NLOS transition — sharp R² drop |
+| 0-1750m | 651 | -0.4 | 19.6 | -0.109 | deep NLOS |
+| 0-2000m | 975 | +0.3 | 18.2 | -0.293 | bias centred; RMSE recovers slightly |
+| 0-2250m | 1110 | +0.6 | 17.2 | -0.280 | |
+
+**Key observations (full range):**
+- Hard cliff at 1250m → 1500m (R² 0.574 → 0.282) — dual-slope NLOS transition zone
+- Bias stays near zero at all ranges (+0.6 dB at 0-2250m) — scalar calibration effective throughout
+- RMSE recovers 1750m+ (19.6 → 18.2 → 17.2 dB) — deep NLOS simpler geometry, fewer reflections
+- OFF methods collapse beyond 1250m: OFF incoh R²=-2.929 at 0-2250m (RMSE=32.7 dB)
+- Scattering covers 318 additional receivers at 0-2250m (1110 ON vs 792 OFF valid paths)
+
 **Next step: Run 3 (30M samples, EVAL_MIN_DIST_KM=0.15) — already configured**
 - CAL_SAMPLES_PS=30M already committed — reduces MC noise floor ±0.21→±0.12 dB
 - EVAL_MIN_DIST_KM=0.15 already committed — removes near-field noise from stats
