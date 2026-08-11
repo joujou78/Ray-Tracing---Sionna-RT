@@ -518,6 +518,25 @@ TX_CONDUCTED_DBM    = 49.0
 ### Per-building material diversity — status:
 Current scene already has 5 building PLY files (brick/concrete/glass/metal/wood) — one level of diversity. True per-building calibration (each building own material) requires scene builder changes. **1802 MHz scene builder is FROZEN — this cannot be implemented without a new builder.** Not recommended before seeing current cal CELL 8e results.
 
+### Thesis References — Key Citations
+
+#### Dual LOS/NLOS scalar justification
+- **3GPP TR 38.901** (v18, 2024) — "Study on channel model for frequencies from 0.5 to 100 GHz." Defines separate LOS/NLOS path loss models, shadow fading σ (UMa NLOS: σ_SF=7.82 dB), and the breakpoint Rbp = 4·hBS·hUT·f/c. The dual-slope structure and LOS/NLOS separation implemented in CELL 8e are a direct application of this model.
+- **ITU-R P.1411-12** (2019) — "Propagation data and prediction methods for the planning of short-range outdoor radiocommunication systems and radio local area networks." Defines the dual-slope breakpoint and separate LOS/NLOS exponents used to derive Rbp = 916m (2695 MHz) and 1225m (3602 MHz).
+- **NYURay (Ju, Xing, Kanhere, Rappaport — NYU WIRELESS)** — Outdoor ray tracing validation at 6.75/16.95 GHz. Achieves 3.2 dB LOS / 5.8 dB NLOS RMSE using separate per-zone mean corrections and per-building material classification from LiDAR. Search: "NYURay calibrated outdoor" on IEEE Xplore.
+
+#### Physics floor and RT calibration
+- **arXiv:2507.19653** — Confirms R²~0.5 ceiling for pure geometry+material calibration in dense urban outdoor at 1.8 GHz. Cited as physics floor justification for 1802 MHz results.
+- **NVLabs diff-rt-calibration** (Hoydis et al., NVIDIA) — `Learned_Materials.ipynb`, `Neural_Materials.ipynb`, `instant-rm/Calibration.ipynb`. Gradient-based and neural material calibration for Sionna RT. Validated indoors (DICHASUS dataset, Stuttgart, 2.4 GHz).
+- **Wireless InSite** (Remcom) — Indoor RT benchmarks: 5.0 dB @ 2.4 GHz, 5.1 dB @ 5 GHz. Heavily material-dependent.
+
+#### Vegetation attenuation
+- **ITU-R P.833-10** (2021) — "Attenuation in vegetation." Formula: A = Am × (1 − exp(−d·γ/Am)); Am=25 dB, γ=2.0 dB/m at ~3 GHz. Used in CELL 8e for 2695/3602 MHz (replaces Weissberger which under-estimates ~40% above 2 GHz).
+- **Weissberger (1982)** — Empirical vegetation attenuation model. Used in CELL 8e for 915/1802 MHz. Formula: A = 1.33·f^0.284·d^0.588 (dB) for d > 14m.
+
+#### Material EM properties
+- **ITU-R P.2040-2** (2021) — "Effects of building materials and structures on radiowave propagation." Brick σ = 0.038 S/m (frequency-independent). Corrects P.2040-1 (2015) over-calculation at 2695+ MHz.
+
 ---
 
 ## Current Scene State (snapshot)
