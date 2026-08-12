@@ -392,6 +392,87 @@ Simulation: CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CELL 8e
 
 ## Nottingham 3602 MHz Status (sionna2_3602mhz_dem_simulation.ipynb)
 
+**CELL 8e complete (2026-08-12). Model fails at 3602 MHz — R² negative across all ranges. Root cause: surface-based RT cannot model vegetation opacity at λ=8.3 cm.**
+
+### CELL 8e Results (DISABLE_CANOPY=True, Phase 0 scalar=+12.097 dB, 100M samples)
+
+| Range | N | Method | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|---|--------|-----------|-----------|-----|-------|
+| 0-300m | 71 | ON incoh | +18.1 | 19.4 | -8.366 | near-field over-correction |
+| 0-500m | 308 | ON incoh | +5.9 | 15.8 | -1.748 | |
+| 0-750m | 598 | ON coh | -2.0 | 12.4 | **-0.026** | best method at this range |
+| 0-750m | 598 | ON incoh | +3.1 | 13.1 | -0.130 | |
+
+**Bin scalar corrections (from 1057 cal receivers, 5 bins):**
+| Bin | Correction | Meaning |
+|-----|-----------|---------|
+| 0.26 km | -4.99 dB | model 5 dB too optimistic |
+| 0.48 km | -6.27 dB | |
+| 0.70 km | -22.93 dB | model 35 dB too optimistic before scalar — NLOS collapse |
+| 0.92 km | -14.69 dB | |
+
+**Root cause — confirmed diagnosis:**
+At λ=8.3 cm, tree branch diameter ≈ λ → near-total opacity. DISABLE_CANOPY=True (required to prevent total ray blockage) makes all vegetation transparent. NLOS paths at 700m+ reach the receiver unrealistically through transparent trees → model predicts 35 dB too much signal before scalar. Post-hoc P.833 correction is applied to total path loss (per receiver) not to individual ray paths — insufficient to recover geometry-level errors.
+
+**This is a valid thesis finding:**
+> At 3602 MHz, purely geometric surface-based RT fails to model vegetation attenuation. The canopy geometry must be disabled to prevent total ray blockage (DISABLE_CANOPY=True), but this removes the dominant loss mechanism in NLOS paths. Result: R² < 0, RMSE > 12 dB. This demonstrates that geometric RT without volumetric vegetation absorption is frequency-limited — consistent with literature and Rbp analysis (Rbp=1225m at 3602 MHz, within the evaluation range).
+
+**Thesis citation:** ITU-R P.833-10 vegetation formula gives 9.8 dB attenuation at 5m depth at 3602 MHz — insufficient when the entire canopy geometry is removed. Correct modeling requires volumetric absorption (see "How to simulate absorption" section below).
+
+### Calibration History
+
+| Run | Settings | Phase 0 RMSE | Scalar | After-scalar RMSE | Notes |
+|-----|----------|-------------|--------|-------------------|-------|
+| Run 0 (aborted) | DISABLE_CANOPY=False, 10M | 46 dB | +30 dB | 29.5 dB | canopy cones blocked all rays >400m |
+| Run 1 (aborted) | DISABLE_CANOPY=True, 10M | 31.4 dB | +21.2 dB | 23.1 dB | MC noise floor |
+| Run 2 (aborted) | DISABLE_CANOPY=True, 30M, bounds=(-30,20) | 47.2 dB | +30.0 dB (CLIPPED) | 31.6 dB | scalar capped |
+| Run 3 (aborted) | DISABLE_CANOPY=True, 30M, bounds=(-60,60) | TBD | TBD | TBD | stuck at noise floor |
+| **Run 4 — FINAL** | DISABLE_CANOPY=True, 30M, CAL_MAX=1.0, NF filter | +26.33 dB | **+12.097 dB** | **23.39 dB** | checkpoint saved; CELL 8e run |
+
+### How to Simulate Vegetation Absorption (future work)
+
+Sionna RT 2.0 is a **surface-based tracer** — absorption only occurs at surface interactions, not through volumes. Three approaches to model vegetation attenuation at high frequencies:
+
+**Option 1 — Stacked disc layers (feasible in Sionna RT)**
+Replace single canopy cone with N horizontal disc layers at different heights within the crown. Each disc has:
+- er ≈ 1.05 (near-air, minimal reflection)
+- sigma = high (absorption at each surface hit)
+- S = 0.3-0.5 (scatter to surrounding directions)
+Each ray passes through multiple discs → cumulative attenuation per layer. More layers → better approximation of volumetric absorption. Scene builder change required; 1802 MHz scene builder is FROZEN.
+
+**Option 2 — Complex permittivity slab (equivalent medium)**
+Model canopy as a solid slab with effective complex permittivity derived from ITU-R P.833 one-way attenuation:
+- ε_eff = ε_r + i·σ/(ω·ε_0), tune σ to give correct two-way path loss through slab at each frequency
+- At 3602 MHz: P.833 gives ~9.8 dB/5m → tune sigma to match
+- Problem: Sionna RT computes surface interactions only — a thick slab gives one surface hit, same as a thin slab. No volumetric path-integral absorption.
+- Only works if multiple thin slabs are stacked (same as Option 1).
+
+**Option 3 — Per-path post-processing (best accuracy, no scene change)**
+Instead of applying P.833 to the final per-receiver path loss (current approach), apply it to each individual ray path before incoherent summation:
+- For each path, compute which vegetation polygons the path vertices intersect
+- Apply ITU-R P.833 attenuation dB to that path's power before summing with others
+- This is a CELL 8e change only — no scene rebuild needed
+- Requires access to PathSolver vertex/segment data per path
+
+**Option 4 — Hybrid geometric+statistical (NYURay approach)**
+Keep RT for building geometry. Apply a statistical vegetation shadowing model per receiver based on link vegetation depth (current CELL 8e approach, but applied during path combination not after).
+
+**Recommended for thesis continuation:** Option 3 (per-path P.833) — feasible in CELL 8e without scene rebuild, physically correct, and directly addresses the 3602 MHz failure mode.
+
+### CELL CAL Configuration (current — FINAL)
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| SCENE_BASE_DIR | nottingham_ofcom2018_1802mhz_dem | reuse existing scene |
+| FREQUENCY_HZ | 3602.5e6 | |
+| DISABLE_CANOPY | True | required — cones block all rays >400m at λ=8.3 cm |
+| DISABLE_VEG_DISCS | False | disc PLYs active (S=0.10 horizontal scatter) |
+| CAL_MAX_DIST_KM | 1.0 | within LOS regime (Rbp=1225m) |
+| CAL_SCALAR_BOUNDS | (-60.0, 60.0) | Phase 0 needs +12 dB |
+| CAL_NOISE_MARGIN_DB | 10.0 | excludes RX within 10 dB of noise floor |
+| CAL_SAMPLES_PS | 30_000_000 | |
+| NUM_SAMPLES_PS | 100_000_000 | |
+| EVAL_MIN_DIST_KM | 0.25 | |
+
 **CELL CAL running (2026-08-09). First run at 30M samples with DISABLE_CANOPY=True and CAL_SCALAR_BOUNDS=(-60,60).**
 
 ### Site parameters (from nottingham3602.csv header)
