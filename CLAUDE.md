@@ -462,6 +462,17 @@ At λ=8.3 cm, tree branch diameter ≈ λ → near-total opacity. DISABLE_CANOPY
 - Hard NLOS collapse at 1250m+ (R²=-0.634 at 0-1500m) — beyond calibrated range
 - 3GPP TR 38.901 UMa NLOS physics floor: σ_SF=6.0 dB → current RMSE=8.7 dB = 2.7 dB above floor
 
+**Run 4 — in progress (disc absorption tuning, 2026-08-14):**
+Changes committed to branch — requires CELL CAL rerun before CELL 8e:
+| Parameter | Old | New | Rationale |
+|-----------|-----|-----|-----------|
+| VEG_SCATTERING_COEFF | 0.35 | **0.10** | Reduce scatter flooding — S=0.35 floods NLOS with spurious indirect paths |
+| VEG_DISC_SIGMA | 0.20 (VEG_CONDUCTIVITY) | **0.50 S/m** | ~2.5 dB absorption per disc hit (was ~1 dB) |
+| VEG_DISC_ER | 2.73 (Sionna default) | **4.0** | Higher Fresnel reflection → fewer rays penetrating deep NLOS |
+| N_SCALAR_BINS | 10 | **15** | Finer resolution of sharp 500-700m NLOS transition |
+| PER_PATH_VEG | True | True | Kept — disc geometry handles scatter; P.833 handles residual gap |
+Run sequence: **CELL CAL → CELL 4A → CELL 8e**
+
 **This is a valid thesis finding:**
 > At 3602 MHz, purely geometric surface-based RT cannot model vegetation attenuation — canopy must be disabled (DISABLE_CANOPY=True) to prevent total ray blockage. Per-path ITU-R P.833 correction (applied per ray segment using paths.vertices), combined with a height filter and consistent bin calibration, recovers R²=0.515 at 0-1250m — comparable to 1802 MHz (R²=0.509) and approaching 2695 MHz (R²=0.574). RMSE=8.7 dB at 0-1000m is 2.7 dB above the 3GPP shadow fading floor. The remaining gap reflects N-selection (vegetation-blocked receivers excluded) and hard NLOS geometry that surface-based RT cannot resolve without volumetric absorption.
 
