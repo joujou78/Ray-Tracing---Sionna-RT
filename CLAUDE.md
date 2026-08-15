@@ -8,6 +8,46 @@ Ray tracing simulation of the Ofcom 2018 Nottingham 915 MHz dataset using Sionna
 - Scene directory: `~/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v4_full/`
 - Working branch: `claude/cool-cori-rrWbY`
 
+## HF Scene Builder (2695 + 3602 MHz)
+
+**File: `sionna019_2695mhz_scene_builder.ipynb`** (committed 2026-08-15, NOT yet run on your machine)
+
+Shared scene for 2695 + 3602 MHz with improved vegetation geometry. Key changes vs 1802 MHz scene:
+
+| Parameter | Old (1802 MHz) | New (HF scene) | Effect |
+|-----------|---------------|----------------|--------|
+| VEG_DISC_LAYERS | 1 | **3** | 3 stacked discs per crown (bottom/mid/top) |
+| VEG_DISC_LAYER_HEIGHTS_FRAC | [1.0] | **[0.30, 0.65, 1.0]** | crown depth fractions |
+| VEG_CROWN_DEPTH_FRAC | n/a | **0.40** | crown = bottom 40% of tree height |
+| VEG_DISC_SPACING_M | 20m | **10m** | 4x denser horizontal grid |
+| VEG_NDMS_EXTRA_RES_M | 10m | **7m** | finer nDSM scan |
+| VEG_MAX_DISCS_PER_POLYGON | 500 | **1000** | larger polygons fully covered |
+| SCENARIO_NAME | nottingham_ofcom2018_1802mhz_dem | **nottingham_ofcom2018_hf_dem** | separate dir |
+
+**Stacked layer formula:** `disc_z = canopy_top - max(2.0, h*0.40) * (1 - layer_frac)`
+- Layer 1 (frac=0.30): disc at 70% of crown depth below canopy top
+- Layer 2 (frac=0.65): disc at 35% below
+- Layer 3 (frac=1.00): disc at canopy top
+
+**To build the HF scene:**
+```
+mkdir -p ~/sionna_rt/nottingham_ofcom2018_hf_dem/
+cd ~/Ray-Tracing---Sionna-RT
+git pull
+# Open sionna019_2695mhz_scene_builder.ipynb
+# Run: CELL 0 → CELL 1 → CELL 3 → CELL 3b → CELL 4 → CELL B3
+```
+
+**To switch simulation notebooks to the HF scene:**
+After the HF scene is built, update CELL 1 in each simulation notebook:
+```python
+# sionna2_2695mhz_dem_simulation.ipynb — CELL 1 (cell index 4):
+SCENE_BASE_DIR  = f'{_HOME}/sionna_rt/nottingham_ofcom2018_hf_dem'
+# sionna2_3602mhz_dem_simulation.ipynb — CELL 1 (cell index 4):
+SCENE_BASE_DIR  = f'{_HOME}/sionna_rt/nottingham_ofcom2018_hf_dem'
+```
+Then delete old calibration JSON files and re-run CELL CAL.
+
 ---
 
 ## 1802 MHz Results (old 486-tree cal applied to 15,486-tree scene — pre-recalibration baseline)
