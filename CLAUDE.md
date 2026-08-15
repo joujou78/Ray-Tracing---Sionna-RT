@@ -355,6 +355,23 @@ Full distance breakdown (ON incoh — best method):
 - Expected: cal RMSE ~11-12 dB, eval RMSE ~9-10 dB at 0-1000m, R² > 0.60 at 0-1250m
 - After Run 3: implement separate LOS/NLOS scalar in CELL 8e (-1 to -2 dB RMSE)
 
+### 2695 MHz Calibration History
+
+| Run | Settings | Cal RX | Phase 0 scalar | Phase 2 RMSE | Notes |
+|-----|----------|--------|----------------|--------------|-------|
+| Run 2 (R²=0.574) | PER_PATH_VEG=False, 10M samples | 618→601 (17 NF) | -2.305 dB | ~13.693 dB | old _MAT_FIXED_VALS (er=17 during cal) |
+| Bad re-cal | PER_PATH_VEG=True, 30M samples | 618→601 (17 NF) | +9.4756 dB | ~13.693 dB | WRONG — calibrated for per-path P.833; CELL 8e R²=-1.644 |
+| **Run 3 — CELL CAL running (2026-08-15)** | PER_PATH_VEG=False, 30M, transparent discs in CAL | **373** (0 NF) | **+7.344 dB** | **~14.37 dB** | new _MAT_FIXED_VALS fix (commit 7585ef7) — ceiling_board er=1 during cal |
+
+**Run 3 calibration notes:**
+- Cal RX dropped from 618 → 373: transparent itu_ceiling_board during CELL CAL removes scatter-only paths that were previously absorbing energy; fewer receivers have valid PL estimates → 245 fewer cal receivers
+- No NF removals (vs 17 in previous runs): fewer receivers means PL range is tighter, all within noise floor margin
+- Phase 0 scalar +7.344 dB: model under-predicts with transparent discs during cal — less scatter → needs positive boost
+- Phase 2 floor ~14.37 dB: slightly above Run 2's 13.693 dB — consistent with fewer cal receivers and transparent disc geometry
+- Phase 2 bi-modal: values cluster at 14.365 dB and 14.491 dB — Powell oscillates between two shallow local optima at MC noise floor
+- Self-consistent: CELL CAL and CELL 8e both use transparent discs → calibrated materials physically matched to evaluation
+- **Awaiting FTOL termination → CELL 4A → CELL 8e**
+
 ### Dual-slope breakpoint analysis (ITU-R P.1411)
 
 Rbp = 4 × hBS × hUT × f / c — frequency comparison:
@@ -462,8 +479,8 @@ At λ=8.3 cm, tree branch diameter ≈ λ → near-total opacity. DISABLE_CANOPY
 - Hard NLOS collapse at 1250m+ (R²=-0.634 at 0-1500m) — beyond calibrated range
 - 3GPP TR 38.901 UMa NLOS physics floor: σ_SF=6.0 dB → current RMSE=8.7 dB = 2.7 dB above floor
 
-**Run 4 — in progress (disc absorption tuning, 2026-08-14):**
-Changes committed to branch — requires CELL CAL rerun before CELL 8e:
+**Run 4 — CELL CAL running (2026-08-15, disc absorption tuning):**
+Changes committed to branch — CELL CAL in progress (Phase 2, ~82 evals, ~15.07 dB floor):
 | Parameter | Old | New | Rationale |
 |-----------|-----|-----|-----------|
 | VEG_SCATTERING_COEFF | 0.35 | **0.10** | Reduce scatter flooding — S=0.35 floods NLOS with spurious indirect paths |
@@ -472,6 +489,31 @@ Changes committed to branch — requires CELL CAL rerun before CELL 8e:
 | N_SCALAR_BINS | 10 | **15** | Finer resolution of sharp 500-700m NLOS transition |
 | PER_PATH_VEG | True | True | Kept — disc geometry handles scatter; P.833 handles residual gap |
 Run sequence: **CELL CAL → CELL 4A → CELL 8e**
+
+### 3602 MHz Run 4 Calibration — CELL CAL running (2026-08-15)
+
+| Phase | RMSE | Scalar | Notes |
+|-------|------|--------|-------|
+| Phase 0 (before scalar) | 32.21 dB | — | DISABLE_CANOPY=True + S=0.10 + sigma=0.50 |
+| Phase 0 (after scalar) | 16.02 dB | **+27.939 dB** | Δ = 16.19 dB improvement |
+| Phase 2 floor | **~15.07 dB** | — | MC noise floor; oscillating 15.066–15.156 dB |
+
+**Key finding — disc absorption cuts cal RMSE from 23.39 → 15.07 dB:**
+
+| | Run 4 — FINAL (CELL 8e, 10 bins) | Run 4 — current CELL CAL |
+|---|---|---|
+| Phase 0 after-scalar RMSE | 23.39 dB | **16.02 dB** |
+| Phase 2 floor | ~23 dB (stuck) | **~15.07 dB** |
+| Disc S | 0.35 | **0.10** |
+| Disc sigma | 0.20 S/m | **0.50 S/m** |
+| Disc er | 2.73 | **4.0** |
+
+- Cal RX: 601 (0.15–1.0 km, 17 NF removed)
+- Phase 0 scalar +27.939 dB: consistent with previous +26.33 dB (DISABLE_CANOPY=True leaves large gap)
+- 16.02 dB after scalar vs 23.39 dB previously: disc absorption (sigma=0.50) pre-attenuates NLOS scatter paths
+- Phase 2 at ~82 evals: oscillating in ±0.09 dB noise band — MC noise floor at 30M samples
+- All 6 free materials (itu_glass, water_rt, itu_concrete, itu_brick, itu_very_dry_ground, itu_wet_ground) being optimized (19 params incl. scalar)
+- **Awaiting FTOL termination → CELL 4A → CELL 8e**
 
 **This is a valid thesis finding:**
 > At 3602 MHz, purely geometric surface-based RT cannot model vegetation attenuation — canopy must be disabled (DISABLE_CANOPY=True) to prevent total ray blockage. Per-path ITU-R P.833 correction (applied per ray segment using paths.vertices), combined with a height filter and consistent bin calibration, recovers R²=0.515 at 0-1250m — comparable to 1802 MHz (R²=0.509) and approaching 2695 MHz (R²=0.574). RMSE=8.7 dB at 0-1000m is 2.7 dB above the 3GPP shadow fading floor. The remaining gap reflects N-selection (vegetation-blocked receivers excluded) and hard NLOS geometry that surface-based RT cannot resolve without volumetric absorption.
@@ -492,7 +534,8 @@ Run sequence: **CELL CAL → CELL 4A → CELL 8e**
 | Run 1 (aborted) | DISABLE_CANOPY=True, 10M | 31.4 dB | +21.2 dB | 23.1 dB | MC noise floor |
 | Run 2 (aborted) | DISABLE_CANOPY=True, 30M, bounds=(-30,20) | 47.2 dB | +30.0 dB (CLIPPED) | 31.6 dB | scalar capped |
 | Run 3 (aborted) | DISABLE_CANOPY=True, 30M, bounds=(-60,60) | TBD | TBD | TBD | stuck at noise floor |
-| **Run 4 — FINAL** | DISABLE_CANOPY=True, 30M, CAL_MAX=1.0, NF filter | +26.33 dB | **+12.097 dB** | **23.39 dB** | checkpoint saved; CELL 8e run |
+| Run 4 — FINAL (CELL 8e done, R²=0.515) | DISABLE_CANOPY=True, 30M, CAL_MAX=1.0, NF filter | 32.21 dB | +12.097 dB | 23.39 dB | CELL 8e Run 3 used these materials |
+| **Run 5 — CELL CAL running (2026-08-15)** | S=0.10, sigma=0.50, er=4.0, 15 bins | **32.21 dB** | **+27.939 dB** | **16.02 dB** | disc absorption tuning; Phase 2 floor ~15.07 dB |
 
 ### How to Simulate Vegetation Absorption (future work)
 
