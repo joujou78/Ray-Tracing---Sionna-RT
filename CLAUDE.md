@@ -389,28 +389,27 @@ Full distance breakdown (ON incoh — best method):
 - OFF methods collapse beyond 1250m: OFF incoh R²=-2.929 at 0-2250m (RMSE=32.7 dB)
 - Scattering covers 318 additional receivers at 0-2250m (1110 ON vs 792 OFF valid paths)
 
-**Next step: Run 3 (30M samples, EVAL_MIN_DIST_KM=0.15) — already configured**
-- CAL_SAMPLES_PS=30M already committed — reduces MC noise floor ±0.21→±0.12 dB
-- EVAL_MIN_DIST_KM=0.15 already committed — removes near-field noise from stats
-- Expected: cal RMSE ~11-12 dB, eval RMSE ~9-10 dB at 0-1000m, R² > 0.60 at 0-1250m
-- After Run 3: implement separate LOS/NLOS scalar in CELL 8e (-1 to -2 dB RMSE)
+**Next step: Run 3 CELL CAL complete (2026-08-16) — proceed to CELL 4A → CELL 8e**
+- Final scalar: +9.657 dB / Cal RMSE: 14.19 dB / 211 evals / 996.5 min
+- Phase 3 re-scalar reverted (worsened: 14.95 dB > 14.19 dB) — Phase 0 scalar optimal
+- After CELL 8e: compare R² vs Run 2 baseline (0.574 at 0-1250m)
 
 ### 2695 MHz Calibration History
 
-| Run | Settings | Cal RX | Phase 0 scalar | Phase 2 RMSE | Notes |
-|-----|----------|--------|----------------|--------------|-------|
+| Run | Settings | Cal RX | Final scalar | Cal RMSE | Notes |
+|-----|----------|--------|--------------|----------|-------|
 | Run 2 (R²=0.574) | PER_PATH_VEG=False, 10M samples | 618→601 (17 NF) | -2.305 dB | ~13.693 dB | old _MAT_FIXED_VALS (er=17 during cal) |
 | Bad re-cal | PER_PATH_VEG=True, 30M samples | 618→601 (17 NF) | +9.4756 dB | ~13.693 dB | WRONG — calibrated for per-path P.833; CELL 8e R²=-1.644 |
-| **Run 3 — CELL CAL running (2026-08-15)** | PER_PATH_VEG=False, 30M, transparent discs in CAL | **373** (0 NF) | **+7.344 dB** | **~14.37 dB** | new _MAT_FIXED_VALS fix (commit 7585ef7) — ceiling_board er=1 during cal |
+| **Run 3 — CELL CAL done (2026-08-16)** | PER_PATH_VEG=False, 30M, transparent discs in CAL | **373** (0 NF) | **+9.657 dB** | **14.19 dB** | new _MAT_FIXED_VALS fix (commit 7585ef7) — ceiling_board er=1 during cal; 211 evals |
 
 **Run 3 calibration notes:**
-- Cal RX dropped from 618 → 373: transparent itu_ceiling_board during CELL CAL removes scatter-only paths that were previously absorbing energy; fewer receivers have valid PL estimates → 245 fewer cal receivers
-- No NF removals (vs 17 in previous runs): fewer receivers means PL range is tighter, all within noise floor margin
-- Phase 0 scalar +7.344 dB: model under-predicts with transparent discs during cal — less scatter → needs positive boost
-- Phase 2 floor ~14.37 dB: slightly above Run 2's 13.693 dB — consistent with fewer cal receivers and transparent disc geometry
-- Phase 2 bi-modal: values cluster at 14.365 dB and 14.491 dB — Powell oscillates between two shallow local optima at MC noise floor
-- Self-consistent: CELL CAL and CELL 8e both use transparent discs → calibrated materials physically matched to evaluation
-- **Awaiting FTOL termination → CELL 4A → CELL 8e**
+- 211 evals / 996.5 min — Powell converged (FTOL)
+- Phase 3 re-scalar worsened (14.95 dB > 14.19 dB) — reverted; Phase 0 scalar +9.657 dB is final
+- Cal RX 373 (vs 618 in Run 2): transparent discs remove scatter-only paths during cal
+- Scalar +9.657 dB matches bad re-cal's +9.4756 dB — both transparent during cal, confirms fix is correct
+- Cal RMSE 14.19 dB at MC noise floor (30M samples, ±0.12 dB noise) — no further Powell movement possible
+- Self-consistent: CELL CAL and CELL 8e both use transparent discs → calibrated materials match evaluation
+- **Proceed: CELL 4A → CELL 8e (100M samples)**
 
 ### Dual-slope breakpoint analysis (ITU-R P.1411)
 
