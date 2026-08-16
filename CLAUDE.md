@@ -409,7 +409,33 @@ Full distance breakdown (ON incoh — best method):
 - Scalar +9.657 dB matches bad re-cal's +9.4756 dB — both transparent during cal, confirms fix is correct
 - Cal RMSE 14.19 dB at MC noise floor (30M samples, ±0.12 dB noise) — no further Powell movement possible
 - Self-consistent: CELL CAL and CELL 8e both use transparent discs → calibrated materials match evaluation
-- **Proceed: CELL 4A → CELL 8e (100M samples)**
+
+**Run 3 CELL 4A — calibrated materials loaded (2026-08-16):**
+
+| Material | εᵣ | σ (S/m) | S | Notes |
+|----------|-----|---------|---|-------|
+| itu_brick | 3.02 | 0.0723 | 0.509 | high scatter |
+| itu_concrete | 6.34 | 0.1233 | 0.513 | high scatter |
+| itu_glass | 7.49 | 0.0209 | 0.409 | |
+| itu_wet_ground | 24.10 | 0.1855 | 0.250 | |
+| itu_very_dry_ground | 3.58 | 0.0250 | 0.279 | |
+| water_rt | 61.11 | 0.0294 | 0.224 | |
+| canopy_itu_vegetation | 1.50 | 0.0033 | 0.400 | near-transparent; 3D tree geometry active |
+| trunk_itu_wood | 1.99 | 0.0136 | 0.150 | |
+| itu_ceiling_board | 1.00 | 0.0000 | 0.050 | transparent (DISABLE_VEG_DISCS=True) |
+| concrete_barrier | 5.31 | 0.0727 | 0.300 | |
+| metal_barrier / itu_metal | 1.00 | 10000000 | 0.050 | perfect conductor |
+
+- Scalar: +9.6574 dB applied
+- canopy_itu_vegetation er=1.50, S=0.40: near-transparent with scatter — tree geometry contributes scatter, P.833 handles bulk attenuation
+- itu_ceiling_board forced transparent (er=1, σ=0, S=0) by DISABLE_VEG_DISCS=True override
+
+**Run 3 CELL 8e — IN PROGRESS (2026-08-16):**
+- 100M samples, EVAL_MIN_DIST_KM=0.15
+- Weissberger: 66157 veg polygons, 14144 building footprints loaded
+- 1088/1200 receivers building-blocked (excluded from vegetation depth) — normal for dense urban Nottingham
+- P.833 at 2695 MHz: 8.2 dB at 5m depth (vs Weissberger 0.6 dB — P.833 correct at 2.7 GHz)
+- **Results pending**
 
 ### Dual-slope breakpoint analysis (ITU-R P.1411)
 
