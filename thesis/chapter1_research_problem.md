@@ -1,54 +1,73 @@
-# Chapter 1 — Research Problem
+# Chapter 1 — Introduction
 
-## 1.1 Background and Motivation
+This chapter introduces the research problem addressed by this thesis. It presents the urban wireless propagation context, states the problem and research gap, introduces Ray Tracing as the proposed solution, describes the selected study areas, and sets out the research questions and objectives that guide the remainder of the work.
 
-Global mobile data traffic continues to grow rapidly, with 5G now carrying roughly half of all mobile network traffic worldwide and adoption projected to keep rising sharply toward the end of the decade [1]. This growth is driving denser urban deployments and pushing operators toward higher-frequency mid-bands, both of which increase the importance of accurately predicting how radio signals propagate through complex, cluttered environments before a network is built [1].
+## 1.1 Wireless Communication in the Urban Context
 
-Two broad families of propagation models are used for this purpose. Empirical models are computationally cheap and require little environmental detail, but they average over large classes of environments and cannot capture site-specific structural variation such as individual building layouts or material composition [2]. Deterministic ray tracing, in contrast, models propagation through explicit interactions — reflection, diffraction, and scattering — with a three-dimensional representation of the environment, and is capable of substantially higher site-specific accuracy at the cost of requiring detailed geometric and material input and significantly greater computational load [2]. This accuracy–cost trade-off has historically limited the use of ray tracing to small, carefully surveyed sites.
+Wireless communication has become a cornerstone of modern urban life, shaping how cities expand, operate, and adapt to technological change. Contemporary urban environments function as interconnected digital ecosystems, supporting technologies such as 5G networks, smart transportation, autonomous mobility, IoT services, and intelligent energy management, driven in large part by continued growth in mobile data demand [1]. Reliable connectivity is therefore not a luxury but a socio-economic necessity.
 
-Recent GPU-accelerated, differentiable ray tracers — most notably Sionna RT — have narrowed this gap by making large-scale, repeated ray-tracing evaluation computationally tractable and by allowing model parameters such as material permittivity and conductivity to be calibrated through gradient-based optimization rather than manual tuning [3]. This capability is a key enabler behind the broader push toward network digital twins for 6G, in which a continuously updated ray-tracing representation of the physical network is used for planning, prediction, and optimization [4]. Realizing this vision, however, depends on first establishing how accurately a calibrated, purely geometric ray tracer can reproduce real, measured propagation behaviour across the frequency bands and environment types a future network must operate in — dense urban and rural, sub-1 GHz and mid-band alike.
+Propagation in urban areas, however, is highly complex. Dense and irregular structures composed of stone, brick, glass, vegetation, and concrete introduce reflection, diffraction, scattering, penetration losses, and shadowing [2]. These effects generate severe multipath propagation and rapid spatial fluctuations. European cities, with their narrow streets, irregular building layouts, porticoes, arches, and aged construction materials, present particularly difficult conditions: materials such as stone, brick, glass, and concrete interact with electromagnetic waves in distinct ways, producing highly dynamic propagation behaviours that conventional models often fail to capture [2]. Traditional models such as Okumura–Hata [9], Free-Space Path Loss (FSPL) [11], and COST-231 [10] rely on empirical assumptions and coarse spatial resolutions, making them unsuitable for high-precision urban planning (see Section 1.2).
 
-## 1.2 Problem Statement
+Deterministic, geometry-aware approaches such as Ray Tracing (RT) address these limitations by explicitly modelling electromagnetic interactions with realistic geometries and materials, capturing reflections, diffractions, scattering, and multipath effects and enabling the generation of high-resolution radio environmental maps [2], [14]. This thesis employs NVIDIA's Sionna RT framework, which integrates the Mitsuba 3 rendering engine [13] and the Dr.Jit differentiable just-in-time compiler [12] to provide differentiable Ray Tracing capabilities [3]. Its architecture allows calibration of material properties, antenna configurations, and scene parameters, reducing prediction errors and improving fidelity [3]. The simulations conducted in this thesis are executed in GPU mode, using hardware provided by the university, which the Sionna RT framework is designed to exploit for detailed urban propagation analysis [3].
 
-Validating a ray tracer against real measurements at city scale requires three things that are individually well understood but rarely combined and reported together in the open literature: (i) a geometrically accurate 3D scene — buildings, terrain, and vegetation — built from real survey data rather than idealized geometry; (ii) a calibration procedure that fits material electromagnetic properties to measurements rather than assuming generic textbook values; and (iii) a measurement dataset spanning multiple frequencies and site types against which the calibrated model's accuracy, and its limits, can be quantified. The Ofcom 2018 UK propagation measurement campaign provides exactly such a multi-frequency, multi-site dataset, having recorded over eight million path-loss measurements across six frequencies (449 MHz–5850 MHz) at seven UK sites of varying morphology [5].
+To address these shortcomings, modern wireless research increasingly adopts deterministic, geometry-aware techniques that explicitly model the physical environment. Among these, radio environmental maps have emerged as essential tools for visualising spatial variation in received signal strength, path loss, delay spread, and other key metrics [14]. These maps allow planners to identify coverage gaps, interference zones, and localised anomalies with far greater precision than classical models [14].
 
-Even with such a dataset and a capable ray tracer, several specific engineering difficulties remain open. First, surface-based ray tracers compute electromagnetic interactions only at discrete surface intersections, which makes volumetric phenomena — most importantly attenuation through tree canopies — difficult to represent physically, particularly as wavelength shrinks relative to the scattering structures involved. Second, coherent summation of multipath components becomes increasingly sensitive to small geometric errors as frequency increases, so the choice between coherent and incoherent combination is not fixed but appears to shift with wavelength and scene complexity. Third, standard reference propagation models such as 3GPP TR 38.901 assume single-slope or dual-slope behaviour with a breakpoint distance set by transmitter and receiver heights and frequency [6], and calibrating a ray tracer across data that spans this breakpoint risks mixing two distinct physical regimes into a single fit. Finally, recent independent analysis of Sionna-based ray tracing against real urban measurements in Rome has shown that simulation fidelity is highly sensitive to factors such as antenna placement and orientation, and that ray-tracing accuracy against ground truth cannot simply be assumed without site-specific validation [7].
+This thesis therefore emphasises the generation of high-fidelity radio maps using physics-based Ray Tracing techniques. Leveraging an open-source simulation framework, the study models realistic wireless propagation in complex urban settings. Special attention is given to UK cities, where dense architectural diversity, irregular street morphology, and challenging layouts provide highly relevant case studies for advanced propagation analysis.
 
-The engineering challenge this thesis addresses is therefore to construct, calibrate, and evaluate a Sionna RT-based propagation model against the Ofcom 2018 measurements across four frequencies (915 MHz, 1802 MHz, 2695 MHz, 3602 MHz) at both dense urban and rural sites, in order to quantify prediction accuracy, identify the accuracy ceiling ("physics floor") achievable through geometry-and-material calibration alone, and characterise the specific failure modes — vegetation, dual-slope mixing, and coherent-interference collapse — that limit it.
+## 1.2 Problem Statement and Research Gap in Urban Propagation Modeling
 
-## 1.3 Aim and Objectives
+Reliable wireless connectivity has become indispensable for modern cities, yet conventional propagation models show clear limitations when applied to complex urban environments. Classical approaches such as the Okumura–Hata [9], FSPL [11], and COST-231 [10] models are largely empirical, relying on statistical averages and uniform assumptions about terrain and building distributions. While effective for broad coverage estimates, they fail to capture the irregular geometries and heterogeneous materials that define dense cityscapes.
 
-**Aim:** To quantify how accurately a calibrated, purely geometric ray tracer (Sionna RT 2.0) predicts real-world path loss across a range of sub-6 GHz frequencies and environment types, and to identify the physical and methodological limits of that accuracy.
+Key shortcomings include the inability to incorporate critical geometric and material features — such as street orientation, building height variability, façade composition, rooftop structures, and canyon-like corridors — that strongly influence electromagnetic behaviour. For instance, glass façades can produce intense reflections, while narrow intersections generate diffraction and shadowing effects that cannot be represented through statistical approximations.
 
-**Objectives:**
-1. Construct 3D propagation scenes for dense urban (Nottingham, London) and rural (Scar Hill) sites using UK Environment Agency LiDAR terrain and vegetation canopy data [8] combined with OpenStreetMap building and infrastructure data.
-2. Develop and apply a multi-phase calibration pipeline that fits building and ground material electromagnetic properties (permittivity, conductivity, scattering coefficient) to measured path loss at each site and frequency.
-3. Quantify prediction accuracy (R², RMSE, bias) of the calibrated model against Ofcom 2018 measurements at 915 MHz, 1802 MHz, 2695 MHz, and 3602 MHz in Nottingham, and at 915 MHz in London and at the rural Scar Hill site.
-4. Characterise frequency-dependent failure modes, specifically: vegetation attenuation modelling as wavelength approaches vegetation feature scale, the dual-slope line-of-sight/non-line-of-sight breakpoint, and the stability of coherent versus incoherent multipath summation.
-5. Compare urban and rural generalisation of the calibrated approach and identify the dominant source of residual error in each case (e.g., terrain resolution versus vegetation representation).
+Moreover, these models typically operate at coarse spatial resolutions — tens to hundreds of metres [9] — which are insufficient for modern applications such as small-cell deployment, beamforming, vehicular communications, and advanced 5G/6G planning. These use cases demand fine-grained, location-specific predictions due to rapid spatial channel variations.
 
-## 1.4 Research Questions
+This gap between simplified empirical models and the high-resolution predictions required by next-generation systems highlights the need for deterministic simulation techniques that explicitly model electromagnetic interactions within realistic three-dimensional urban environments. Ray Tracing techniques have therefore gained increasing importance in wireless propagation research because they explicitly model the interaction of electromagnetic waves with realistic geometries and materials [2]. By incorporating accurate environmental representations, RT-based approaches provide significantly improved prediction fidelity and spatial resolution compared to conventional statistical models [2].
 
-- **RQ1:** How does the prediction accuracy of a calibrated Sionna RT model vary with frequency (915–3602 MHz) in a dense urban environment?
-- **RQ2:** What scene-representation and calibration choices are required to model vegetation attenuation realistically as wavelength decreases toward the scale of vegetation structures?
-- **RQ3:** What is the achievable accuracy ceiling of pure geometry-and-material calibration, without learned or statistical residual correction, and where does it fall short of measured behaviour?
-- **RQ4:** How does model accuracy generalise from a dense urban site to a rural, terrain-dominated site using the same calibration methodology?
+## 1.3 Ray Tracing as a Solution and the Role of RT
 
-## 1.5 Scope and Limitations
+Ray Tracing (RT) offers a deterministic alternative to empirical models by simulating the physical behaviour of radio waves as they interact with surrounding objects and materials. Unlike statistical approaches, RT directly accounts for reflections, diffractions, scattering, penetration losses, and multipath propagation [2].
 
-This thesis is scoped to the Sionna RT 2.0 surface-based ray tracer [3], applied to four Ofcom 2018 measurement sites (Nottingham, London, Scar Hill) at four frequencies between 915 MHz and 3602 MHz [5], using UK Environment Agency LiDAR [8] and OpenStreetMap data for scene construction. It is explicitly limited to purely geometric ray tracing with classical (non-learned) material calibration; hybrid ray-tracing/neural residual correction approaches are identified as a promising direction but fall outside the scope of the experimental work presented here. Millimetre-wave and above-6 GHz bands, indoor propagation, and non-UK sites are not evaluated.
+The deterministic nature of RT makes it particularly suitable for complex urban environments where signal behaviour is strongly influenced by local geometry and material properties. By modelling streets, trees and other vegetation, rooftops, and obstacles with high fidelity, RT enables precise estimation of spatial signal distributions and propagation characteristics [2]. This capability positions RT as a leading method for generating high-resolution radio environmental maps and supporting advanced wireless network planning [14].
 
-## 1.6 Significance and Contribution
+This thesis employs NVIDIA's open-source Sionna RT, built on the Mitsuba 3 rendering engine [13] and the Dr.Jit compiler infrastructure [12]. Sionna RT provides differentiable Ray Tracing capabilities tailored for wireless research and digital twin applications [3], [4]. Its differentiable architecture allows calibration of scene parameters — such as materials, antenna configurations, and environmental features — against measured data, reducing prediction errors (RMSE, R²) through iterative refinement [3]. The framework remains highly suitable for detailed propagation analysis because of its flexibility, open-source nature, reproducibility, and integration with Python-based scientific workflows [3].
 
-This work contributes an empirically validated, multi-frequency comparison of ray-tracing accuracy against real, multi-site measurement data — a combination that is documented only sparsely in the open literature — together with a reproducible scene-construction and calibration pipeline built from open UK geospatial data [8]. In establishing where purely geometric calibration reaches its accuracy ceiling and which failure modes dominate at each frequency, this thesis provides an evidence base directly relevant to the accuracy expectations of ray-tracing-based digital twins now being proposed for 6G network planning [4].
+## 1.4 Study Area Selection and the Importance of Radio Environmental Maps
 
-## 1.7 Thesis Structure Overview
+Urban regions in the United Kingdom were chosen as case studies due to their dense layouts, historical districts, irregular street geometries, and mixed architectural styles. These characteristics create highly complex propagation environments, making them ideal for investigating advanced electromagnetic behaviour using RT.
+
+The selected areas include narrow streets, railways, variable building heights, residential and commercial zones, and diverse construction materials. This diversity enables analysis of how architectural and geometric features influence signal propagation, multipath richness, shadowing, and delay spread.
+
+Radio environmental maps generated in these settings provide detailed spatial visualisations of signal behaviour. Unlike coarse statistical models, they reveal localised variations in coverage, interference, and attenuation [14]. Such insights are critical for modern wireless planning, where infrastructure deployment must balance technical performance with urban planning constraints.
+
+This thesis emphasises detailed radio maps combined with path analysis using Sionna RT's path solver, enabling extraction of location-specific propagation insights and path loss measurements with high fidelity [3].
+
+## 1.5 Research Questions and Objectives
+
+To address the identified research challenges and bridge the gap between conventional propagation modelling and high-fidelity deterministic simulation, this thesis investigates the following research questions:
+
+1. How accurately can Sionna RT generate high-resolution radio environmental maps within complex UK urban environments?
+2. How do architectural features — such as narrow streets, dense building arrangements, and varied façades — affect signal propagation?
+3. What spatial variations in signal strength, path loss, delay spread, and multipath richness can be observed across different urban regions?
+4. How do RT-based predictions compare with classical models in accuracy, resolution, and applicability?
+
+To answer these questions, the primary objectives of this thesis are:
+
+- Develop realistic three-dimensional urban models using LiDAR, OpenStreetMap data, and geographic processing workflows suitable for Ray Tracing simulations.
+- Prepare and optimise simulation scenes for compatibility with Sionna RT and differentiable propagation modelling.
+- Conduct detailed electromagnetic propagation simulations using Sionna RT.
+- Generate high-resolution radio environmental maps illustrating signal coverage, shadowing effects, and spatial propagation characteristics.
+- Analyse path loss behaviour, multipath propagation, delay spread, and angular dispersion using path solver outputs.
+- Evaluate the applicability, scalability, and limitations of open-source RT frameworks for wireless planning and digital twin applications.
+- Investigate the impact of scene calibration, material tuning, and geometric refinement on reducing prediction errors such as RMSE and R².
+
+## 1.6 Thesis Structure Overview
 
 Figure 1 illustrates the overall research framework, linking the problem definition, literature gap, proposed method, implementation, and validation stages that guide the development of this thesis. Each stage corresponds to a chapter, ensuring a logical progression from theoretical foundations to practical experimentation and final conclusions:
 
 - **Chapter 1 – Research Problem** — Defines the engineering challenge, practical need, and scientific motivation underlying urban wireless propagation modeling.
 - **Chapter 2 – Literature Gap** — Reviews existing propagation models, identifies missing knowledge, and highlights unresolved technical issues.
-- **Chapter 3 – Proposed Method** — Presents the deterministic Ray Tracing approach, simulation framework, and scene generation methodology using EA LiDAR Defra and OpenStreetMap data.
+- **Chapter 3 – Proposed Method** — Presents the deterministic Ray Tracing approach, simulation framework, and scene generation methodology using EA LiDAR and OpenStreetMap data.
 - **Chapter 4 – Implementation** — Details system modeling, simulation setup, data collection, and tool configuration within the Sionna RT environment.
 - **Chapter 5 – Results & Validation** — Analyzes radio environmental maps, evaluates propagation metrics, and compares results with classical models.
 - **Chapter 6 – Conclusions** — Summarizes findings, discusses limitations, and outlines future directions in differentiable Ray Tracing and digital twin applications.
@@ -57,4 +76,4 @@ This structure ensures methodological transparency, academic rigor, and practica
 
 ---
 
-*References for this chapter are numbered [1]–[8]; see `references.md` for the full, verified reference list shared across all chapters.*
+*References for this chapter are numbered [1]–[14]; see `references.md` for the full, verified reference list shared across all chapters.*

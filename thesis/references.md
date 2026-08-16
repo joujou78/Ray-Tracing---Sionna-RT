@@ -35,6 +35,24 @@ project note) versus provided directly by the student.
 [8] Environment Agency / Defra, "LIDAR Composite Digital Terrain Model (DTM)" and "Digital Surface Model (DSM)," Defra Data Services Platform. [Online]. Available: https://environment.data.gov.uk/dataset/
 — Verified via data.gov.uk / environment.data.gov.uk search, 2026-08-16. Source of UK terrain/vegetation LiDAR used in scene construction.
 
+[9] M. Hata, "Empirical Formula for Propagation Loss in Land Mobile Radio Services," *IEEE Trans. Veh. Technol.*, vol. VT-29, no. 3, pp. 317–325, Aug. 1980. doi: 10.1109/T-VT.1980.23859.
+— Verified via search (DOI, multiple citation-index confirmations), 2026-08-16. The canonical Okumura–Hata model reference.
+
+[10] COST Action 231, "Digital Mobile Radio Towards Future Generation Systems," COST 231 Final Report, European Commission, EUR 18957, 1999. ISBN 9789282854167.
+— Verified via search (Aalborg Univ. research portal, WorldCat, Rutgers WINLAB hosted copy), 2026-08-16.
+
+[11] H. T. Friis, "A Note on a Simple Transmission Formula," *Proc. IRE*, vol. 34, no. 5, pp. 254–256, 1946. doi: 10.1109/JRPROC.1946.234568.
+— Verified via search (DOI, Semantic Scholar), 2026-08-16.
+
+[12] W. Jakob, S. Speierer, N. Roussel, and D. Vicini, "Dr.Jit: A Just-In-Time Compiler for Differentiable Rendering," *ACM Trans. Graph. (Proc. SIGGRAPH)*, vol. 41, no. 4, 2022. arXiv:2202.01284.
+— Verified via arXiv abstract + ACM/SIGGRAPH history page search, 2026-08-16.
+
+[13] W. Jakob et al., "Mitsuba 3: A Retargetable Forward and Inverse Renderer," EPFL / Mitsuba Renderer project. [Online]. Available: https://github.com/mitsuba-renderer/mitsuba3
+— Verified via GitHub README + CG Channel coverage search, 2026-08-16. No standalone academic paper was found distinct from the Dr.Jit paper [12]; cited as the software project itself.
+
+[14] M. Pesko, T. Javornik, A. Košir, M. Štular, and M. Mohorčič, "Radio Environment Maps: The Survey of Construction Methods," *KSII Trans. Internet Inf. Syst.*, vol. 8, no. 11, pp. 3789–3809, Nov. 2014. doi: 10.3837/tiis.2014.11.008.
+— Verified via search (Korea Science / journal page, DOI), 2026-08-16.
+
 ---
 
 ## Pending verification (not yet used in any chapter)
