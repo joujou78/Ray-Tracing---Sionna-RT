@@ -400,7 +400,8 @@ Full distance breakdown (ON incoh — best method):
 |-----|----------|--------|--------------|----------|-------|
 | Run 2 (R²=0.574) | PER_PATH_VEG=False, 10M samples | 618→601 (17 NF) | -2.305 dB | ~13.693 dB | old _MAT_FIXED_VALS (er=17 during cal) |
 | Bad re-cal | PER_PATH_VEG=True, 30M samples | 618→601 (17 NF) | +9.4756 dB | ~13.693 dB | WRONG — calibrated for per-path P.833; CELL 8e R²=-1.644 |
-| **Run 3 — CELL CAL done (2026-08-16)** | PER_PATH_VEG=False, 30M, transparent discs in CAL | **373** (0 NF) | **+9.657 dB** | **14.19 dB** | new _MAT_FIXED_VALS fix (commit 7585ef7) — ceiling_board er=1 during cal; 211 evals |
+| Run 3 — FAILED | PER_PATH_VEG=False, 30M, transparent discs in CAL | 373 (0 NF) | +9.657 dB | 14.19 dB | _MAT_FIXED_VALS fix (7585ef7) made ceiling_board er=1 during Powell → brick/concrete S→0.51 → scatter flood → CELL 8e R²=-0.881 |
+| **Run 4 — CELL CAL IN PROGRESS (2026-08-16)** | PER_PATH_VEG=False, 30M, ceiling_board ACTIVE during Powell | **373** (0 NF) | **+7.130 dB (Phase 0)** | **14.524 dB (eval 1, improving)** | _MAT_FIXED_VALS reverted (a57e768) — er=17 during Powell; N_SCALAR_BINS=10, LOS_NLOS_ZONE_SPLIT=True, EVAL_MIN_DIST_KM=0.15 |
 
 **Run 3 calibration notes:**
 - 211 evals / 996.5 min — Powell converged (FTOL)
@@ -430,12 +431,18 @@ Full distance breakdown (ON incoh — best method):
 - canopy_itu_vegetation er=1.50, S=0.40: near-transparent with scatter — tree geometry contributes scatter, P.833 handles bulk attenuation
 - itu_ceiling_board forced transparent (er=1, σ=0, S=0) by DISABLE_VEG_DISCS=True override
 
-**Run 3 CELL 8e — IN PROGRESS (2026-08-16):**
-- 100M samples, EVAL_MIN_DIST_KM=0.15
-- Weissberger: 66157 veg polygons, 14144 building footprints loaded
-- 1088/1200 receivers building-blocked (excluded from vegetation depth) — normal for dense urban Nottingham
-- P.833 at 2695 MHz: 8.2 dB at 5m depth (vs Weissberger 0.6 dB — P.833 correct at 2.7 GHz)
-- **Results pending**
+**Run 3 CELL 8e — FAILED (2026-08-16):**
+- R²=-0.881 at 0-1250m (N=719 ON incoh) — scatter flood from transparent ceiling_board during Powell
+- avg_rays ON=4310 vs OFF=23 — 3× fewer scatter paths than Run 2 (12398)
+- Bias = -7.9 dB (sign-flipped vs Run 2's +4.8 dB) — materials calibrated on wrong scatter budget
+- Root cause: _MAT_FIXED_VALS with er=1 during Powell → brick/concrete S→0.51 → 65k scatter paths → R²=-0.881
+
+**Run 4 CELL CAL — IN PROGRESS (2026-08-16):**
+- Phase 0: scalar=+7.130 dB, RMSE=15.50 dB after scalar (373 cal RX, 30M samples)
+- Phase 2 eval 1: 14.524 dB — Powell moving freely (Run 3 was stuck at 15.07 dB)
+- _MAT_FIXED_VALS reverted: ceiling_board er=17, sigma=0.15, S=0.50 during Powell
+- New features: N_SCALAR_BINS=10, LOS_NLOS_ZONE_SPLIT=True, EVAL_MIN_DIST_KM=0.15
+- Expected convergence: ~13.5-14.0 dB, ~16-18 hrs remaining
 
 ### Dual-slope breakpoint analysis (ITU-R P.1411)
 
@@ -544,8 +551,8 @@ At λ=8.3 cm, tree branch diameter ≈ λ → near-total opacity. DISABLE_CANOPY
 - Hard NLOS collapse at 1250m+ (R²=-0.634 at 0-1500m) — beyond calibrated range
 - 3GPP TR 38.901 UMa NLOS physics floor: σ_SF=6.0 dB → current RMSE=8.7 dB = 2.7 dB above floor
 
-**Run 4 — CELL CAL running (2026-08-15, disc absorption tuning):**
-Changes committed to branch — CELL CAL in progress (Phase 2, ~82 evals, ~15.07 dB floor):
+**Run 5 — CELL CAL IN PROGRESS (2026-08-16, disc absorption tuning):**
+Changes committed to branch — CELL CAL Phase 2, eval 198, new best 14.924 dB (eval 197):
 | Parameter | Old | New | Rationale |
 |-----------|-----|-----|-----------|
 | VEG_SCATTERING_COEFF | 0.35 | **0.10** | Reduce scatter flooding — S=0.35 floods NLOS with spurious indirect paths |
@@ -561,7 +568,7 @@ Run sequence: **CELL CAL → CELL 4A → CELL 8e**
 |-------|------|--------|-------|
 | Phase 0 (before scalar) | 32.21 dB | — | DISABLE_CANOPY=True + S=0.10 + sigma=0.50 |
 | Phase 0 (after scalar) | 16.02 dB | **+27.939 dB** | Δ = 16.19 dB improvement |
-| Phase 2 floor | **~15.07 dB** | — | MC noise floor; oscillating 15.066–15.156 dB |
+| Phase 2 new best | **14.924 dB (eval 197)** | — | spike at eval 195 (18.348 dB) then new minimum — still running |
 
 **Key finding — disc absorption cuts cal RMSE from 23.39 → 15.07 dB:**
 
@@ -600,7 +607,7 @@ Run sequence: **CELL CAL → CELL 4A → CELL 8e**
 | Run 2 (aborted) | DISABLE_CANOPY=True, 30M, bounds=(-30,20) | 47.2 dB | +30.0 dB (CLIPPED) | 31.6 dB | scalar capped |
 | Run 3 (aborted) | DISABLE_CANOPY=True, 30M, bounds=(-60,60) | TBD | TBD | TBD | stuck at noise floor |
 | Run 4 — FINAL (CELL 8e done, R²=0.515) | DISABLE_CANOPY=True, 30M, CAL_MAX=1.0, NF filter | 32.21 dB | +12.097 dB | 23.39 dB | CELL 8e Run 3 used these materials |
-| **Run 5 — CELL CAL running (2026-08-15)** | S=0.10, sigma=0.50, er=4.0, 15 bins | **32.21 dB** | **+27.939 dB** | **16.02 dB** | disc absorption tuning; Phase 2 floor ~15.07 dB |
+| **Run 5 — CELL CAL IN PROGRESS (2026-08-16)** | S=0.10, sigma=0.50, er=4.0, 15 bins | **32.21 dB** | **+27.939 dB** | **14.924 dB (eval 197, best so far)** | disc absorption tuning; new best 14.924 dB at eval 197 after spike recovery |
 
 ### How to Simulate Vegetation Absorption (future work)
 
@@ -711,6 +718,12 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 | Phase 2 eval 1 (probe) | 10.145 dB | accidental good point from probe |
 | Phase 2 evals 2-41 | 10.910-10.941 dB | oscillating — MC noise floor (37 params, 20M samples, ±0.21 dB noise) |
 | Expected termination | ~10.9 dB cal RMSE | FTOL natural stop |
+
+**London CELL CAL Run 2 — IN PROGRESS (2026-08-16):**
+- Phase 2 eval 150: 8.966 dB — at MC noise floor (30M samples), FTOL imminent
+- Best so far: 8.966 dB (evals 147-150 stable)
+- Previous session expected ~10.9 dB at 20M samples — 30M + _SIG_MAX_PER_MAT improved to 8.966 dB
+- After FTOL: CELL 4A → CELL 8e (100M samples)
 
 **London CELL CAL fixes (all committed):**
 
