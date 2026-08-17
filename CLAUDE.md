@@ -438,12 +438,28 @@ Full distance breakdown (ON incoh — best method):
 - Bias = -7.9 dB (sign-flipped vs Run 2's +4.8 dB) — materials calibrated on wrong scatter budget
 - Root cause: _MAT_FIXED_VALS with er=1 during Powell → brick/concrete S→0.51 → 65k scatter paths → R²=-0.881
 
-**Run 4 CELL CAL — IN PROGRESS (2026-08-16):**
+**Run 4 CELL CAL — COMPLETE (2026-08-16): 220 evals, 14.19 dB, scalar=+9.391 dB**
 - Phase 0: scalar=+7.130 dB, RMSE=15.50 dB after scalar (373 cal RX, 30M samples)
-- Phase 2 eval 1: 14.524 dB — Powell moving freely (Run 3 was stuck at 15.07 dB)
-- _MAT_FIXED_VALS reverted: ceiling_board er=17, sigma=0.15, S=0.50 during Powell
-- New features: N_SCALAR_BINS=10, LOS_NLOS_ZONE_SPLIT=True, EVAL_MIN_DIST_KM=0.15
-- Expected convergence: ~13.5-14.0 dB, ~16-18 hrs remaining
+- Phase 2 converged (FTOL) at 14.19 dB / 220 evals
+- _MAT_FIXED_VALS: ceiling_board er=17, sigma=0.15, S=0.50 (active during Powell)
+- itu_wet_ground sigma calibrated to 7.14 S/m (uncapped — Run 5 fix: cap at 0.20)
+
+**Run 4 CELL 4A — COMPLETE: itu_wet_ground sigma=7.1435 S/m (uncapped, unphysical)**
+
+**Run 4 CELL 8e — FAILED (2026-08-17): wet_ground sigma=7.14 absorbed close-range paths**
+
+| Range | N (ON incoh) | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|-------------|-----------|-----------|-----|-------|
+| 0-200m | 13 | +25.3 | 25.4 | -173.976 | absorption smoke-gun |
+| 0-300m | 41 | +26.0 | 26.1 | -32.938 | |
+| 0-500m | 125 | +13.7 | 19.6 | -5.549 | |
+| 0-750m | 255 | +7.1 | 14.5 | -1.093 | |
+| 0-900m | 323 | +5.8 | 13.4 | -0.714 | |
+| 0-1000m | 373 | +5.3 | 12.6 | -0.273 | |
+| **0-1250m** | **635** | **+2.8** | **12.6** | **0.225** | partial recovery beyond 1 km |
+
+Root cause: wet_ground sigma=7.14 S/m absorbed ground-bounce paths at close range → model predicts 25 dB too much path loss within 300m. Bin scalar corrections spanned ±24 dB (0.32 km: +24.31 dB, 1.20 km: -9.96 dB). LOS and NLOS zone offsets both +9 dB — diagnostic of wrong calibration, not missing zone split.
+Fix: `_SIG_MAX_PER_MAT['itu_wet_ground'] = 0.20` added for Run 5.
 
 ### Dual-slope breakpoint analysis (ITU-R P.1411)
 
