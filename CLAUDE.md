@@ -402,7 +402,7 @@ Full distance breakdown (ON incoh — best method):
 | Bad re-cal | PER_PATH_VEG=True, 30M samples | 618→601 (17 NF) | +9.4756 dB | ~13.693 dB | WRONG — calibrated for per-path P.833; CELL 8e R²=-1.644 |
 | Run 3 — FAILED | PER_PATH_VEG=False, 30M, transparent discs in CAL | 373 (0 NF) | +9.657 dB | 14.19 dB | _MAT_FIXED_VALS fix (7585ef7) made ceiling_board er=1 during Powell → brick/concrete S→0.51 → scatter flood → CELL 8e R²=-0.881 |
 | Run 4 — FAILED (CELL 8e R²=-1.093 at 0-750m) | PER_PATH_VEG=False, 30M, ceiling_board ACTIVE during Powell | 373 (0 NF) | +9.391 dB | 14.19 dB (220 evals) | itu_wet_ground sigma=7.14 S/m (uncapped) — absorbed close-range paths; bias=+25 dB at 0-200m; bin corrections ±24 dB |
-| **Run 5 — CMA-ES IN PROGRESS (2026-08-17)** | Same as Run 4 + _SIG_MAX_PER_MAT caps + CELL CAL-CMA (CMA-ES optimizer, 5M samples) | 373 (0 NF) | +7.746 dB | 14.82 dB Phase 0 → eval 1: 13.560 dB (beats Powell 14.19) | wet_ground capped at 0.20 ✓; expected convergence 13.0-13.5 dB |
+| **Run 5 — CMA-ES IN PROGRESS (2026-08-17)** | Same as Run 4 + _SIG_MAX_PER_MAT caps + CELL CAL-CMA (CMA-ES optimizer, 5M samples) | 373 (0 NF) | +7.746 dB | 14.82 dB Phase 0 → eval 195 best: **10.917 dB** | wet_ground capped at 0.20 ✓; 3.1 dB above 3GPP σ_SF=7.82 dB physics floor; still descending |
 
 **Run 3 calibration notes:**
 - 211 evals / 996.5 min — Powell converged (FTOL)
@@ -495,11 +495,35 @@ Using CMA-ES instead of Powell (CELL CAL-CMA, commit 2502e5f). Key improvements 
 
 **Phase 1 eval 1:** RMSE=13.560 dB — already beats Powell Run 4 final (14.19 dB) at first eval
 
-**Note — itu_glass cap missing:** `_SIG_MAX_PER_MAT['itu_glass'] = 0.10` not set — cap falls back to 1e4. Low risk (few glass surfaces in Nottingham) but add for next run.
+**CMA-ES descent per generation (popsize=12):**
 
-**Note — 5M samples:** CAL_SAMPLES_PS/CAL_CMA_SAMPLES=5M → ±0.21 dB MC noise. CMA-ES population of ~12 candidates partially averages noise (effective ±0.21/√12 ≈ ±0.06 dB per generation). Less ideal than 30M but acceptable for CMA; tolfun=0.03 may trigger early — if plateau >13.5 dB, re-run at 30M.
+| Generation | Evals | Best RMSE | Delta |
+|-----------|-------|-----------|-------|
+| 1 | 1-12 | 12.846 dB | — |
+| 2 | 13-24 | 12.639 dB | -0.21 |
+| 3 | 25-36 | 12.230 dB | -0.41 |
+| 4 | 37-48 | 11.811 dB | -0.42 |
+| 5 | 49-60 | 11.476 dB | -0.34 |
+| 6 | 61-72 | 11.476 dB | 0.00 (plateau) |
+| 7-16 | 73-194 | 11.252 dB | slow descent |
+| ~17 | 195+ | **10.917 dB** | -0.335 (new best, still descending) |
 
-**Expected convergence:** 13.0-13.5 dB (~2-4 hrs total at 5M samples)
+**Key milestones:**
+- Eval 1: 13.560 dB — beats Powell immediately
+- Eval 51: 11.476 dB — broke through 12 dB barrier
+- Eval 195: 10.917 dB — plateau broken, CMA covariance rotated to new direction
+- Expected final: **10.5-11.0 dB** (~3.1 dB above 3GPP σ_SF=7.82 dB physics floor)
+
+**3GPP physics floor context:**
+- σ_SF=7.82 dB (3GPP TR 38.901 UMa NLOS shadow fading) = irreducible random variation no static RT can predict
+- Gap = 10.917 − 7.82 = **3.1 dB** at eval 195 — very close to theoretical limit
+- Important: compare physics floor against CELL 8e eval RMSE (100M), not cal RMSE (5M). Cal RMSE ≠ eval RMSE.
+
+**Note — itu_glass cap missing (Run 5):** `_SIG_MAX_PER_MAT['itu_glass'] = 0.10` not set — cap falls back to 1e4. Low risk (few glass surfaces in Nottingham, starts at 0.014 S/m). Fixed in commit c2d3f6b for next run. Check itu_glass sigma in CELL 4A before running CELL 8e.
+
+**Note — 5M samples:** CMA-ES population of ~12 candidates partially averages noise (effective ±0.21/√12 ≈ ±0.06 dB per generation). Less ideal than 30M but CMA handles it better than Powell.
+
+**Expected convergence:** 10.5-11.0 dB (~4-5 hrs total at 5M samples)
 
 ### Dual-slope breakpoint analysis (ITU-R P.1411)
 
@@ -633,11 +657,15 @@ Run sequence: **CELL CAL → CELL 4A → CELL 8e**
 **Run 6 CELL CAL — IN PROGRESS (2026-08-17):**
 - Phase 0: 601/601 valid paths, scalar=+28.602 dB, RMSE after scalar=16.23 dB
 - Phase 2 eval 1=15.471 dB, eval 2=15.431 dB — Powell moving freely
+- Evals 44-55: oscillating 15.355-15.502 dB; eval 45=eval 46 (15.464 dB, 909s each) — final convergence steps
+- Each eval: ~900s (15 min) vs 2695 MHz ~55s — caused by DISABLE_VEG_DISCS=False + active disc PLYs (denser scatter geometry)
+- Converging to: **~15.35-15.40 dB** — significantly better than Run 4's 23.39 dB after-scalar start
+- FTOL expected in next 10-20 evals (~2-3 hrs remaining)
 - Note: DISABLE_VEG_DISCS=False (discs active, sigma=0.20) — NOT same as Run 3 (DISABLE_VEG_DISCS=True)
   - Explains +28.6 dB scalar vs Run 3's +12.1 dB (active discs absorb scatter paths)
   - BUT: CELL CAL and CELL 4A are consistent (both sigma=0.20) — no mismatch risk
   - Phase 0 RMSE 16.23 dB better than Run 3's 23.39 dB — discs providing physical absorption
-- Expected convergence: ~14-15 dB, ~16 hrs remaining → CELL 4A → CELL 8e → target R²~0.52-0.55
+- Expected convergence: ~15.35 dB → CELL 4A → CELL 8e → target R²~0.52-0.55
 
 ### 3602 MHz Run 4 Calibration — CELL CAL running (2026-08-15)
 
