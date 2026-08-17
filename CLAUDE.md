@@ -402,7 +402,7 @@ Full distance breakdown (ON incoh — best method):
 | Bad re-cal | PER_PATH_VEG=True, 30M samples | 618→601 (17 NF) | +9.4756 dB | ~13.693 dB | WRONG — calibrated for per-path P.833; CELL 8e R²=-1.644 |
 | Run 3 — FAILED | PER_PATH_VEG=False, 30M, transparent discs in CAL | 373 (0 NF) | +9.657 dB | 14.19 dB | _MAT_FIXED_VALS fix (7585ef7) made ceiling_board er=1 during Powell → brick/concrete S→0.51 → scatter flood → CELL 8e R²=-0.881 |
 | Run 4 — FAILED (CELL 8e R²=-1.093 at 0-750m) | PER_PATH_VEG=False, 30M, ceiling_board ACTIVE during Powell | 373 (0 NF) | +9.391 dB | 14.19 dB (220 evals) | itu_wet_ground sigma=7.14 S/m (uncapped) — absorbed close-range paths; bias=+25 dB at 0-200m; bin corrections ±24 dB |
-| **Run 5 — READY TO RUN (2026-08-17)** | Same as Run 4 + _SIG_MAX_PER_MAT: wet_ground≤0.20, dry_ground≤0.05, water≤5.0 | — | — | — | Delete cal files, re-run CELL CAL → CELL 4A → CELL 8e |
+| **Run 5 — CMA-ES IN PROGRESS (2026-08-17)** | Same as Run 4 + _SIG_MAX_PER_MAT caps + CELL CAL-CMA (CMA-ES optimizer, 5M samples) | 373 (0 NF) | +7.746 dB | 14.82 dB Phase 0 → eval 1: 13.560 dB (beats Powell 14.19) | wet_ground capped at 0.20 ✓; expected convergence 13.0-13.5 dB |
 
 **Run 3 calibration notes:**
 - 211 evals / 996.5 min — Powell converged (FTOL)
@@ -460,6 +460,46 @@ Full distance breakdown (ON incoh — best method):
 
 Root cause: wet_ground sigma=7.14 S/m absorbed ground-bounce paths at close range → model predicts 25 dB too much path loss within 300m. Bin scalar corrections spanned ±24 dB (0.32 km: +24.31 dB, 1.20 km: -9.96 dB). LOS and NLOS zone offsets both +9 dB — diagnostic of wrong calibration, not missing zone split.
 Fix: `_SIG_MAX_PER_MAT['itu_wet_ground'] = 0.20` added for Run 5.
+
+**Run 5 — CELL CAL-CMA IN PROGRESS (2026-08-17)**
+
+Using CMA-ES instead of Powell (CELL CAL-CMA, commit 2502e5f). Key improvements over Powell:
+
+| Fix | Detail |
+|-----|--------|
+| _SIG_MAX_PER_MAT in encode/decode | wet_ground hard-capped at 0.20 in normalised space — Powell uncapped, CMA cannot exceed cap regardless of proposal |
+| _MAT_FIXED_VALS applied before Phase 0 | ceiling_board er=2.73, sigma=0.15, S=0.50 fixed before first solve — consistent with CELL 4A |
+| Noise floor filter | CAL_NOISE_MARGIN_DB=10 dB applied — same as CELL CAL |
+| CAL_FIXED_SEED | seed=42 used for reproducible PathSolver calls |
+| CAL_SCALAR_BOUNDS | reads CELL 1 (-30, 20) — was hardcoded (-30,30) |
+| Warm prior S=0.35 | applied before Phase 0 → more scatter paths → lower scalar needed |
+| Per-material S bounds | _S_MIN_PER_MAT / _S_MAX_PER_MAT enforced in decode |
+| Inline plots | RMSE convergence + per-material parameter trajectories saved as PNG |
+
+**Phase 0 result:**
+- 16.72 dB before scalar → 14.82 dB after scalar=+7.746 dB (vs Run 4: 15.50 dB → scalar=+9.391 dB)
+- Warm prior S=0.35 provides more scatter paths → 1.7 dB less scalar needed
+
+**Free materials (6):**
+
+| Material | er | sigma (default) | cap | S |
+|----------|-----|----------------|-----|---|
+| water_rt | 80.000 | 0.01000 | 5.000 | 0.050 |
+| itu_glass | 6.270 | 0.01403 | **10000** (no cap set — add 0.10 next run) | 0.080 |
+| itu_concrete | 5.310 | 0.07274 | 0.291 | 0.300 |
+| itu_brick | 3.910 | 0.03800 | 0.152 | 0.250 |
+| itu_very_dry_ground | 3.000 | 0.00182 | 0.050 | 0.300 |
+| itu_wet_ground | 20.179 | 0.54427 | **0.200** | 0.300 |
+
+**CMA-ES config:** sigma0=0.3, maxiter=300, popsize=auto~12, tolx=0.0001, tolfun=0.03, 5M samples
+
+**Phase 1 eval 1:** RMSE=13.560 dB — already beats Powell Run 4 final (14.19 dB) at first eval
+
+**Note — itu_glass cap missing:** `_SIG_MAX_PER_MAT['itu_glass'] = 0.10` not set — cap falls back to 1e4. Low risk (few glass surfaces in Nottingham) but add for next run.
+
+**Note — 5M samples:** CAL_SAMPLES_PS/CAL_CMA_SAMPLES=5M → ±0.21 dB MC noise. CMA-ES population of ~12 candidates partially averages noise (effective ±0.21/√12 ≈ ±0.06 dB per generation). Less ideal than 30M but acceptable for CMA; tolfun=0.03 may trigger early — if plateau >13.5 dB, re-run at 30M.
+
+**Expected convergence:** 13.0-13.5 dB (~2-4 hrs total at 5M samples)
 
 ### Dual-slope breakpoint analysis (ITU-R P.1411)
 
