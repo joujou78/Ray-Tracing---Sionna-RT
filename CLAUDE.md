@@ -551,15 +551,26 @@ At λ=8.3 cm, tree branch diameter ≈ λ → near-total opacity. DISABLE_CANOPY
 - Hard NLOS collapse at 1250m+ (R²=-0.634 at 0-1500m) — beyond calibrated range
 - 3GPP TR 38.901 UMa NLOS physics floor: σ_SF=6.0 dB → current RMSE=8.7 dB = 2.7 dB above floor
 
-**Run 5 — CELL CAL IN PROGRESS (2026-08-16, disc absorption tuning):**
-Changes committed to branch — CELL CAL Phase 2, eval 198, new best 14.924 dB (eval 197):
-| Parameter | Old | New | Rationale |
-|-----------|-----|-----|-----------|
-| VEG_SCATTERING_COEFF | 0.35 | **0.10** | Reduce scatter flooding — S=0.35 floods NLOS with spurious indirect paths |
-| VEG_DISC_SIGMA | 0.20 (VEG_CONDUCTIVITY) | **0.50 S/m** | ~2.5 dB absorption per disc hit (was ~1 dB) |
-| VEG_DISC_ER | 2.73 (Sionna default) | **4.0** | Higher Fresnel reflection → fewer rays penetrating deep NLOS |
-| N_SCALAR_BINS | 10 | **15** | Finer resolution of sharp 500-700m NLOS transition |
-| PER_PATH_VEG | True | True | Kept — disc geometry handles scatter; P.833 handles residual gap |
+**Run 5 — CELL CAL COMPLETE, CELL 8e FAILED (2026-08-17):**
+CELL CAL: 207 evals, 14.924 dB, scalar=+29.942 dB (17.8 dB higher than Run 3 +12.097 dB)
+CELL 8e: R²=-4.654, bias=-30.5 dB — catastrophic failure
+
+Root cause 1: sigma=0.50 S/m over-absorbs discs (~8.7 dB per hit vs ~3.5 dB at sigma=0.20). Scalar grew from +12 dB (Run 3) to +29.9 dB — 17.8 dB gap.
+Root cause 2: _MAT_FIXED_VALS in CELL CAL used VEG_CONDUCTIVITY but CELL 4A applied VEG_DISC_SIGMA=0.50 → calibrated for different absorption than evaluated.
+
+**Run 6 — READY TO RUN (2026-08-17, reverted to Run 3 + zone split):**
+Changes pushed to branch:
+| Parameter | Run 5 | Run 6 | Rationale |
+|-----------|-------|-------|-----------|
+| VEG_SCATTERING_COEFF | 0.10 | **0.35** | Reverted to Run 3 — over-reduced S caused scatter flood |
+| VEG_DISC_SIGMA | 0.50 S/m | **removed (default 0.20)** | Reverted — 0.50 over-absorbed, 17.8 dB scalar gap |
+| VEG_DISC_ER | 4.0 | **removed (default 2.73)** | Reverted — Run 3 defaults |
+| N_SCALAR_BINS | 15 | **15** | Kept — finer NLOS transition resolution |
+| LOS_NLOS_ZONE_SPLIT | — | **True** | NEW — separate LOS/NLOS mean offset (same as 2695 MHz) |
+| PER_PATH_VEG | True | True | Kept |
+
+_MAT_FIXED_VALS now resolves: itu_ceiling_board → er=2.73, sigma=0.20, S=0.35 (Run 3 values, consistent CELL CAL/CELL 4A).
+Delete existing cal files before running: `rm ~/sionna_rt/nottingham_ofcom2018_3602mhz_dem/calibrated_materials_3602mhz.json ~/sionna_rt/nottingham_ofcom2018_3602mhz_dem/scalar_offset_3602mhz.json`
 Run sequence: **CELL CAL → CELL 4A → CELL 8e**
 
 ### 3602 MHz Run 4 Calibration — CELL CAL running (2026-08-15)
@@ -607,7 +618,8 @@ Run sequence: **CELL CAL → CELL 4A → CELL 8e**
 | Run 2 (aborted) | DISABLE_CANOPY=True, 30M, bounds=(-30,20) | 47.2 dB | +30.0 dB (CLIPPED) | 31.6 dB | scalar capped |
 | Run 3 (aborted) | DISABLE_CANOPY=True, 30M, bounds=(-60,60) | TBD | TBD | TBD | stuck at noise floor |
 | Run 4 — FINAL (CELL 8e done, R²=0.515) | DISABLE_CANOPY=True, 30M, CAL_MAX=1.0, NF filter | 32.21 dB | +12.097 dB | 23.39 dB | CELL 8e Run 3 used these materials |
-| **Run 5 — CELL CAL IN PROGRESS (2026-08-16)** | S=0.10, sigma=0.50, er=4.0, 15 bins | **32.21 dB** | **+27.939 dB** | **14.924 dB (eval 197, best so far)** | disc absorption tuning; new best 14.924 dB at eval 197 after spike recovery |
+| Run 5 — FAILED (CELL 8e R²=-4.654) | S=0.10, sigma=0.50, er=4.0, 15 bins | 32.21 dB | +29.942 dB | 14.924 dB | sigma=0.50 over-absorbed — 17.8 dB scalar gap vs Run 3 |
+| **Run 6 — READY TO RUN (2026-08-17)** | S=0.35, sigma=0.20, er=2.73 (Run 3 defaults), 15 bins, LOS_NLOS_ZONE_SPLIT=True | — | — | — | Reverted disc to Run 3 + added zone split |
 
 ### How to Simulate Vegetation Absorption (future work)
 
