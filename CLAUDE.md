@@ -401,7 +401,7 @@ Full distance breakdown (ON incoh — best method):
 | Run 2 (R²=0.574) | PER_PATH_VEG=False, 10M samples | 618→601 (17 NF) | -2.305 dB | ~13.693 dB | old _MAT_FIXED_VALS (er=17 during cal) |
 | Bad re-cal | PER_PATH_VEG=True, 30M samples | 618→601 (17 NF) | +9.4756 dB | ~13.693 dB | WRONG — calibrated for per-path P.833; CELL 8e R²=-1.644 |
 | Run 3 — FAILED | PER_PATH_VEG=False, 30M, transparent discs in CAL | 373 (0 NF) | +9.657 dB | 14.19 dB | _MAT_FIXED_VALS fix (7585ef7) made ceiling_board er=1 during Powell → brick/concrete S→0.51 → scatter flood → CELL 8e R²=-0.881 |
-| **Run 4 — CELL CAL IN PROGRESS (2026-08-16)** | PER_PATH_VEG=False, 30M, ceiling_board ACTIVE during Powell | **373** (0 NF) | **+7.130 dB (Phase 0)** | **14.524 dB (eval 1, improving)** | _MAT_FIXED_VALS reverted (a57e768) — er=17 during Powell; N_SCALAR_BINS=10, LOS_NLOS_ZONE_SPLIT=True, EVAL_MIN_DIST_KM=0.15 |
+| **Run 4 — CELL CAL COMPLETE (2026-08-17)** | PER_PATH_VEG=False, 30M, ceiling_board ACTIVE during Powell | **373** (0 NF) | **+9.391 dB** | **14.19 dB (220 evals, 1051.7 min)** | Converged OK; Phase 3 re-scalar worsened (15.14>14.19) → reverted; N_SCALAR_BINS=10, LOS_NLOS_ZONE_SPLIT=True, EVAL_MIN_DIST_KM=0.15 → CELL 4A → CELL 8e |
 
 **Run 3 calibration notes:**
 - 211 evals / 996.5 min — Powell converged (FTOL)
