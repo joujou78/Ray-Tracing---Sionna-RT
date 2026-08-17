@@ -401,7 +401,8 @@ Full distance breakdown (ON incoh — best method):
 | Run 2 (R²=0.574) | PER_PATH_VEG=False, 10M samples | 618→601 (17 NF) | -2.305 dB | ~13.693 dB | old _MAT_FIXED_VALS (er=17 during cal) |
 | Bad re-cal | PER_PATH_VEG=True, 30M samples | 618→601 (17 NF) | +9.4756 dB | ~13.693 dB | WRONG — calibrated for per-path P.833; CELL 8e R²=-1.644 |
 | Run 3 — FAILED | PER_PATH_VEG=False, 30M, transparent discs in CAL | 373 (0 NF) | +9.657 dB | 14.19 dB | _MAT_FIXED_VALS fix (7585ef7) made ceiling_board er=1 during Powell → brick/concrete S→0.51 → scatter flood → CELL 8e R²=-0.881 |
-| **Run 4 — CELL CAL COMPLETE (2026-08-17)** | PER_PATH_VEG=False, 30M, ceiling_board ACTIVE during Powell | **373** (0 NF) | **+9.391 dB** | **14.19 dB (220 evals, 1051.7 min)** | Converged OK; Phase 3 re-scalar worsened (15.14>14.19) → reverted; N_SCALAR_BINS=10, LOS_NLOS_ZONE_SPLIT=True, EVAL_MIN_DIST_KM=0.15 → CELL 4A → CELL 8e |
+| Run 4 — FAILED (CELL 8e R²=-1.093 at 0-750m) | PER_PATH_VEG=False, 30M, ceiling_board ACTIVE during Powell | 373 (0 NF) | +9.391 dB | 14.19 dB (220 evals) | itu_wet_ground sigma=7.14 S/m (uncapped) — absorbed close-range paths; bias=+25 dB at 0-200m; bin corrections ±24 dB |
+| **Run 5 — READY TO RUN (2026-08-17)** | Same as Run 4 + _SIG_MAX_PER_MAT: wet_ground≤0.20, dry_ground≤0.05, water≤5.0 | — | — | — | Delete cal files, re-run CELL CAL → CELL 4A → CELL 8e |
 
 **Run 3 calibration notes:**
 - 211 evals / 996.5 min — Powell converged (FTOL)
