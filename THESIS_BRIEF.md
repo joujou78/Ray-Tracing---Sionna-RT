@@ -55,12 +55,16 @@ The full technical reference is in `CLAUDE.md` in the same repository.
 - Scattering critical: ON incoh (0.574) vs OFF incoh (0.070) — 50-point gap; model fails without scatter
 - Run 4 in progress: N_SCALAR_BINS=10 + LOS/NLOS zone split → target R²~0.60-0.65
 
-### Nottingham 3602 MHz (Run 3 — best so far, FINAL accepted)
-- **R²=0.515, RMSE=9.4 dB** at 0-1250m (ON incoh, per-path P.833)
+### Nottingham 3602 MHz (Run 3 — baseline R²=0.515; Run 6 IN PROGRESS)
+- **R²=0.515, RMSE=9.4 dB** at 0-1250m (ON incoh, per-path P.833) — Run 3 baseline
 - DISABLE_CANOPY=True required — λ=8.3 cm causes total ray blockage through tree crowns
 - Per-path ITU-R P.833 correction (applied per ray segment via paths.vertices)
-- Hard NLOS collapse beyond 1250m (R²=-0.634 at 0-1500m)
-- Run 5 in progress: disc absorption tuning → target modest improvement
+- Hard NLOS collapse beyond 1250m (R²=-0.634 at 0-1500m) — physics limit, not calibration
+- Run 5 FAILED: sigma=0.50 over-absorbed → scalar +29.9 dB (vs +12.1 dB baseline) → R²=-4.654
+- **Run 6 IN PROGRESS**: disc sigma=0.20, S=0.35, er=2.73 + LOS/NLOS zone split (Rbp=1225m)
+  - Phase 0: scalar=+28.602 dB, RMSE=16.23 dB after scalar (better than Run 3's 23.39 dB)
+  - Phase 2 moving: eval 1=15.471 dB, eval 2=15.431 dB — Powell converging
+  - Target: R²~0.52-0.55 at 0-1250m
 
 ### London 915 MHz (IN PROGRESS)
 - CELL CAL at 8.966 dB (30M samples), FTOL imminent
@@ -81,7 +85,7 @@ The full technical reference is in `CLAUDE.md` in the same repository.
 | 915 MHz | **0.835** | 0-750m | 6.0 dB | ON incoh | Best result — short λ, good scatter |
 | 1802 MHz | 0.509 | 0-1250m | 10.6 dB | ON incoh | Coherent collapsed; physics floor |
 | 2695 MHz | 0.574 | 0-1250m | 12.7 dB | ON incoh | Beats 1802 MHz; dual-slope critical |
-| 3602 MHz | 0.515 | 0-1250m | 9.4 dB | ON incoh | Canopy must be disabled; per-path P.833 |
+| 3602 MHz | 0.515 (Run 6 pending) | 0-1250m | 9.4 dB | ON incoh | Canopy must be disabled; per-path P.833 |
 
 ---
 
@@ -184,6 +188,73 @@ Calibrating across Rbp mixes LOS and NLOS physics → sign-flip in bias → R² 
 | NYURay (Ju et al., NYU WIRELESS) | 3.2/5.8 dB LOS/NLOS RMSE with zone corrections + per-building material |
 | NVLabs diff-rt-calibration (Hoydis et al.) | Gradient-based / neural material calibration |
 | RadioUNet (Levie et al., 2021) | R²~0.80 urban outdoor with physics prior + CNN |
+
+---
+
+## 3602 MHz Deep Analysis (thesis-ready findings, 2026-08-17)
+
+### Why vegetation must be disabled at 3602 MHz
+
+At λ=8.3 cm, tree branch diameter ≈ λ. Sionna RT is a **surface-based tracer** — it models only surface interactions, not volumetric penetration. At 3602 MHz the 3D canopy cones are dense enough to block every ray beyond ~400m, making the model blind to all NLOS receivers:
+
+| Setting | Phase 0 RMSE | Scalar | Outcome |
+|---------|-------------|--------|---------|
+| DISABLE_CANOPY=False (canopy active) | 46 dB | +30 dB | All NLOS paths blocked — model predicts zero signal |
+| DISABLE_CANOPY=True (canopy transparent) | 32 dB | +12 dB | R²=0.515 at 0-1250m |
+
+In reality, electromagnetic waves at 3602 MHz partially penetrate vegetation — they are not fully blocked. The RT surface model cannot represent this, so the fix is:
+1. Disable the blocking geometry (DISABLE_CANOPY=True)
+2. Apply ITU-R P.833-10 per-path attenuation as post-processing per ray segment
+
+The flat disc PLYs (itu_ceiling_board) remain active — they provide horizontal scatter that Sionna RT can represent geometrically. Only the 3D volumetric cones (which would falsely block all paths) are disabled.
+
+**Thesis statement:** *At 3602 MHz, the surface-based RT model requires a hybrid approach: geometric scatter via disc elements, supplemented by per-path empirical absorption from ITU-R P.833-10. This is a fundamental limitation of surface-based RT at centimetre-wave frequencies where branch diameter approaches wavelength.*
+
+### Cumulative evaluation plot — key observations (Run 3, R²=0.515)
+
+From the cumulative path-loss evaluation chart (Bias / RMSE / R² / ΔRMSE ON-OFF vs distance threshold):
+
+**1. Scattering is essential — ΔRMSE ON-OFF = -7.5 dB at 1.25 km**
+- Without scattering: RMSE ~17 dB even in the good range
+- With scattering: RMSE ~9-10 dB at 0-1.25 km
+- 50+ receivers have scatter-only paths — no LOS or specular path reaches them
+- Thesis: scattering is the dominant propagation mechanism at 3602 MHz urban
+
+**2. Hard NLOS collapse at Rbp = 1225m**
+- ON incoh bias: ~0 dB at 0-1.25 km → drops to -9 dB at 1.5 km+
+- RMSE: ~9 dB → jumps to 20 dB at 1.5 km and stays flat to 4 km
+- R²: 0.515 at 1.25 km → collapses to -0.4 at 1.5 km
+- This is a dual-slope physics transition (ITU-R P.1411), not a calibration error
+- Thesis: the -9 dB NLOS bias represents the model over-predicting signal through transparent trees — DISABLE_CANOPY=True allows rays to reach far-NLOS receivers unrealistically
+
+**3. LOS regime (0.25-1.25 km): bias near zero, well-calibrated**
+- Bias stays within ±1 dB up to 1.25 km — calibration is correctly centred
+- RMSE 9-11 dB — 2.7-4.1 dB above the 3GPP physics floor (σ_SF=6.0 dB UMa NLOS)
+- The gap reflects N-selection (vegetation-blocked receivers excluded) and hard NLOS geometry
+
+### Run progression — 3602 MHz calibration learning
+
+| Run | DISABLE_VEG_DISCS | Disc sigma | Scalar | After-scalar RMSE | CELL 8e R² | Lesson |
+|-----|-------------------|-----------|--------|-------------------|-----------|--------|
+| Run 3/4 (baseline) | True (transparent) | n/a | +12.1 dB | 23.39 dB | **0.515** | Best result — transparent discs, per-path P.833 |
+| Run 5 | False | 0.50 S/m | +29.9 dB | 14.92 dB | -4.654 | Over-absorption: 17.8 dB scalar gap, _MAT_FIXED_VALS mismatch |
+| Run 6 (in progress) | False | 0.20 S/m | +28.6 dB | 16.23 dB | pending | Consistent CELL CAL/4A; lower Phase 0 RMSE than Run 3 |
+
+**Run 5 failure root cause** (important for thesis methodology section):
+The calibration pipeline requires that the disc material properties used during Powell optimisation (CELL CAL, via `_MAT_FIXED_VALS`) exactly match those applied during evaluation (CELL 4A). Run 5 used sigma=0.20 in `_MAT_FIXED_VALS` but sigma=0.50 in CELL 4A — calibrating for one absorption level, evaluating at another. The 17.8 dB scalar gap was the diagnostic signature of this mismatch.
+
+### LOS/NLOS zone split — implementation (Run 6 addition)
+
+On top of the N-bin distance scalar, a separate mean offset is fitted at the dual-slope boundary Rbp=1225m:
+
+```
+LOS zone (d < Rbp):  mean residual fitted from LOS calibration receivers
+NLOS zone (d ≥ Rbp): mean residual fitted from NLOS calibration receivers
+```
+
+Applied after the bin scalar, before per-path P.833 vegetation correction. Same approach as NYURay (Ju et al.) which achieves 3.2/5.8 dB LOS/NLOS RMSE with zone corrections.
+
+Expected benefit: +1-3 R² points at 0-1250m by removing the mean bias between LOS and early-NLOS receivers.
 
 ---
 

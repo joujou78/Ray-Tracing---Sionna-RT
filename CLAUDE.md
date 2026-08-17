@@ -573,6 +573,15 @@ _MAT_FIXED_VALS now resolves: itu_ceiling_board → er=2.73, sigma=0.20, S=0.35 
 Delete existing cal files before running: `rm ~/sionna_rt/nottingham_ofcom2018_3602mhz_dem/calibrated_materials_3602mhz.json ~/sionna_rt/nottingham_ofcom2018_3602mhz_dem/scalar_offset_3602mhz.json`
 Run sequence: **CELL CAL → CELL 4A → CELL 8e**
 
+**Run 6 CELL CAL — IN PROGRESS (2026-08-17):**
+- Phase 0: 601/601 valid paths, scalar=+28.602 dB, RMSE after scalar=16.23 dB
+- Phase 2 eval 1=15.471 dB, eval 2=15.431 dB — Powell moving freely
+- Note: DISABLE_VEG_DISCS=False (discs active, sigma=0.20) — NOT same as Run 3 (DISABLE_VEG_DISCS=True)
+  - Explains +28.6 dB scalar vs Run 3's +12.1 dB (active discs absorb scatter paths)
+  - BUT: CELL CAL and CELL 4A are consistent (both sigma=0.20) — no mismatch risk
+  - Phase 0 RMSE 16.23 dB better than Run 3's 23.39 dB — discs providing physical absorption
+- Expected convergence: ~14-15 dB, ~16 hrs remaining → CELL 4A → CELL 8e → target R²~0.52-0.55
+
 ### 3602 MHz Run 4 Calibration — CELL CAL running (2026-08-15)
 
 | Phase | RMSE | Scalar | Notes |
