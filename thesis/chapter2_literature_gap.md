@@ -4,42 +4,94 @@ This chapter provides a critical, structured review of existing scientific and t
 
 ## 2.1 Background of the Research Area
 
-Radio propagation prediction methods fall into two broad families, introduced in Chapter 1: empirical models and deterministic ray tracing. Empirical models such as Okumura–Hata [9], its COST-231 high-frequency extension [10], and Free-Space Path Loss [11] describe path loss as a function of distance, frequency, and antenna height fitted to large-scale measurement campaigns, without an explicit representation of the propagation environment's geometry.
+Propagation modelling provides the mathematical and physical framework for estimating radio wave behaviour, underpinning coverage prediction, interference estimation, and resource planning. This section reviews the classical empirical models, the deterministic ray-tracing alternative, and the material and geometric modelling considerations that together form the theoretical foundation for the methodology developed in this thesis.
 
-Deterministic ray tracing instead computes propagation paths explicitly from a three-dimensional description of the environment, tracing reflection, diffraction, and scattering interactions between transmitter and receiver [2]. The electromagnetic behaviour of each interaction depends on the permittivity, conductivity, and roughness of the surface material involved; ITU-R Recommendation P.2040-2 provides the standard reference values and frequency-dependent models for these material properties for common building materials [17].
+### 2.1.1 Classical Propagation Models: Strengths and Limitations
 
-Two propagation phenomena recur throughout the literature and are directly relevant to this thesis's scope. First, at short range in urban macrocell geometries, basic transmission loss is commonly characterised by two slopes separated by a breakpoint distance determined by transmitter height, receiver height, and frequency; ITU-R Recommendation P.1411-10 formalises this dual-slope behaviour for outdoor short-range systems [15]. Second, vegetation introduces attenuation that is difficult to model geometrically: the empirical Weissberger model, developed from measurements between 230 MHz and 95 GHz, was among the first widely used models for foliage-obstructed links [18], and has since been supplemented by the more recent ITU-R Recommendation P.833-10, which extends vegetation attenuation modelling up to 100 GHz using a saturating exponential form [16]. Both remain empirical corrections layered on top of, rather than derived from, the underlying geometric propagation mechanism.
+**Free-Space Path Loss (FSPL).** The FSPL model represents the idealised case of unobstructed signal propagation through free space, calculating attenuation from distance and frequency alone:
+
+**Equation (2.1):** FSPL (dB) = 20 log₁₀(d) + 20 log₁₀(f) + 32.44
+
+where *d* is distance in kilometres and *f* is frequency in MHz. This form follows directly from the Friis transmission formula [11]. Despite its analytical simplicity, FSPL excludes reflection, diffraction, and scattering, limiting its applicability beyond idealised line-of-sight links [2], [11].
+
+**Okumura–Hata model and the COST-231 extension.** The Hata model is an empirical extension of Okumura's measurements, estimating median path loss in urban areas as:
+
+**Equation (2.2):** PL_urban = 69.55 + 26.16 log₁₀(f) − 13.82 log₁₀(h_b) − a(h_m) + (44.9 − 6.55 log₁₀(h_b)) log₁₀(d)
+
+where *f* is frequency in MHz (150–1500 MHz), *h_b* is base station antenna height in metres, *h_m* is mobile antenna height in metres, *a(h_m)* is a city-size-dependent correction term, and *d* is distance in km [9]. The COST-231 extension adapts this formula for frequencies up to 2 GHz and dense urban environments [10], but like the original Hata model it relies on statistically fitted parameters and does not represent the geometry or material composition of the specific environment being modelled [9], [10].
+
+**[TABLE 2.1]**
+
+| Model | Frequency | Assumptions | Advantages | Limitations |
+|---|---|---|---|---|
+| FSPL [11] | Any | Free space, no obstructions | Analytical, simple | Ignores reflections, diffraction |
+| Okumura–Hata [9] | 150–1500 MHz | Empirical, field data | Good for large-scale planning | No detailed geometry/material representation |
+| COST-231 [10] | Up to 2 GHz | Empirical, urban adaptation | Dense urban applicability | Limited spatial accuracy |
+
+*Table 2.1 — Comparative overview of classical propagation models.*
+
+**Limitations in complex historical/dense urban settings.** Classical models assume environmental homogeneity and uniform building distributions. In dense, architecturally varied urban environments — such as the Nottingham city-centre site studied in this thesis, with its narrow streets, mixed building ages, and varied façade materials — such assumptions introduce significant inaccuracies. Classical models also offer coarse spatial resolution, typically on the order of 100 m or more, insufficient for applications such as small-cell deployment or site-specific link-budget analysis that require spatially precise, location-specific prediction [9], [10].
+
+### 2.1.2 Ray Tracing: A Deterministic Modelling Solution
+
+Ray Tracing (RT), founded on geometric optics, explicitly models signal interaction with environmental geometry and materials, capturing multipath propagation directly rather than through statistical averaging [2]. Each electromagnetic wave is represented as a discrete ray traced through a three-dimensional scene; at the receiver, the total electric field is the coherent sum of all resolved multipath rays:
+
+**Equation (2.3):** E_total = Σᵢ₌₁ⁿ Eᵢ · e^(−jφᵢ)
+
+where *Eᵢ* and *φᵢ* are the amplitude and phase of the *i*-th ray. This explicit representation makes RT well suited to capturing multipath-induced fading and delay spread, which are central to the failure modes investigated in this thesis (see Chapters 5–6) [2].
+
+**[FIGURE 2.1 — PLACEHOLDER]**
+*Illustration of ray-tracing propagation mechanisms in an urban street canyon: direct/LOS ray, specular reflection off a façade, edge diffraction at a rooftop or corner, and diffuse scattering off a rough surface. To be inserted.*
+
+RT models three principal interaction mechanisms:
+- **Reflection** — governed by Snell's law and the Fresnel equations, which relate reflected and transmitted field amplitude to the incidence angle and the material's electromagnetic properties [2].
+- **Diffraction** — commonly modelled using the Uniform Theory of Diffraction (UTD), which extends geometrical optics to the shadow and reflection-boundary transition regions around edges such as rooftops and building corners, and is essential for representing non-line-of-sight propagation around urban corners [23].
+- **Scattering** — handled through empirical or surface-roughness-based models representing diffuse re-radiation from irregular surfaces (brickwork, foliage, vegetation) that cannot be captured by specular reflection alone [2].
+
+Together these mechanisms give RT significantly improved spatial resolution and explicit material sensitivity compared with the classical empirical models of Section 2.1.1, at the cost of requiring accurate three-dimensional geometry and calibrated material data as direct inputs [2].
+
+### 2.1.3 Material Modeling and Spatial Resolution
+
+Accurate RT simulation requires precise characterisation of the electromagnetic properties of the materials present in the scene: surfaces such as brick, concrete, and glass interact with incident waves differently, and these differences materially affect predicted path loss.
+
+**ITU-R material standards.** ITU-R Recommendation P.2040 provides standardised methods and reference values for the permittivity, conductivity, and reflection/transmission behaviour of common building materials as a function of frequency [17], [22]. Example reflection-loss figures at 2.4 GHz are sometimes quoted for brick, glass, and concrete walls in secondary literature discussing this recommendation.
+
+> **Caution — unverified figures.** I could not independently confirm specific numeric reflection-loss values (e.g., "brick ≈ 8 dB," "glass ≈ 4 dB," "concrete ≈ 10–12 dB" at 2.4 GHz) against the primary ITU-R P.2040-1 [22] document or any secondary source in this session's research. Per this project's citation-verification rule, these figures should not be presented as confirmed ITU-R values until checked directly against the recommendation's own tables — see `references.md`, entry [22]. This thesis's own calibration work (Chapters 4–5) instead derives material permittivity, conductivity, and scattering coefficients directly from measurement-based Powell optimisation, referencing ITU-R P.2040-2 [17] and P.833-10 [16] only for initial parameter bounds — so the specific values used later in the thesis do not depend on resolving this citation.
+
+**[TABLE 2.2 — PLACEHOLDER]**
+*Literature-reported material reflection-loss/EM-property values by frequency (brick, concrete, glass) once the ITU-R P.2040-1 [22] figures above are verified against the primary source, alongside this thesis's own calibrated values from Chapter 5 for comparison. To be inserted.*
+
+**Importance of geometry fidelity.** Spatial accuracy in the scene model is as important as material accuracy. In this thesis, the Nottingham (dense urban) and Scar Hill (rural) scenes are built from UK Environment Agency LiDAR digital terrain and surface models [8] combined with OpenStreetMap building footprints, preserving building outlines, terrain relief, and vegetation canopy structure at metre-scale resolution (Chapter 3 describes this scene-construction pipeline in full, including the role of Blender in material/texture preparation rather than manual building-by-building modelling).
+
+### 2.1.4 Vegetation Attenuation, Dual-Slope Propagation, and Differentiable Ray Tracing
+
+Two further propagation phenomena recur throughout the literature and are directly relevant to this thesis's scope. First, at short range in urban macrocell geometries, basic transmission loss is commonly characterised by two slopes separated by a breakpoint distance determined by transmitter height, receiver height, and frequency; ITU-R Recommendation P.1411-10 formalises this dual-slope behaviour for outdoor short-range systems [15]. Second, vegetation introduces attenuation that is difficult to model geometrically: the empirical Weissberger model, developed from measurements between 230 MHz and 95 GHz, was among the first widely used models for foliage-obstructed links [18], and has since been supplemented by the more recent ITU-R Recommendation P.833-10, which extends vegetation attenuation modelling up to 100 GHz using a saturating exponential form [16]. Both remain empirical corrections layered on top of, rather than derived from, the underlying geometric propagation mechanism described in Section 2.1.2.
 
 Recent years have also seen the emergence of GPU-accelerated, differentiable ray tracers — notably Sionna RT, built on the Mitsuba 3 rendering engine [13] and the Dr.Jit differentiable compiler [12] — which make gradient-based calibration of material and scene parameters computationally practical at a scale not previously accessible [3]. This development underpins the broader digital-twin vision for 6G network planning introduced in Chapter 1 [4].
 
-**[FIGURE 2.1 — PLACEHOLDER]**
-*Taxonomy of propagation modelling approaches: Empirical (Okumura–Hata, COST-231, FSPL) / Deterministic Ray Tracing (image-based, SBR, Sionna RT) / Data-driven (RadioUNet). To be inserted.*
-
 ## 2.2 Review of Existing Approaches
 
-**Classical empirical approaches.** Okumura–Hata [9] and its COST-231 extension [10] remain widely used for macro-level network planning because of their low computational cost and minimal input data requirements, but as discussed in Chapter 1 they operate at coarse spatial resolution and cannot represent site-specific geometry.
+**Classical empirical approaches.** Okumura–Hata [9] and its COST-231 extension [10] remain widely used for macro-level network planning because of their low computational cost and minimal input data requirements, but as discussed in Section 2.1.1 they operate at coarse spatial resolution and cannot represent site-specific geometry.
 
 **Deterministic ray tracing and its calibration.** Site-specific ray tracing has a long history in radio propagation research [2], and recent work has focused heavily on *calibrating* ray tracers against real measurements rather than relying on generic material assumptions. Kanhere, Poddar, and Rappaport calibrated NYURay, a 3D mmWave and sub-THz ray tracer, against 28 GHz, 73 GHz, and 142 GHz channel measurements collected in indoor, outdoor, and factory scenarios, obtaining a standard deviation in directional multipath power error of under 3 dB indoors and under 2 dB outdoors and in factory environments after calibration [19]. Separately, Hoydis et al. introduced a gradient-based calibration method for Sionna RT that jointly optimises differentiable parametrisations of material properties, scattering, and antenna patterns against measured channel impulse responses, validating it on synthetic data and real indoor measurements from a distributed MIMO channel sounder [21].
-
-**Vegetation and dual-slope modelling.** As noted in Section 2.1, vegetation attenuation is generally handled as a post-hoc empirical correction — Weissberger [18] or ITU-R P.833-10 [16] — applied either to a receiver's total path loss or, in more recent per-path implementations, to individual ray segments. Dual-slope behaviour is similarly handled by treating the ITU-R P.1411-10 breakpoint distance [15] as a regime boundary within which a single calibration should be considered physically consistent.
 
 **Data-driven alternatives.** A parallel body of work addresses propagation prediction with machine learning rather than explicit geometric simulation. Levie et al.'s RadioUNet uses a convolutional neural network trained on a large simulated dataset (RadioMapSeer) to estimate 2D radio maps directly from city geometry, reporting strong accuracy at a fraction of the computational cost of full ray tracing [20]. Such approaches trade physical interpretability and generalisation to unseen geometries for prediction speed.
 
 **Validation against real urban measurements.** Fewer studies validate ray-tracing fidelity directly against real outdoor cellular measurements at sub-6 GHz frequencies. Manukyan et al. evaluated Sionna-based ray tracing against real 4G/5G measurements collected across six base stations in Rome (0.8–4 GHz), using Spearman rank correlation between measured and simulated received power and k-nearest-neighbour localisation accuracy as fidelity metrics, and found that antenna location and orientation assumptions were decisive to simulator fidelity — greedy re-optimisation of these assumptions alone improved correlation by 5% to 130% depending on the base station [7].
 
-**[TABLE 2.1 — PLACEHOLDER]**
-*Comparison of empirical propagation models: Okumura–Hata [9] / COST-231 [10] / FSPL [11] — columns: frequency range, typical spatial resolution, input data required, reported accuracy. To be inserted.*
+**[FIGURE 2.2 — PLACEHOLDER]**
+*Taxonomy of propagation modelling approaches: Empirical (Okumura–Hata, COST-231, FSPL) / Deterministic Ray Tracing (image-based, SBR, Sionna RT) / Data-driven (RadioUNet). To be inserted.*
 
-**[TABLE 2.2 — PLACEHOLDER]**
+**[TABLE 2.3 — PLACEHOLDER]**
 *Comparison of reviewed calibration studies: NYURay [19] / Sionna RT gradient-based calibration [21] / RadioUNet [20] — columns: frequency range, environment type, calibration method, reported accuracy metric. To be inserted.*
 
 ## 2.3 Critical Analysis of Existing Work
 
 The reviewed literature establishes that calibrated ray tracing can achieve strong accuracy, but this has predominantly been demonstrated in two settings that differ from the one this thesis addresses. NYURay's calibration results are strongest at mmWave and sub-THz frequencies (28–142 GHz) over indoor, outdoor-microcell, and factory distances [19], while the Sionna RT differentiable calibration method has so far been validated primarily on synthetic scenes and a single real indoor MIMO measurement set [21]. Neither directly demonstrates calibration accuracy across multiple sub-6 GHz macrocell frequencies at the same outdoor urban site — the regime in which the ITU-R P.1411 dual-slope breakpoint [15] and vegetation attenuation [16], [18] are most consequential, since breakpoint distances at these frequencies (hundreds of metres to just over a kilometre, given typical macrocell heights) fall inside the range of interest for network planning rather than being negligible as at mmWave.
 
-The vegetation and dual-slope literature itself provides physical models but not a systematic account of how they interact with ray-tracer calibration. Weissberger [18] and ITU-R P.833-10 [16] specify attenuation as a function of foliage depth, but neither addresses how attenuation should be combined with a surface-based ray tracer that, by construction, computes electromagnetic interactions only at discrete surface intersections and cannot represent volumetric absorption through a tree canopy directly — a limitation that becomes more severe as wavelength shrinks toward the physical scale of vegetation structures. Similarly, ITU-R P.1411-10's breakpoint formula [15] defines where LOS and NLOS regimes separate, but the literature reviewed here does not address the practical calibration consequence: fitting a ray tracer's free parameters to measurements spanning both regimes risks averaging over two physically distinct propagation mechanisms.
+The vegetation and dual-slope literature itself provides physical models but not a systematic account of how they interact with ray-tracer calibration. Weissberger [18] and ITU-R P.833-10 [16] specify attenuation as a function of foliage depth, but neither addresses how attenuation should be combined with a surface-based ray tracer that, by construction, computes electromagnetic interactions only at discrete surface intersections (Section 2.1.2) and cannot represent volumetric absorption through a tree canopy directly — a limitation that becomes more severe as wavelength shrinks toward the physical scale of vegetation structures. Similarly, ITU-R P.1411-10's breakpoint formula [15] defines where LOS and NLOS regimes separate, but the literature reviewed here does not address the practical calibration consequence: fitting a ray tracer's free parameters to measurements spanning both regimes risks averaging over two physically distinct propagation mechanisms.
 
-The data-driven alternative represented by RadioUNet [20] achieves high accuracy efficiently, but at the cost of requiring large, environment-specific training data and offering limited insight into which physical mechanism (reflection, diffraction, vegetation attenuation) is responsible for a given prediction error — a diagnostic capability that a calibrated ray tracer retains by construction.
+The data-driven alternative represented by RadioUNet [20] achieves high accuracy efficiently, but at the cost of requiring large, environment-specific training data and offering limited insight into which physical mechanism (reflection, diffraction, vegetation attenuation) is responsible for a given prediction error — a diagnostic capability that a calibrated ray tracer retains by construction (Table 2.1, Section 2.1.1).
 
 Finally, Manukyan et al.'s finding that ray-tracing fidelity against real measurements is highly sensitive to antenna placement and orientation assumptions [7] is a caution rather than a solution: it demonstrates that ray-tracing accuracy cannot be assumed from the simulator alone and must be established empirically for each deployment scenario, but its evaluation metrics (rank correlation, localisation accuracy) do not directly report the path-loss-level accuracy metrics (R², RMSE, bias) that are standard in network planning and that this thesis uses throughout.
 
@@ -51,4 +103,4 @@ No study identified in this review combines these elements into a single, system
 
 ---
 
-*References for this chapter reuse [2], [3], [4], [5], [7], [9]–[13] from Chapter 1 and add [15]–[21]; see `references.md` for the full, verified reference list shared across all chapters.*
+*References for this chapter reuse [2], [3], [4], [7], [8]–[13] from Chapter 1 and add [15]–[23]; see `references.md` for the full, verified reference list shared across all chapters.*

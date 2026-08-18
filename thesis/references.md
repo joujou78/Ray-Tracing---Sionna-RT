@@ -74,7 +74,13 @@ project note) versus provided directly by the student.
 [21] J. Hoydis, F. Aït Aoudia, S. Cammerer, F. Euchner, M. Nimier-David, S. ten Brink, and A. Keller, "Learning Radio Environments by Differentiable Ray Tracing," arXiv:2311.18558, 2023 (IEEE Trans. Machine Learning in Communications and Networking, 2024).
 — Verified via arXiv abstract + IEEE Xplore listing, 2026-08-16. This is the paper CLAUDE.md referred to as "NVLabs diff-rt-calibration (Hoydis et al.)".
 
+[22] ITU-R, "Effects of building materials and structures on radiowave propagation above about 100 MHz," Recommendation ITU-R P.2040-1, Jul. 2015.
+— Recommendation's existence and approval date verified via ITU.int / Accuris Standards Store search, 2026-08-16. **UNVERIFIED CONTENT**: the specific numeric reflection-loss values commonly quoted alongside this recommendation (brick ≈ 8 dB, glass ≈ 4 dB, concrete ≈ 10–12 dB at 2.4 GHz) could not be confirmed against the primary document or any secondary source in this session's searches. Do not cite these figures as ITU-R P.2040-1 values without pulling the actual table from the PDF first — see caution note in Chapter 2, Section 2.1.3.
+
+[23] R. G. Kouyoumjian and P. H. Pathak, "A Uniform Geometrical Theory of Diffraction for an Edge in a Perfectly Conducting Surface," *Proc. IEEE*, vol. 62, no. 11, pp. 1448–1461, Nov. 1974.
+— Verified via search (ADS abstract, IEEE Xplore listing, multiple citation confirmations), 2026-08-16. The canonical Uniform Theory of Diffraction (UTD) reference.
+
 ---
 
 ## Pending verification (not yet used in any chapter)
-Nothing outstanding from the original CLAUDE.md literature table — all entries have now been individually verified and cited above (with two corrections noted: [15] version number, [19] author list).
+Nothing outstanding from the original CLAUDE.md literature table. One open item from Chapter 2's theoretical-foundations content: the specific ITU-R P.2040-1 material reflection-loss values [22] still need primary-source confirmation before final submission.
