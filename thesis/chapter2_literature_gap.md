@@ -134,11 +134,11 @@ Simulations in this thesis are GPU-accelerated. `sionna019_calibration.ipynb` do
 | GPU memory | 16,384 MiB (16 GB) |
 | Driver version | 580.126.20 |
 | CUDA version | 13.0 |
-| Host | Virtual machine (`sti-virtual-machine`) |
+| CPU | Intel(R) Xeon(R) Platinum 8176 @ 2.10 GHz, 12 vCPUs (12 sockets × 1 core × 1 thread) |
+| System RAM | 62 GiB total (~43 GiB available at time of query) |
+| Virtualisation | VMware hypervisor, full virtualisation (host `sti-virtual-machine`) |
 
-At the time of the query, GPU utilisation was at 100% across four concurrent Python processes (two `sionna_gpu`/`sionna_gpu_final` conda environments plus two unlabelled `python` processes), consistent with CLAUDE.md's record of multiple calibration runs (2695 MHz, 3602 MHz, London 915 MHz) executing in parallel on this machine.
-
-> **[PLACEHOLDER — still pending]** CPU core count and system RAM are not shown by `nvidia-smi` and have not yet been provided; add the output of `lscpu` and `free -h` (or equivalent) here once available.
+At the time of the query, GPU utilisation was at 100% across four concurrent Python processes (two `sionna_gpu`/`sionna_gpu_final` conda environments plus two unlabelled `python` processes), consistent with CLAUDE.md's record of multiple calibration runs (2695 MHz, 3602 MHz, London 915 MHz) executing in parallel on this machine. This CPU configuration (12 vCPUs, Xeon Platinum 8176) is consistent with a cloud/virtualised compute allocation rather than a bare-metal workstation, matching the `sti-virtual-machine` hostname and VMware hypervisor reported above.
 
 ### 2.5.3 Installation and Software Environment
 
