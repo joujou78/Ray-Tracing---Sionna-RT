@@ -121,8 +121,20 @@ The pipeline actually used in this thesis (as implemented across `sionna019_scen
 **[FIGURE 2.3 — PLACEHOLDER]**
 *Side-by-side comparison of coarse vs. detailed urban geometry for the Nottingham scene: (a) OSM-only building footprints with default heights, (b) full LiDAR/nDSM-informed geometry with Blender-refined building detail. To be inserted.*
 
-**[FIGURE 2.4 — PLACEHOLDER]**
-*Pipeline workflow diagram: EA LiDAR + OSM + Blender geometry → Sionna 2.0 scene XML → RadioMaterial assignment → PathSolver ray tracing → vegetation post-processing → radio environmental map / evaluation metrics. To be inserted.*
+**Figure 2.4 — Simulation pipeline: from scene build to final radio map.**
+
+```mermaid
+flowchart TD
+    A["EA LiDAR DTM/DSM download + merge\n(nDSM = DSM − DTM)\nCELL 2b–2e"] --> C["Terrain PLY + OSM building PLYs\n(nDSM-informed heights;\nBlender-refined building detail\nexported per-material)\nCELL 3–4"]
+    C --> D["Scene assembly:\nSionna 2.0 scene XML\nCELL B3"]
+    D --> E["RadioMaterial assignment\n(ITU-R P.2040-2 initial values)\nCELL 4A/4B"]
+    E --> F["TX placement (site AGL/EIRP)\n+ RX extraction from Ofcom CSV\nCELL 4C, 5–6"]
+    F --> G["PathSolver ray tracing\n(reflection, diffraction, scattering)\nCELL 7 / CELL 8"]
+    G --> H["Vegetation post-processing\n(ITU-R P.833 / Weissberger)\nCELL P.833"]
+    H --> I["Radio environmental map +\nbias / RMSE / R² vs Ofcom\nCELL REPORT"]
+```
+
+*Figure 2.4 — This project's actual scene-build-to-evaluation pipeline (Nottingham/London/Scar Hill), traced directly from the scene-builder and simulation notebooks: EA LiDAR + OSM + Blender-refined geometry → Sionna 2.0 scene XML → RadioMaterial assignment → TX/RX placement → PathSolver ray tracing → vegetation post-processing → radio environmental map and evaluation metrics.*
 
 ### 2.5.2 Hardware and Computational Configuration
 
