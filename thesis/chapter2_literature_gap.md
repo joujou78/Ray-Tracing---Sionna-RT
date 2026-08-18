@@ -69,6 +69,38 @@ Two further propagation phenomena recur throughout the literature and are direct
 
 Recent years have also seen the emergence of GPU-accelerated, differentiable ray tracers — notably Sionna RT, built on the Mitsuba 3 rendering engine [13] and the Dr.Jit differentiable compiler [12] — which make gradient-based calibration of material and scene parameters computationally practical at a scale not previously accessible [3]. This development underpins the broader digital-twin vision for 6G network planning introduced in Chapter 1 [4].
 
+### 2.1.5 Path Loss Computation and Summation Methods in Ray Tracing
+
+Section 2.1.2 introduced the total field as a sum of *n* discrete ray contributions (Equation 2.3). This section makes explicit how that sum becomes a path loss figure in dB, and — critically for this thesis, since the choice recurs throughout Chapters 4–5 as a per-frequency modelling decision — the difference between *coherent* and *incoherent* summation of those contributions.
+
+**Channel impulse response and path gain.** `PathSolver` in Sionna RT returns, for each resolved propagation path *i*, a complex baseband path coefficient *aᵢ* and a delay *τᵢ*. The channel frequency response at carrier frequency *f* is:
+
+**Equation (2.4):** h(f) = Σᵢ₌₀^(M−1) aᵢ · e^(−j2πfτᵢ)
+
+where *M* is the number of resolved paths between transmitter and receiver. This is the discrete form of Equation (2.3), with *aᵢ* absorbing free-space spreading loss, reflection/transmission/diffraction coefficients, and (where active) scattering loss along path *i*.
+
+**Path loss from channel gain.** Received power follows the link-budget relation P_rx = P_tx + G_tx + G_rx − PL (in dB), where the path loss itself is obtained from the magnitude of the total channel gain:
+
+**Equation (2.5):** PL (dB) = −20 log₁₀ |h(f)|
+
+**Coherent summation.** If the complex path coefficients are summed with their relative phase intact — as in Equation (2.4) directly — the result is sensitive to small path-length differences (a shift of a fraction of a wavelength can change *τᵢ* enough to flip the sign of a phase term), which can cause constructive or destructive interference between paths:
+
+**Equation (2.6):** P_coh = |Σᵢ aᵢ e^(−j2πfτᵢ)|²
+
+**Incoherent summation.** An alternative is to sum the *power* contributed by each path, discarding relative phase entirely:
+
+**Equation (2.7):** P_incoh = Σᵢ |aᵢ|²
+
+Coherent summation (Equation 2.6) is the physically complete representation of narrowband received power and is appropriate when path geometry is known precisely relative to the wavelength. Incoherent summation (Equation 2.7) discards phase information but is far less sensitive to small geometric errors in the scene or the receiver's exact sub-wavelength position — a practical advantage when many nominally similar scatterers (e.g., thousands of individually modelled tree crowns) make the coherent sum numerically unstable. Throughout this project's own results (Chapters 4–5, referenced here as "ON/OFF" and "coh/incoh" in the calibration notebooks), the choice between these two methods — and between scattering enabled ("ON") or disabled ("OFF") in the material model — is itself found to be frequency- and scene-dependent rather than fixed, which Section 2.3 revisits as an open methodological question the existing literature does not settle in general.
+
+**Maxwell-derived material parameters: ε, σ, and S.** The path coefficients *aᵢ* in Equation (2.4) depend, at each reflection, on the electromagnetic properties of the material struck. Following Maxwell's equations for a lossy dielectric, a material's response to a time-harmonic field is captured by a single complex relative permittivity:
+
+**Equation (2.8):** ε_complex = ε_r − j · σ / (ω ε₀)
+
+where *ε_r* is the (real) relative permittivity, *σ* is the conductivity in S/m, *ω* = 2π*f* is the angular frequency, and *ε₀* ≈ 8.854×10⁻¹² F/m is the permittivity of free space. The imaginary term represents Ohmic loss and is what makes a material absorptive rather than purely reflective. This complex permittivity determines the material's wave impedance and, through the Fresnel equations (Section 2.1.2), its reflection and transmission coefficients as a function of incidence angle and polarisation [17], [22]. ITU-R P.2040 tabulates *ε_r* and *σ* for common building materials on exactly this basis [17].
+
+The third material parameter used throughout this thesis's calibration, the scattering coefficient *S* ∈ [0, 1], is not a Maxwell-equation quantity in the same sense — smooth-surface Fresnel reflection is deterministic and specular. *S* is instead an empirical extension for rough or heterogeneous surfaces, following the Effective Roughness model of Degli-Esposti et al.: a fraction *S* of the reflected power is redirected into a diffuse scattering lobe (Lambertian or directive) rather than the specular direction, with the remaining (1 − *S*) fraction reflected specularly according to the Fresnel coefficients derived from Equation (2.8) [27]. This is the *S* parameter reported alongside *ε_r* and *σ* in this thesis's calibrated material tables (Chapter 5) and is what the "ON"/"OFF" scattering toggle in Section 2.1.5 above switches on and off.
+
 ## 2.2 Review of Existing Approaches
 
 **Classical empirical approaches.** Okumura–Hata [9] and its COST-231 extension [10] remain widely used for macro-level network planning because of their low computational cost and minimal input data requirements, but as discussed in Section 2.1.1 they operate at coarse spatial resolution and cannot represent site-specific geometry.
@@ -179,4 +211,4 @@ This chapter has critically reviewed classical propagation models and their limi
 
 ---
 
-*References for this chapter reuse [2], [3], [4], [5], [7], [8]–[13] from Chapter 1 and add [15]–[26]; see `references.md` for the full, verified reference list shared across all chapters. Note: a "Loyka & Kouki (2008)" citation appearing in an earlier draft could not be verified and has been omitted — see `references.md`, "Not used" section.*
+*References for this chapter reuse [2], [3], [4], [5], [7], [8]–[13] from Chapter 1 and add [15]–[27]; see `references.md` for the full, verified reference list shared across all chapters. Note: a "Loyka & Kouki (2008)" citation appearing in an earlier draft could not be verified and has been omitted — see `references.md`, "Not used" section.*

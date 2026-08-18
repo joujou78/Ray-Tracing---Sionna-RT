@@ -93,6 +93,11 @@ project note) versus provided directly by the student.
 
 ---
 
+[27] V. Degli-Esposti, F. Fuschini, E. M. Vitucci, and G. Falciasecca, "Measurement and Modelling of Scattering From Buildings," *IEEE Trans. Antennas Propag.*, vol. 55, no. 1, pp. 143–153, Jan. 2007. doi: 10.1109/TAP.2006.888422.
+— Verified via search (DOI, multiple citation-index confirmations), 2026-08-18. The canonical Effective Roughness / directive scattering model reference underlying the scattering coefficient *S* used in Sionna RT's `RadioMaterial` and in this project's material calibration.
+
+---
+
 ## Not used — could not verify, do not cite
 "Loyka & Kouki (2008)," described in a draft passage as covering "polarization and multipath modeling accuracy" in ray tracing. The only Loyka & Kouki publication found is S. L. Loyka and A. B. Kouki, "Using Two-Ray Multipath Model for Microwave Link Budget Analysis," *IEEE Antennas Propag. Mag.*, vol. 43, pp. 31–36, 2001 (plus a related 2001 CCECE conference paper on fade-depth prediction) — a different year (2001, not 2008) and a narrower topic (two-ray fade depth, not general polarization/multipath RT accuracy). Do not cite this as "Loyka & Kouki (2008)" without locating the specific paper the draft actually intended.
 
