@@ -96,6 +96,9 @@ project note) versus provided directly by the student.
 [27] V. Degli-Esposti, F. Fuschini, E. M. Vitucci, and G. Falciasecca, "Measurement and Modelling of Scattering From Buildings," *IEEE Trans. Antennas Propag.*, vol. 55, no. 1, pp. 143–153, Jan. 2007. doi: 10.1109/TAP.2006.888422.
 — Verified via search (DOI, multiple citation-index confirmations), 2026-08-18. The canonical Effective Roughness / directive scattering model reference underlying the scattering coefficient *S* used in Sionna RT's `RadioMaterial` and in this project's material calibration.
 
+[28] M. J. D. Powell, "An Efficient Method for Finding the Minimum of a Function of Several Variables Without Calculating Derivatives," *Comput. J.*, vol. 7, no. 2, pp. 155–162, 1964. doi: 10.1093/comjnl/7.2.155.
+— Verified via search (DOI, Oxford Academic listing, SciPy `fmin_powell` documentation), 2026-08-18. The derivative-free conjugate-direction optimisation method (Powell's method) used for the multi-phase material calibration in this project (Chapter 4).
+
 ---
 
 ## Not used — could not verify, do not cite

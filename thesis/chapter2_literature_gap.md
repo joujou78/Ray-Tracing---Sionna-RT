@@ -101,6 +101,55 @@ where *ε_r* is the (real) relative permittivity, *σ* is the conductivity in S/
 
 The third material parameter used throughout this thesis's calibration, the scattering coefficient *S* ∈ [0, 1], is not a Maxwell-equation quantity in the same sense — smooth-surface Fresnel reflection is deterministic and specular. *S* is instead an empirical extension for rough or heterogeneous surfaces, following the Effective Roughness model of Degli-Esposti et al.: a fraction *S* of the reflected power is redirected into a diffuse scattering lobe (Lambertian or directive) rather than the specular direction, with the remaining (1 − *S*) fraction reflected specularly according to the Fresnel coefficients derived from Equation (2.8) [27]. This is the *S* parameter reported alongside *ε_r* and *σ* in this thesis's calibrated material tables (Chapter 5) and is what the "ON"/"OFF" scattering toggle in Section 2.1.5 above switches on and off.
 
+### 2.1.6 Fresnel Reflection Coefficients
+
+The specular reflection introduced qualitatively in Section 2.1.2 is quantified by the Fresnel equations, giving the (generally complex-valued) reflection coefficient as a function of incidence angle *α* and the complex relative permittivity *ε* = ε_complex from Equation (2.8). For perpendicular ("s") polarisation:
+
+**Equation (2.9):** R_s = (√(ε − sin²α) − cos α) / (√(ε − sin²α) + cos α)
+
+and for parallel ("p") polarisation:
+
+**Equation (2.10):** R_p = (ε cos α − √(ε − sin²α)) / (ε cos α + √(ε − sin²α))
+
+Because *ε* is complex whenever conductivity *σ* > 0 (Equation 2.8), these coefficients carry both a magnitude (fraction of power reflected) and a phase shift, both of which propagate into the path coefficient *aᵢ* of Equation (2.4) for every reflected ray. This is the mechanism by which the calibrated material parameters (*ε_r*, *σ*) of Section 2.1.3 directly determine simulated path loss.
+
+### 2.1.7 Vegetation Attenuation Formulas
+
+Section 2.1.4 introduced Weissberger's model and ITU-R P.833-10 qualitatively; their exact forms, both used in this project's post-processing (Chapters 4–5), are:
+
+**Weissberger's Modified Exponential Decay model** [18]:
+
+**Equation (2.11):** A (dB) = 1.33 · f^0.284 · d^0.588,  for 14 m < d ≤ 400 m
+A (dB) = 0.45 · f^0.284 · d,  for 0 < d ≤ 14 m
+
+where *f* is frequency in GHz and *d* is the foliage depth traversed, in metres.
+
+**ITU-R P.833-10 vegetation attenuation** [16]:
+
+**Equation (2.12):** A (dB) = A_m · (1 − exp(−d · γ / A_m))
+
+where *A_m* is the maximum attenuation for a given vegetation type (≈ 25 dB is typical near 3 GHz) and *γ* is the specific attenuation for very short vegetation depths (≈ 2.0 dB/m near 3 GHz), both frequency- and vegetation-type-dependent per the recommendation's tables. Unlike Weissberger's power-law form (Equation 2.11), Equation (2.12) saturates at *A_m* as depth increases, which this project uses per-path (applied to individual ray segments via their intersected vegetation depth) at 2695 MHz and 3602 MHz, where Weissberger is known to under-estimate attenuation by around 40% [16].
+
+### 2.1.8 Dual-Slope Breakpoint Distance
+
+The breakpoint distance introduced conceptually in Section 2.1.4 is calculated, per the standard two-ray/dual-slope geometry adopted by ITU-R P.1411-10 [15] (and consistently with 3GPP TR 38.901's equivalent formulation [6]), as:
+
+**Equation (2.13):** R_bp = 4 · h_BS · h_UT · f / c
+
+where *h_BS* and *h_UT* are base-station and user-terminal antenna heights in metres, *f* is frequency in Hz, and *c* is the speed of light. This project's own reported breakpoints (e.g., R_bp ≈ 311 m at 915 MHz, 916 m at 2695 MHz, for h_BS = 17 m, h_UT = 1.5 m) follow directly from Equation (2.13) and are used to bound the calibration distance range at each frequency, as discussed in Section 2.3.
+
+### 2.1.9 Evaluation Metrics
+
+Throughout this thesis, simulated path loss PL_sim is compared against measured path loss PL_meas (from the Ofcom 2018 dataset [5]) at each receiver *i* = 1...N using three standard goodness-of-fit statistics:
+
+**Equation (2.14) — Bias:** Bias (dB) = (1/N) Σᵢ (PL_sim,i − PL_meas,i)
+
+**Equation (2.15) — RMSE:** RMSE (dB) = √[(1/N) Σᵢ (PL_sim,i − PL_meas,i)²]
+
+**Equation (2.16) — Coefficient of determination:** R² = 1 − [Σᵢ (PL_meas,i − PL_sim,i)²] / [Σᵢ (PL_meas,i − PL̄_meas)²]
+
+where PL̄_meas is the mean of the measured path loss over the receiver set considered. These are the metrics reported for every frequency, site, and distance range in Chapters 5–6.
+
 ## 2.2 Review of Existing Approaches
 
 **Classical empirical approaches.** Okumura–Hata [9] and its COST-231 extension [10] remain widely used for macro-level network planning because of their low computational cost and minimal input data requirements, but as discussed in Section 2.1.1 they operate at coarse spatial resolution and cannot represent site-specific geometry.
@@ -144,7 +193,7 @@ The pipeline actually used in this thesis (as implemented across `sionna019_scen
 1. **Terrain acquisition** — UK Environment Agency 1 m LiDAR Digital Terrain and Surface Models are downloaded and merged for the scene area, and a normalised Digital Surface Model (nDSM = DSM − DTM) is computed to recover above-ground clutter height (scene-builder cells CELL 2b–2e) [8].
 2. **Terrain and building geometry** — the DTM is sampled onto a regular grid to build a terrain mesh, and OpenStreetMap building footprints are extruded into building PLY meshes, with nDSM-derived heights used to fill gaps in sparse OSM height tags (CELL 3–4). Where finer building detail is required, geometry is authored/refined in Blender, with materials standardised to Sionna-compatible names and exported per material as PLY meshes for import into the scene.
 3. **Scene assembly** — all PLY meshes are assembled into a single Sionna 2.0-format scene XML file (CELL B3).
-4. **Material assignment** — the scene is loaded into Sionna RT and each surface is assigned a `RadioMaterial` (relative permittivity, conductivity, scattering coefficient), initialised from ITU-R P.2040-2 reference values [17] and later calibrated against measurements (CELL 4A/4B; calibration procedure detailed in Chapter 4).
+4. **Material assignment** — the scene is loaded into Sionna RT and each surface is assigned a `RadioMaterial` (relative permittivity, conductivity, scattering coefficient — Section 2.1.3), initialised from ITU-R P.2040-2 reference values [17] and later calibrated against measurements using Powell's derivative-free conjugate-direction optimisation method [28] (CELL 4A/4B; the multi-phase calibration procedure itself is detailed in Chapter 4).
 5. **Transmitter and receiver placement** — the transmitter is placed at the site's documented location and antenna height (CELL 4C), and receivers are extracted from the corresponding Ofcom 2018 drive-test CSV for that site and frequency [5] (CELL 5–6).
 6. **Path solving** — Sionna's `PathSolver` traces rays between transmitter and receivers, resolving reflection, diffraction, and scattering interactions (CELL 7, with a stratified distance-band variant in CELL 8 for scattering ON/OFF comparison across the full receiver set).
 7. **Vegetation post-processing** — ITU-R P.833-10 or Weissberger vegetation attenuation is applied post-hoc based on the vegetation depth intersected by each path (CELL P.833) [16], [18].
@@ -211,4 +260,4 @@ This chapter has critically reviewed classical propagation models and their limi
 
 ---
 
-*References for this chapter reuse [2], [3], [4], [5], [7], [8]–[13] from Chapter 1 and add [15]–[27]; see `references.md` for the full, verified reference list shared across all chapters. Note: a "Loyka & Kouki (2008)" citation appearing in an earlier draft could not be verified and has been omitted — see `references.md`, "Not used" section.*
+*References for this chapter reuse [2], [3], [4], [5], [6], [7], [8]–[13] from Chapter 1 and add [15]–[28]; see `references.md` for the full, verified reference list shared across all chapters. Note: a "Loyka & Kouki (2008)" citation appearing in an earlier draft could not be verified and has been omitted — see `references.md`, "Not used" section.*
