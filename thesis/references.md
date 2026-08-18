@@ -82,5 +82,19 @@ project note) versus provided directly by the student.
 
 ---
 
+[24] D. Chizhik, J. Ling, P. Wolniansky, R. Valenzuela, N. Costa, and K. Huber, "Multiple-Input-Multiple-Output Measurements and Modeling in Manhattan," *IEEE J. Sel. Areas Commun.*, vol. 21, no. 3, pp. 321–331, Apr. 2003. doi: 10.1109/JSAC.2003.809457.
+— Verified via search (DOI, dblp, Nokia Bell Labs author pages), 2026-08-16. **CORRECTED year**: a draft passage cited "Chizhik et al. (2004)" — the actual publication is 2003.
+
+[25] T. S. Rappaport, G. R. MacCartney, M. K. Samimi, and S. Sun, "Wideband Millimeter-Wave Propagation Measurements and Channel Models for Future Wireless Communication System Design," *IEEE Trans. Commun.*, vol. 63, no. 9, pp. 3029–3056, Sept. 2015.
+— Verified via search (publication details consistent across multiple sources), 2026-08-16. Matches the "Rappaport et al. (2015), mmWave sensitivity to urban materials" description in the draft passage.
+
+[26] University of Bologna (author name not confirmed — WebFetch to amslaurea.unibo.it is network-blocked in this session), "High Resolution Radio Environmental Maps Using Sionna Ray Tracing: The Case Study of Bologna," undergraduate/master's thesis, AMS Laurea repository, eprint 35655, Jul. 2025. Available: https://amslaurea.unibo.it/id/eprint/35655/
+— Existence, abstract content, and July 2025 date verified via search (ResearchGate listing, repository URL). **Author name not yet confirmed** — student should pull this directly from the repository page before final citation. This is the source of the Bologna/Blender/CPU-only passage originally pasted into this chapter; it is now cited properly as a related work (Section 2.2/2.6) rather than reused as this thesis's own methodology text.
+
+---
+
+## Not used — could not verify, do not cite
+"Loyka & Kouki (2008)," described in a draft passage as covering "polarization and multipath modeling accuracy" in ray tracing. The only Loyka & Kouki publication found is S. L. Loyka and A. B. Kouki, "Using Two-Ray Multipath Model for Microwave Link Budget Analysis," *IEEE Antennas Propag. Mag.*, vol. 43, pp. 31–36, 2001 (plus a related 2001 CCECE conference paper on fade-depth prediction) — a different year (2001, not 2008) and a narrower topic (two-ray fade depth, not general polarization/multipath RT accuracy). Do not cite this as "Loyka & Kouki (2008)" without locating the specific paper the draft actually intended.
+
 ## Pending verification (not yet used in any chapter)
-Nothing outstanding from the original CLAUDE.md literature table. One open item from Chapter 2's theoretical-foundations content: the specific ITU-R P.2040-1 material reflection-loss values [22] still need primary-source confirmation before final submission.
+The specific ITU-R P.2040-1 material reflection-loss values [22] still need primary-source confirmation before final submission. Hardware/VM specs for Chapter 2 Section 2.5.2 (CPU core count, RAM, VM/cluster type) are pending from the student — only the GPU (Tesla V100-SXM2-16GB, confirmed via `sionna019_calibration.ipynb`) is verified so far.

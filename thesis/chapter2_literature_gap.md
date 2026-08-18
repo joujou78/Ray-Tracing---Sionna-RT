@@ -101,6 +101,70 @@ Taken together, the reviewed literature has separately established: (i) that ray
 
 No study identified in this review combines these elements into a single, systematic evaluation: a purely geometric, calibrated ray tracer validated against a large, public, multi-frequency measurement dataset spanning sub-6 GHz macrocell frequencies (915 MHz–3602 MHz) at the same dense urban site, extended to a rural comparison site, with explicit attention to how vegetation modelling choice and dual-slope-aware calibration range affect the resulting accuracy at each frequency. This is the gap this thesis addresses, directly motivating the research questions and objectives set out in Section 1.5: quantifying how calibrated ray-tracing accuracy varies with frequency, establishing what scene and vegetation modelling choices are required as wavelength decreases, and identifying the accuracy ceiling achievable through geometry-and-material calibration alone before any learned or statistical residual correction is introduced.
 
+## 2.5 Sionna RT: Simulation Framework and Real Pipeline
+
+Sionna RT, developed by NVIDIA, is the open-source Python library used throughout this thesis, integrating the Mitsuba 3 rendering engine [13] and the Dr.Jit differentiable compiler [12] for GPU-accelerated ray-tracing simulation [3].
+
+### 2.5.1 Components and Workflow
+
+The pipeline actually used in this thesis (as implemented across `sionna019_scene_builder.ipynb` and the per-frequency simulation notebooks) proceeds as follows:
+
+1. **Terrain acquisition** — UK Environment Agency 1 m LiDAR Digital Terrain and Surface Models are downloaded and merged for the scene area, and a normalised Digital Surface Model (nDSM = DSM − DTM) is computed to recover above-ground clutter height (scene-builder cells CELL 2b–2e) [8].
+2. **Terrain and building geometry** — the DTM is sampled onto a regular grid to build a terrain mesh, and OpenStreetMap building footprints are extruded into building PLY meshes, with nDSM-derived heights used to fill gaps in sparse OSM height tags (CELL 3–4). Where finer building detail is required, geometry is authored/refined in Blender, with materials standardised to Sionna-compatible names and exported per material as PLY meshes for import into the scene.
+3. **Scene assembly** — all PLY meshes are assembled into a single Sionna 2.0-format scene XML file (CELL B3).
+4. **Material assignment** — the scene is loaded into Sionna RT and each surface is assigned a `RadioMaterial` (relative permittivity, conductivity, scattering coefficient), initialised from ITU-R P.2040-2 reference values [17] and later calibrated against measurements (CELL 4A/4B; calibration procedure detailed in Chapter 4).
+5. **Transmitter and receiver placement** — the transmitter is placed at the site's documented location and antenna height (CELL 4C), and receivers are extracted from the corresponding Ofcom 2018 drive-test CSV for that site and frequency [5] (CELL 5–6).
+6. **Path solving** — Sionna's `PathSolver` traces rays between transmitter and receivers, resolving reflection, diffraction, and scattering interactions (CELL 7, with a stratified distance-band variant in CELL 8 for scattering ON/OFF comparison across the full receiver set).
+7. **Vegetation post-processing** — ITU-R P.833-10 or Weissberger vegetation attenuation is applied post-hoc based on the vegetation depth intersected by each path (CELL P.833) [16], [18].
+8. **Evaluation** — simulated path loss is compared against the Ofcom measurements to compute bias, RMSE, and R² (CELL REPORT), the metrics used throughout Chapters 5–6.
+
+**[FIGURE 2.3 — PLACEHOLDER]**
+*Side-by-side comparison of coarse vs. detailed urban geometry for the Nottingham scene: (a) OSM-only building footprints with default heights, (b) full LiDAR/nDSM-informed geometry with Blender-refined building detail. To be inserted.*
+
+**[FIGURE 2.4 — PLACEHOLDER]**
+*Pipeline workflow diagram: EA LiDAR + OSM + Blender geometry → Sionna 2.0 scene XML → RadioMaterial assignment → PathSolver ray tracing → vegetation post-processing → radio environmental map / evaluation metrics. To be inserted.*
+
+### 2.5.2 Hardware and Computational Configuration
+
+Simulations in this thesis are GPU-accelerated. `sionna019_calibration.ipynb` documents the compute configuration directly: an NVIDIA Tesla V100-SXM2-16GB GPU, using Mitsuba's `cuda_ad_rgb` variant with `FORCE_CPU_RT=False` (i.e., GPU ray tracing, not a CPU fallback). This was independently confirmed via a live `nvidia-smi` query on the training VM (hostname `sti-virtual-machine`), which reports:
+
+| Parameter | Value |
+|---|---|
+| GPU | NVIDIA Tesla V100-SXM2-16GB |
+| GPU memory | 16,384 MiB (16 GB) |
+| Driver version | 580.126.20 |
+| CUDA version | 13.0 |
+| Host | Virtual machine (`sti-virtual-machine`) |
+
+At the time of the query, GPU utilisation was at 100% across four concurrent Python processes (two `sionna_gpu`/`sionna_gpu_final` conda environments plus two unlabelled `python` processes), consistent with CLAUDE.md's record of multiple calibration runs (2695 MHz, 3602 MHz, London 915 MHz) executing in parallel on this machine.
+
+> **[PLACEHOLDER — still pending]** CPU core count and system RAM are not shown by `nvidia-smi` and have not yet been provided; add the output of `lscpu` and `free -h` (or equivalent) here once available.
+
+### 2.5.3 Installation and Software Environment
+
+The exact, pinned software environment is documented in the project's `requirements_sionna019.txt` and is reproduced here for completeness:
+
+```
+Core framework:   sionna==0.19.2, tensorflow==2.15.0, keras==2.15.0
+RT backend:       mitsuba==3.5.2, drjit==0.4.6
+Numerics:         numpy==1.26.4, scipy==1.15.3
+Geospatial/OSM:    osmnx==2.0.7, geopandas==1.1.3, shapely==2.1.2,
+                   pyproj==3.7.1, rasterio==1.4.4
+Visualisation:     matplotlib==3.10.8, pyvista==0.47.3, open3d==0.19.0, plotly==6.7.0
+```
+
+Installation follows the standard Python packaging workflow: create an isolated environment (e.g., `conda create -n sionna019 python=3.10`), activate it, and install the pinned dependency set with `pip install -r requirements_sionna019.txt`. Note that this project also contains a separate, Sionna 2.0-targeted notebook set (`sionna2_*`) using a newer Sionna/Mitsuba/Dr.Jit combination; the two environments are kept independent to avoid version conflicts, consistent with the scene-format distinction between the legacy Sionna 0.19 XML and the Sionna 2.0 XML written by CELL B3.
+
+As open-source software, Sionna RT supports academic rigour, reproducibility, and flexibility relative to proprietary ray-tracing tools, which is part of why it was selected for this project [3].
+
+## 2.6 Related Research and Relevance
+
+Beyond the calibration-focused studies already reviewed in Section 2.2, several earlier works established that site-specific, geometry-aware modelling is necessary to capture real urban propagation behaviour. Chizhik et al. measured MIMO channels in Manhattan and demonstrated substantial, geometry-driven variation in angular and delay spread between sites — variation that classical statistical models cannot reproduce because they do not represent individual street and building geometry [24]. Rappaport et al.'s wideband millimetre-wave measurement campaign further showed that propagation characteristics are highly sensitive to the specific materials and geometry of the measurement environment, reinforcing the case for material-aware, site-specific simulation rather than generic path-loss exponents [25].
+
+More directly comparable to this thesis is a 2025 University of Bologna undergraduate/master's thesis that used Sionna RT to generate high-resolution radio environmental maps for Bologna's historic centre, with building geometry authored in Blender and CPU-based ray-tracing execution [26]. That work demonstrates Sionna RT's applicability to architecturally complex, dense historic urban environments and reports qualitative phenomena such as waveguiding beneath porticoes and diffraction in narrow alleyways. It differs from this thesis in three respects relevant to the research gap identified in Section 2.4: it targets a single frequency and city rather than a multi-frequency, multi-site comparison; it does not calibrate material properties against an independent, public path-loss measurement dataset (relying instead on qualitative/simulated observations); and its CPU-based execution limits the sample counts practical for Monte Carlo path solving, whereas this thesis's GPU-accelerated pipeline (Section 2.5.2) supports the 30–100 million sample counts used for calibration and evaluation in Chapters 4–5.
+
+This chapter has critically reviewed classical propagation models and their limitations, introduced Ray Tracing as a deterministic, geometry-aware alternative, discussed material and geometry modelling considerations, described the Sionna RT simulation framework and this thesis's own pipeline, and situated this work relative to related studies. Together with the research gap identified in Section 2.4, these findings directly inform the methodology developed in Chapter 3.
+
 ---
 
-*References for this chapter reuse [2], [3], [4], [7], [8]–[13] from Chapter 1 and add [15]–[23]; see `references.md` for the full, verified reference list shared across all chapters.*
+*References for this chapter reuse [2], [3], [4], [5], [7], [8]–[13] from Chapter 1 and add [15]–[26]; see `references.md` for the full, verified reference list shared across all chapters. Note: a "Loyka & Kouki (2008)" citation appearing in an earlier draft could not be verified and has been omitted — see `references.md`, "Not used" section.*
