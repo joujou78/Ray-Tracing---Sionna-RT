@@ -53,13 +53,28 @@ project note) versus provided directly by the student.
 [14] M. Pesko, T. Javornik, A. Košir, M. Štular, and M. Mohorčič, "Radio Environment Maps: The Survey of Construction Methods," *KSII Trans. Internet Inf. Syst.*, vol. 8, no. 11, pp. 3789–3809, Nov. 2014. doi: 10.3837/tiis.2014.11.008.
 — Verified via search (Korea Science / journal page, DOI), 2026-08-16.
 
+[15] ITU-R, "Propagation data and prediction methods for the planning of short-range outdoor radiocommunication systems and radio local area networks in the frequency range 300 MHz to 100 GHz," Recommendation ITU-R P.1411-10, Aug. 2019.
+— Verified via ITU.int document search, 2026-08-16. **CORRECTED from CLAUDE.md**, which cited this as "P.1411-12 (2019)" — no P.1411-12 was found; P.1411-10 is the version actually published in August 2019 (P.1411-11 followed in Sept. 2021, P.1411-13 in Sept. 2025). The version number in the project notes appears to have been an error; the year was correct.
+
+[16] ITU-R, "Attenuation in vegetation," Recommendation ITU-R P.833-10, Sept. 2021.
+— Verified via ITU.int document search, 2026-08-16. Matches CLAUDE.md citation exactly.
+
+[17] ITU-R, "Effects of building materials and structures on radiowave propagation above about 100 MHz," Recommendation ITU-R P.2040-2, Sept. 2021.
+— Verified via ITU.int document search, 2026-08-16. Matches CLAUDE.md citation exactly.
+
+[18] M. A. Weissberger, "An Initial Critical Summary of Models for Predicting the Attenuation of Radio Waves by Trees," ESD-TR-81-101, EMC Analysis Center, Annapolis, MD, 1982.
+— Verified via search (Wikipedia "Weissberger's model" + secondary literature citing the report), 2026-08-16.
+
+[19] O. Kanhere, H. Poddar, and T. S. Rappaport, "Calibration of NYURay for Ray Tracing using 28, 73, and 142 GHz Channel Measurements Conducted in Indoor, Outdoor, and Factory Scenarios," arXiv:2410.03104, 2024 (accepted, IEEE Trans. Antennas Propag.).
+— Verified via arXiv abstract + ResearchGate, 2026-08-16. **CORRECTED from CLAUDE.md**, which attributed NYURay to "Ju et al." — the actual calibration paper's authors are Kanhere, Poddar, and Rappaport (S. Ju appears as a co-author on a related NYU measurement-campaign paper, not this calibration paper).
+
+[20] R. Levie, C. Yapar, G. Kutyniok, and G. Caire, "RadioUNet: Fast Radio Map Estimation With Convolutional Neural Networks," *IEEE Trans. Wireless Commun.*, vol. 20, no. 6, pp. 4001–4015, 2021.
+— Verified via search (publication details consistent across multiple sources), 2026-08-16. Matches CLAUDE.md citation.
+
+[21] J. Hoydis, F. Aït Aoudia, S. Cammerer, F. Euchner, M. Nimier-David, S. ten Brink, and A. Keller, "Learning Radio Environments by Differentiable Ray Tracing," arXiv:2311.18558, 2023 (IEEE Trans. Machine Learning in Communications and Networking, 2024).
+— Verified via arXiv abstract + IEEE Xplore listing, 2026-08-16. This is the paper CLAUDE.md referred to as "NVLabs diff-rt-calibration (Hoydis et al.)".
+
 ---
 
 ## Pending verification (not yet used in any chapter)
-Carried over from the project's CLAUDE.md literature table — to be individually verified before first citation in Chapter 2 (Literature Gap):
-- ITU-R P.1411-12 (2019) — dual-slope breakpoint formula
-- ITU-R P.833-10 (2021) — vegetation attenuation model
-- ITU-R P.2040-2 (2021) — building material EM properties
-- Weissberger (1982) — empirical vegetation attenuation model
-- NYURay (Ju et al., NYU WIRELESS)
-- RadioUNet (Levie et al., 2021)
+Nothing outstanding from the original CLAUDE.md literature table — all entries have now been individually verified and cited above (with two corrections noted: [15] version number, [19] author list).
