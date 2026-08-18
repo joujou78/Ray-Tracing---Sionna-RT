@@ -63,6 +63,9 @@ To answer these questions, the primary objectives of this thesis are:
 
 ## 1.6 Thesis Structure Overview
 
+**[FIGURE 1 — PLACEHOLDER]**
+*Research framework roadmap: Problem Definition (Ch.1) → Literature Gap (Ch.2) → Proposed Method (Ch.3) → Implementation (Ch.4) → Results & Validation (Ch.5) → Conclusions (Ch.6). To be inserted.*
+
 Figure 1 illustrates the overall research framework, linking the problem definition, literature gap, proposed method, implementation, and validation stages that guide the development of this thesis. Each stage corresponds to a chapter, ensuring a logical progression from theoretical foundations to practical experimentation and final conclusions:
 
 - **Chapter 1 – Research Problem** — Defines the engineering challenge, practical need, and scientific motivation underlying urban wireless propagation modeling.

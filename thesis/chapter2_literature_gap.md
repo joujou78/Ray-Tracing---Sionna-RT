@@ -12,6 +12,9 @@ Two propagation phenomena recur throughout the literature and are directly relev
 
 Recent years have also seen the emergence of GPU-accelerated, differentiable ray tracers — notably Sionna RT, built on the Mitsuba 3 rendering engine [13] and the Dr.Jit differentiable compiler [12] — which make gradient-based calibration of material and scene parameters computationally practical at a scale not previously accessible [3]. This development underpins the broader digital-twin vision for 6G network planning introduced in Chapter 1 [4].
 
+**[FIGURE 2.1 — PLACEHOLDER]**
+*Taxonomy of propagation modelling approaches: Empirical (Okumura–Hata, COST-231, FSPL) / Deterministic Ray Tracing (image-based, SBR, Sionna RT) / Data-driven (RadioUNet). To be inserted.*
+
 ## 2.2 Review of Existing Approaches
 
 **Classical empirical approaches.** Okumura–Hata [9] and its COST-231 extension [10] remain widely used for macro-level network planning because of their low computational cost and minimal input data requirements, but as discussed in Chapter 1 they operate at coarse spatial resolution and cannot represent site-specific geometry.
@@ -23,6 +26,12 @@ Recent years have also seen the emergence of GPU-accelerated, differentiable ray
 **Data-driven alternatives.** A parallel body of work addresses propagation prediction with machine learning rather than explicit geometric simulation. Levie et al.'s RadioUNet uses a convolutional neural network trained on a large simulated dataset (RadioMapSeer) to estimate 2D radio maps directly from city geometry, reporting strong accuracy at a fraction of the computational cost of full ray tracing [20]. Such approaches trade physical interpretability and generalisation to unseen geometries for prediction speed.
 
 **Validation against real urban measurements.** Fewer studies validate ray-tracing fidelity directly against real outdoor cellular measurements at sub-6 GHz frequencies. Manukyan et al. evaluated Sionna-based ray tracing against real 4G/5G measurements collected across six base stations in Rome (0.8–4 GHz), using Spearman rank correlation between measured and simulated received power and k-nearest-neighbour localisation accuracy as fidelity metrics, and found that antenna location and orientation assumptions were decisive to simulator fidelity — greedy re-optimisation of these assumptions alone improved correlation by 5% to 130% depending on the base station [7].
+
+**[TABLE 2.1 — PLACEHOLDER]**
+*Comparison of empirical propagation models: Okumura–Hata [9] / COST-231 [10] / FSPL [11] — columns: frequency range, typical spatial resolution, input data required, reported accuracy. To be inserted.*
+
+**[TABLE 2.2 — PLACEHOLDER]**
+*Comparison of reviewed calibration studies: NYURay [19] / Sionna RT gradient-based calibration [21] / RadioUNet [20] — columns: frequency range, environment type, calibration method, reported accuracy metric. To be inserted.*
 
 ## 2.3 Critical Analysis of Existing Work
 
