@@ -99,10 +99,15 @@ project note) versus provided directly by the student.
 [28] M. J. D. Powell, "An Efficient Method for Finding the Minimum of a Function of Several Variables Without Calculating Derivatives," *Comput. J.*, vol. 7, no. 2, pp. 155–162, 1964. doi: 10.1093/comjnl/7.2.155.
 — Verified via search (DOI, Oxford Academic listing, SciPy `fmin_powell` documentation), 2026-08-18. The derivative-free conjugate-direction optimisation method (Powell's method) used for the multi-phase material calibration in this project (Chapter 4).
 
+[29] M. Ying, D. Shakya, P. Ma, G. Qian, and T. S. Rappaport, "Site-Specific Location Calibration and Validation of Ray-Tracing Simulator NYURay at Upper Mid-Band Frequencies," *npj Wireless Technol.*, vol. 2, art. 8, 2026 (also arXiv:2507.22027).
+— Verified via search (arXiv abstract, npj Wireless Technology listing), 2026-08-19. Reports location-calibration accuracy improvements (42.3% LOS / 13.5% NLOS) and path-loss-exponent deviation <0.14 at 6.75/16.95 GHz — NOT the "3.2 dB LOS / 5.8 dB NLOS RMSE" figure that CLAUDE.md attributes to NYURay (see "Not used" section below).
+
 ---
 
 ## Not used — could not verify, do not cite
 "Loyka & Kouki (2008)," described in a draft passage as covering "polarization and multipath modeling accuracy" in ray tracing. The only Loyka & Kouki publication found is S. L. Loyka and A. B. Kouki, "Using Two-Ray Multipath Model for Microwave Link Budget Analysis," *IEEE Antennas Propag. Mag.*, vol. 43, pp. 31–36, 2001 (plus a related 2001 CCECE conference paper on fade-depth prediction) — a different year (2001, not 2008) and a narrower topic (two-ray fade depth, not general polarization/multipath RT accuracy). Do not cite this as "Loyka & Kouki (2008)" without locating the specific paper the draft actually intended.
+
+"NYURay ... 3.2 dB LOS / 5.8 dB NLOS RMSE with zone corrections + per-building material" — this specific figure appears in both THESIS_BRIEF.md and CLAUDE.md, attributed to "Ju et al." Neither NYURay paper found in this session's research reports these numbers: [19] (Kanhere/Poddar/Rappaport, 28-142 GHz) reports <3 dB / <2 dB multipath-power standard deviation, not RMSE; [29] (Ying et al., 6.75/16.95 GHz) reports location-accuracy percentages and PLE deviation, not dB RMSE. Do not cite "3.2/5.8 dB" as a NYURay result without locating the specific paper it actually comes from.
 
 ## Pending verification (not yet used in any chapter)
 The specific ITU-R P.2040-1 material reflection-loss values [22] still need primary-source confirmation before final submission. Hardware/VM specs for Chapter 2 Section 2.5.2 (CPU core count, RAM, VM/cluster type) are pending from the student — only the GPU (Tesla V100-SXM2-16GB, confirmed via `sionna019_calibration.ipynb`) is verified so far.
