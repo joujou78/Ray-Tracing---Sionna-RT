@@ -620,6 +620,7 @@ Full 0-1250m breakdown (N=681 ON / 599 OFF):
 | Run 1 | pre-per-path (5 bins) | -0.026 | 0-750m (ON coh) | 12.4 dB | 598 |
 | Run 2 | per-path P.833 (5 bins) | 0.154 | 0-1000m (ON incoh) | 13.0 dB | 863 |
 | **Run 3** | **per-path + height filter (10 bins)** | **0.515** | **0-1250m (ON incoh)** | **9.4 dB** | **681** |
+| **Run 6** | **per-path + height filter (15 bins) + zone split + DISABLE_VEG_DISCS=False** | **0.515** | **0-1250m (ON incoh)** | **9.8 dB** | **725** | **Confirms R²=0.515 as physics floor** |
 
 **N-selection effect (important):** Run 3 has N=513 at 0-1000m vs N=863 in Run 2. PER_PATH_VEG=True with height filter attenuates paths through heavy vegetation to near-zero amplitude; incoherent sum collapses to NaN for receivers whose only paths cross dense canopy. These excluded receivers (350 at 0-1000m) are the hardest NLOS cases. R² improvement reflects both the better correction pipeline and removal of geometry-limited receivers.
 
@@ -639,7 +640,7 @@ CELL 8e: R²=-4.654, bias=-30.5 dB — catastrophic failure
 Root cause 1: sigma=0.50 S/m over-absorbs discs (~8.7 dB per hit vs ~3.5 dB at sigma=0.20). Scalar grew from +12 dB (Run 3) to +29.9 dB — 17.8 dB gap.
 Root cause 2: _MAT_FIXED_VALS in CELL CAL used VEG_CONDUCTIVITY but CELL 4A applied VEG_DISC_SIGMA=0.50 → calibrated for different absorption than evaluated.
 
-**Run 6 — READY TO RUN (2026-08-17, reverted to Run 3 + zone split):**
+**Run 6 — COMPLETE (2026-08-19, reverted to Run 3 + zone split):**
 Changes pushed to branch:
 | Parameter | Run 5 | Run 6 | Rationale |
 |-----------|-------|-------|-----------|
@@ -654,18 +655,14 @@ _MAT_FIXED_VALS now resolves: itu_ceiling_board → er=2.73, sigma=0.20, S=0.35 
 Delete existing cal files before running: `rm ~/sionna_rt/nottingham_ofcom2018_3602mhz_dem/calibrated_materials_3602mhz.json ~/sionna_rt/nottingham_ofcom2018_3602mhz_dem/scalar_offset_3602mhz.json`
 Run sequence: **CELL CAL → CELL 4A → CELL 8e**
 
-**Run 6 CELL CAL — IN PROGRESS (2026-08-17):**
+**Run 6 CELL CAL + CELL 8e — COMPLETE (2026-08-19): R²=0.515 at 0-1250m — FINAL**
 - Phase 0: 601/601 valid paths, scalar=+28.602 dB, RMSE after scalar=16.23 dB
-- Phase 2 eval 1=15.471 dB, eval 2=15.431 dB — Powell moving freely
-- Evals 44-55: oscillating 15.355-15.502 dB; eval 45=eval 46 (15.464 dB, 909s each) — final convergence steps
-- Each eval: ~900s (15 min) vs 2695 MHz ~55s — caused by DISABLE_VEG_DISCS=False + active disc PLYs (denser scatter geometry)
-- Converging to: **~15.35-15.40 dB** — significantly better than Run 4's 23.39 dB after-scalar start
-- FTOL expected in next 10-20 evals (~2-3 hrs remaining)
-- Note: DISABLE_VEG_DISCS=False (discs active, sigma=0.20) — NOT same as Run 3 (DISABLE_VEG_DISCS=True)
-  - Explains +28.6 dB scalar vs Run 3's +12.1 dB (active discs absorb scatter paths)
-  - BUT: CELL CAL and CELL 4A are consistent (both sigma=0.20) — no mismatch risk
-  - Phase 0 RMSE 16.23 dB better than Run 3's 23.39 dB — discs providing physical absorption
-- Expected convergence: ~15.35 dB → CELL 4A → CELL 8e → target R²~0.52-0.55
+- Phase 2 FTOL converged: ~15.35 dB (each eval ~900s due to DISABLE_VEG_DISCS=False active disc PLYs)
+- CELL 8e: **ON incoh R²=0.515, bias=-0.2 dB, RMSE=9.8 dB, N=725 at 0-1250m**
+- avg_rays ON=7,455 vs OFF=43 at 0-1250m — scatter dominant
+- Zone split negligible: only 23 NLOS receivers (3.1%) beyond Rbp=1225m at 0-1250m
+- **Matches Run 3 exactly — R²=0.515 confirmed as the 3602 MHz physics floor**
+- Note: DISABLE_VEG_DISCS=False neutral at 0-1250m; active discs (sigma=0.20) absorb scatter paths but result identical to Run 3 (DISABLE_VEG_DISCS=True) at this range
 
 ### 3602 MHz Run 4 Calibration — CELL CAL running (2026-08-15)
 
@@ -713,7 +710,7 @@ Run sequence: **CELL CAL → CELL 4A → CELL 8e**
 | Run 3 (aborted) | DISABLE_CANOPY=True, 30M, bounds=(-60,60) | TBD | TBD | TBD | stuck at noise floor |
 | Run 4 — FINAL (CELL 8e done, R²=0.515) | DISABLE_CANOPY=True, 30M, CAL_MAX=1.0, NF filter | 32.21 dB | +12.097 dB | 23.39 dB | CELL 8e Run 3 used these materials |
 | Run 5 — FAILED (CELL 8e R²=-4.654) | S=0.10, sigma=0.50, er=4.0, 15 bins | 32.21 dB | +29.942 dB | 14.924 dB | sigma=0.50 over-absorbed — 17.8 dB scalar gap vs Run 3 |
-| **Run 6 — READY TO RUN (2026-08-17)** | S=0.35, sigma=0.20, er=2.73 (Run 3 defaults), 15 bins, LOS_NLOS_ZONE_SPLIT=True | — | — | — | Reverted disc to Run 3 + added zone split |
+| **Run 6 — COMPLETE (2026-08-19): R²=0.515 FINAL** | S=0.35, sigma=0.20, er=2.73 (Run 3 defaults), 15 bins, LOS_NLOS_ZONE_SPLIT=True | 32.21 dB | +28.602 dB | ~15.35 dB | Matches Run 3 exactly — physics floor confirmed |
 
 ### How to Simulate Vegetation Absorption (future work)
 
