@@ -102,6 +102,9 @@ project note) versus provided directly by the student.
 [29] M. Ying, D. Shakya, P. Ma, G. Qian, and T. S. Rappaport, "Site-Specific Location Calibration and Validation of Ray-Tracing Simulator NYURay at Upper Mid-Band Frequencies," *npj Wireless Technol.*, vol. 2, art. 8, 2026 (also arXiv:2507.22027).
 — Verified via search (arXiv abstract, npj Wireless Technology listing), 2026-08-19. Reports location-calibration accuracy improvements (42.3% LOS / 13.5% NLOS) and path-loss-exponent deviation <0.14 at 6.75/16.95 GHz — NOT the "3.2 dB LOS / 5.8 dB NLOS RMSE" figure that CLAUDE.md attributes to NYURay (see "Not used" section below).
 
+[30] E. Uuemaa, S. Ahi, B. Montibeller, M. Muru, and A. Kmoch, "Vertical Accuracy of Freely Available Global Digital Elevation Models (ASTER, AW3D30, MERIT, TanDEM-X, SRTM, and NASADEM)," *Remote Sens.*, vol. 12, no. 21, art. 3482, 2020. doi: 10.3390/rs12213482.
+— Verified via search (DOI, MDPI listing, multiple citation-index confirmations), 2026-08-19. Used to support the terrain-resolution/accuracy comparison between SRTM (Scar Hill) and LiDAR (Nottingham/London) in Section 2.1.4.
+
 ---
 
 ## Not used — could not verify, do not cite
