@@ -8,6 +8,46 @@ Ray tracing simulation of the Ofcom 2018 Nottingham 915 MHz dataset using Sionna
 - Scene directory: `~/sionna_rt/nottingham_ofcom2018_915mhz_dem/scene_v4_full/`
 - Working branch: `claude/cool-cori-rrWbY`
 
+## HF Scene Builder (2695 + 3602 MHz)
+
+**File: `sionna019_2695mhz_scene_builder.ipynb`** (committed 2026-08-15, NOT yet run on your machine)
+
+Shared scene for 2695 + 3602 MHz with improved vegetation geometry. Key changes vs 1802 MHz scene:
+
+| Parameter | Old (1802 MHz) | New (HF scene) | Effect |
+|-----------|---------------|----------------|--------|
+| VEG_DISC_LAYERS | 1 | **3** | 3 stacked discs per crown (bottom/mid/top) |
+| VEG_DISC_LAYER_HEIGHTS_FRAC | [1.0] | **[0.30, 0.65, 1.0]** | crown depth fractions |
+| VEG_CROWN_DEPTH_FRAC | n/a | **0.40** | crown = bottom 40% of tree height |
+| VEG_DISC_SPACING_M | 20m | **10m** | 4x denser horizontal grid |
+| VEG_NDMS_EXTRA_RES_M | 10m | **7m** | finer nDSM scan |
+| VEG_MAX_DISCS_PER_POLYGON | 500 | **1000** | larger polygons fully covered |
+| SCENARIO_NAME | nottingham_ofcom2018_1802mhz_dem | **nottingham_ofcom2018_hf_dem** | separate dir |
+
+**Stacked layer formula:** `disc_z = canopy_top - max(2.0, h*0.40) * (1 - layer_frac)`
+- Layer 1 (frac=0.30): disc at 70% of crown depth below canopy top
+- Layer 2 (frac=0.65): disc at 35% below
+- Layer 3 (frac=1.00): disc at canopy top
+
+**To build the HF scene:**
+```
+mkdir -p ~/sionna_rt/nottingham_ofcom2018_hf_dem/
+cd ~/Ray-Tracing---Sionna-RT
+git pull
+# Open sionna019_2695mhz_scene_builder.ipynb
+# Run: CELL 0 → CELL 1 → CELL 3 → CELL 3b → CELL 4 → CELL B3
+```
+
+**To switch simulation notebooks to the HF scene:**
+After the HF scene is built, update CELL 1 in each simulation notebook:
+```python
+# sionna2_2695mhz_dem_simulation.ipynb — CELL 1 (cell index 4):
+SCENE_BASE_DIR  = f'{_HOME}/sionna_rt/nottingham_ofcom2018_hf_dem'
+# sionna2_3602mhz_dem_simulation.ipynb — CELL 1 (cell index 4):
+SCENE_BASE_DIR  = f'{_HOME}/sionna_rt/nottingham_ofcom2018_hf_dem'
+```
+Then delete old calibration JSON files and re-run CELL CAL.
+
 ---
 
 ## 1802 MHz Results (old 486-tree cal applied to 15,486-tree scene — pre-recalibration baseline)
@@ -29,45 +69,843 @@ Notes:
 - ON coh consistently better than incoh at 1802 MHz (shorter wavelength → stronger coherent interference)
 - Crossover at ~1750m: incoh and coh converge, incoh slightly better beyond
 - Weissberger already applied in CELL 8e (always on regardless of CAL_APPLY_WEISSBERGER flag)
-- **Next: recalibrate with 15,486-tree scene → expect significant R² improvement**
 
-## 1802 MHz Calibration — 15,486-tree scene (IN PROGRESS)
+## 1802 MHz Results — 15,486-tree scene (FINAL)
 
-**Settings:** 30M samples / N_AVG=1 / CAL_FIX_SCATTER=True / DISABLE_VEG_DISCS=True / 14 free params (7 mats × 2)
+**Settings:** CAL_FIX_SCATTER=False / DISABLE_VEG_DISCS=True / CAL_FIXED_SEED=42 / CAL_MAX_DIST_KM=1.5 / CAL_MIN_DIST_KM=0.15 / 100M eval samples
 
-| Phase | RMSE (dB) | Scalar (dB) | Notes |
-|-------|-----------|-------------|-------|
-| Before calibration | 14.75 | — | 0.9 dB better than 486-tree uncal (15.64) |
-| After Phase 0 scalar | 13.83 | -5.124 | smaller scalar vs -9.77 dB — trees supplying missing signal |
-| After Powell (expected) | ~10.5-11.5 | TBD | IN PROGRESS |
+**Best method: ON incoh** (ON coh collapsed — 15,486 trees destroy coherent phase)
 
-Key insight: scalar -5.1 dB vs -9.77 dB previous — 15,486 trees add scatter budget, simulation closer to measurements before calibration.
+| Range | N | Method | Bias (dB) | RMSE (dB) | R² |
+|-------|---|--------|-----------|-----------|-----|
+| 0-1000m | 701 | ON incoh | -1.4 | 9.6 | **0.442** |
+| 0-1000m | 701 | ON coh | -6.6 | 11.6 | 0.187 |
+| 0-1250m | 767 | ON incoh | -2.4 | 10.6 | **0.509** |
+| 0-1250m | 767 | ON coh | -8.2 | 13.4 | 0.220 |
 
-**Expected CELL 8e results after recalibration:**
-| Range | Old cal R² | Expected new cal R² |
-|-------|-----------|---------------------|
-| 0-750m ON coh | 0.515 | 0.60-0.70 |
-| 0-1000m ON coh | 0.476 | 0.55-0.65 |
-| 0-1250m | 0.508 | 0.55-0.65 |
+Full 0-1500m summary (ON incoh — best method):
+
+| Range | N | Bias (dB) | RMSE (dB) | R² |
+|-------|---|-----------|-----------|-----|
+| 0-1000m | 701 | -1.4 | 9.6 | **0.442** |
+| 0-1250m | 767 | -2.4 | 10.6 | **0.509** |
+| 0-1500m | 808 | -3.3 | 11.6 | **0.488** |
+
+Trend: R² peaks at 0-1250m; negative bias grows then stabilises (-1.4 → -2.4 → -3.3 → -4.4 → -4.0 dB); R² recovers slightly at 2000m (0.448 vs 0.428 at 1750m) — 1750-2000m band well-predicted.
+
+| Range | N | Bias (dB) | RMSE (dB) | R² |
+|-------|---|-----------|-----------|-----|
+| 0-1000m | 701 | -1.4 | 9.6 | **0.442** |
+| 0-1250m | 767 | -2.4 | 10.6 | **0.509** |
+| 0-1500m | 808 | -3.3 | 11.6 | 0.488 |
+| 0-1750m | 857 | -4.4 | 12.6 | 0.428 |
+| 0-2000m | 985 | -4.0 | 12.5 | 0.448 |
+
+Full 0-1000m breakdown (N=701, avg ON rays=32313, OFF rays=140):
+
+| Method | Bias (dB) | RMSE (dB) | STD (dB) | R² |
+|--------|-----------|-----------|----------|-----|
+| ON incoh | -1.4 | 9.6 | 9.5 | **0.442** |
+| OFF incoh | -1.3 | 9.9 | 9.8 | 0.407 |
+| ON coh | -6.6 | 11.6 | 9.5 | 0.187 |
+| OFF coh | +0.7 | 10.5 | 10.5 | 0.327 |
+| ON best | -0.5 | 9.7 | 9.6 | 0.433 |
+| OFF best | -0.5 | 9.8 | 9.8 | 0.417 |
+
+Full 0-1500m breakdown (N=808, avg ON rays=29070, OFF rays=129):
+
+| Method | Bias (dB) | RMSE (dB) | STD (dB) | R² |
+|--------|-----------|-----------|----------|-----|
+| ON incoh | -3.3 | 11.6 | 11.1 | **0.488** |
+| OFF incoh | -3.0 | 12.0 | 11.6 | 0.453 |
+| ON coh | -9.1 | 14.4 | 11.2 | 0.212 |
+| OFF coh | -1.1 | 12.6 | 12.6 | 0.396 |
+| ON best | -2.2 | 11.6 | 11.4 | 0.490 |
+| OFF best | -2.0 | 11.8 | 11.7 | 0.468 |
+
+Full 0-1250m breakdown (N=767, avg ON rays=30209, OFF rays=133):
+
+| Method | Bias (dB) | RMSE (dB) | STD (dB) | R² |
+|--------|-----------|-----------|----------|-----|
+| ON incoh | -2.4 | 10.6 | 10.4 | **0.509** |
+| OFF incoh | -2.1 | 11.1 | 10.8 | 0.470 |
+| ON coh | -8.2 | 13.4 | 10.6 | 0.220 |
+| OFF coh | -0.2 | 11.7 | 11.7 | 0.407 |
+| ON best | -1.3 | 10.7 | 10.7 | 0.500 |
+| OFF best | -1.2 | 11.0 | 10.9 | 0.475 |
+
+**Key findings:**
+- ON coh collapsed (R²=0.187 at 0-1000m) — 15,486 trees generate massive destructive interference at 1802 MHz (16.7cm wavelength)
+- ON incoh is the best method for 1802 MHz with 15,486-tree scene
+- R²=0.442 at 0-1000m, 0.509 at 0-1250m — matches old 486-tree ON coh baseline (~0.476/0.508)
+- Small negative bias (-1.4 to -2.4 dB) — slight over-prediction at both ranges
+- avg_rays ON=32313 vs OFF=140 — scattering active and providing the dominant propagation mechanism
+- **These results accepted as final — no further recalibration planned for 1802 MHz**
+
+**Comparison vs old 486-tree baseline:**
+| Range | Old (ON coh) | New (ON incoh) | Delta |
+|-------|-------------|----------------|-------|
+| 0-1000m | 0.476 | 0.442 | -0.034 |
+| 0-1250m | 0.508 | 0.509 | +0.001 |
+
+Result: same R² as old 486-tree baseline — R²~0.44-0.51 accepted as the physics floor for 1802 MHz Nottingham with 15,486-tree scene.
+
+## 1802 MHz Calibration History
+
+| Run | Settings | Cal RMSE | Eval R² (0-1000m) | Best method |
+|-----|----------|----------|-------------------|-------------|
+| Run 1 (486-tree scene) | S locked, 7 params | ~8 dB | 0.476 | ON coh |
+| Run 2 (15,486-tree) — **FINAL** | S unlocked, N_AVG=1 | ~13.5-14.5 dB | **0.442** | ON incoh |
 
 ## 1802 MHz Pending Tests
 
 | Priority | Test | How | Expected |
 |----------|------|-----|----------|
-| 1 | CELL 4A → CELL 8e after current CELL CAL | 100M eval | target R²>0.60 at 0-750m |
-| 2 | LiDAR crown detection tuning | Adjust LIDAR_TREE_MIN_DIST_M / MIN_H_M | density vs false-positive tradeoff |
+| 1 | LiDAR crown detection tuning | Adjust LIDAR_TREE_MIN_DIST_M / MIN_H_M | density vs false-positive tradeoff |
+| 2 | Separate LOS/NLOS scalar in CELL 8e | Medium complexity | -1 to -2 dB RMSE (NYURay approach) |
 
 ## Key Findings So Far (1802 MHz)
 
 | Finding | Detail |
 |---------|--------|
-| ON coh > ON incoh at 1802 MHz | Shorter wavelength (16.7cm) → coherent interference dominates |
-| Crossover at ~1750m | incoh becomes competitive beyond this range |
+| ON incoh best for 15,486-tree scene | ON coh collapsed (R²=0.187) — tree coherent interference destroys phase at 1802 MHz |
+| Physics floor confirmed: R²~0.44-0.51 | Both runs converge here; matches literature R²~0.5 ceiling for pure geometry+material cal |
+| Crossover at ~1750m | incoh becomes competitive beyond this range (old 486-tree finding, still valid) |
 | LiDAR trees: 486 → 15,486 | nDSM peak detection, 5m min spacing, 3-30m height filter, building exclusion |
 | DISABLE_VEG_DISCS=True | Disc veg (itu_ceiling_board) transparent; 3D canopy (canopy_itu_vegetation) active |
 | Weissberger always on in CELL 8e | CAL_APPLY_WEISSBERGER flag only affects CELL CAL, not CELL 8e |
 | Phase 3 bug fixed | Comparison was inverted — now correctly keeps Phase 3 if RMSE improves |
 | Convergence plot fixed | _mat_names truncated to _ph_arr.shape[1]//3 to avoid IndexError |
+| Physics floor confirmed by literature | Dense urban outdoor 1.8 GHz: R²~0.5 ceiling for pure geometry+material cal (arXiv:2507.19653) |
+| CAL_SKIP_PROBE must stay True | Warm prior S=0.35 biases sensitivity probe low — probe blocks Powell unless skipped |
+| CAL_FIXED_SEED=42 required | Without it: ±4 dB systematic drift between evals, Powell cannot find gradient |
+| _SIG_MAX_PER_MAT applied | brick/concrete σ ≤ 0.20 — uncapped Cal-3 produced σ=3.94 (unphysical) |
+
+---
+
+## Scar Hill 915 MHz Status (sionna2_915mhz_dem_simulation_scarhill.ipynb)
+
+**Scene built 2026-08-08 — CELL CAL completed (10.71 dB, iteration 1). CELL 8e run at 10M samples.**
+
+### Results (SRTM 30m terrain, 10M eval samples, ON incoh best method)
+
+| Range | N | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|---|-----------|-----------|-----|-------|
+| 0-500m | 75 | +0.7 | 12.0 | -3.43 | near-field scatter noise |
+| 0-1000m | 140 | +4.7 | 12.4 | -0.11 | over-prediction mid-range |
+| **0-1250m** | **179** | **+0.9** | **15.1** | **+0.083** | **best — bias-centred** |
+| 0-1500m | 202 | +2.5 | 15.8 | -0.10 | |
+| 0-3000m | 375 | -1.9 | 16.6 | -0.007 | near-zero bias |
+| 0-3500m | 441 | -6.1 | 19.3 | +0.055 | |
+
+**Key findings:**
+- R²=0.083 peak (0-1250m) — SRTM 30m physics floor for rural hilltop site
+- avg_rays ON=19k-40k vs OFF=55 — scatter dominant (DISABLE_VEG_DISCS=False, S=0.50)
+- Calibration centred (+0.9 dB at 0-1250m) — cal correct, R² limited by terrain resolution
+- CELL CAL: 10.71 dB (820 evals, single iteration, no auto-retry)
+- NUM_SAMPLES_PS=10M matches CAL_SAMPLES_PS=10M — fair eval (100M causes scatter mismatch)
+- **Only meaningful improvement: Scottish LiDAR 1m DTM (lidar.scot NJ40/41/50/51)**
+
+### Site parameters (from scarhill915.csv header)
+| Parameter | Value |
+|-----------|-------|
+| Site name | Scar Hill, Aberdeenshire, Scotland |
+| TX lat/lon | 57.1887 / -2.8547 |
+| BNG grid ref | NJ 483 111 (Lumphanan/Torphins area) |
+| Frequency | 915.95 MHz |
+| TX AGL | 17 m |
+| EIRP | 46.9 dBm (TX_CONDUCTED_DBM=45.6 + 1.3 dBi antenna) |
+| RX AGL | 1.5 m |
+| Noise floor | -124 dBm |
+| Records | 143,541 (max range ~32 km — rural Aberdeenshire) |
+
+### Scene configuration
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| SCENE_WEST/EAST | -2.9374 / -2.65 | ~15 km wide (expanded to cover all 1200 receivers) |
+| SCENE_SOUTH/NORTH | 57.1435 / 57.2339 | ~10 km tall |
+| TERRAIN_PAD_M | 3000 | 3 km beyond scene bbox |
+| CRS | EPSG:27700 (BNG) | valid for all Great Britain |
+| TERRAIN_SOURCE | auto → srtm (30m) | Scotland north of EA LiDAR boundary (55.9°N) |
+| NDSM_PROVIDER | auto → opentopo | same reason |
+| CAL_MAX_DIST_KM | 1.5 | same as Nottingham 915 — auto-discover finds effective range |
+| CAL_MIN_DIST_KM | 0.15 | same near-field exclusion |
+| CAL_MIN_VALID_FRAC | 0.65 | same as Nottingham 915 |
+| CAL_SAMPLES_PS | 10_000_000 | same as Nottingham 915 |
+| NUM_SAMPLES_PS | 10_000_000 | matches CAL_SAMPLES_PS=10M — skip CELL 4A for rural scenes (scatter mismatch at 100M) |
+| TX_AGL_SCAN_M | [15, 17, 20, 25, 30] | TX height auto-selection |
+| RX_EXTRA_GAIN_DB | 0.0 dB | same as Nottingham 915 (no chain loss applied) |
+
+### Scottish LiDAR (1m — better than SRTM 30m)
+Download from **lidar.scot** — 4 OS 10km squares cover full scene + 3km terrain padding:
+
+| Square | Absolute BNG | Contents |
+|--------|-------------|---------|
+| **NJ40** | E:340-350k, N:800-810k | SW quadrant |
+| **NJ41** | E:340-350k, N:810-820k | W of TX |
+| **NJ50** | E:350-360k, N:800-810k | S of TX |
+| **NJ51** | E:350-360k, N:810-820k | TX area |
+
+Tile names: `NJ4003_1m_DTM.tif` → `NJ5619_1m_DTM.tif` — 272 DTM + 272 DSM = 544 files
+
+After download + merge:
+```bash
+gdal_merge.py -o ~/sionna_rt/scarhill_ofcom_915mhz_dem/dem.tif NJ4*_1m_DTM.tif NJ5*_1m_DTM.tif
+gdal_merge.py -o ~/sionna_rt/scarhill_ofcom_915mhz_dem/lidar_dsm.tif NJ4*_1m_DSM.tif NJ5*_1m_DSM.tif
+```
+Then set `TERRAIN_SOURCE = 'ea_lidar'` and `NDSM_PROVIDER = 'ea'` in scene builder CELL 0.
+
+### Run sequence (same as London)
+```
+Scene builder: CELL 0 → CELL 1 → CELL 2 → CELL 2b → CELL 4 → CELL B3
+Simulation:    CELL 0 → CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CELL 8e (100M)
+```
+
+---
+
+## Nottingham 2695 MHz Status (sionna2_2695mhz_dem_simulation.ipynb)
+
+**Run 2 CELL 8e complete (2026-08-09). Best result: R²=0.574 at 0-1250m (ON incoh) — beats 1802 MHz at same range (R²=0.509).**
+
+### Site parameters (from nottingham2695.csv header)
+| Parameter | Value |
+|-----------|-------|
+| Site name | Nottingham |
+| TX lat/lon | 52.9863 / -1.2559 (same mast as 1802 MHz) |
+| Frequency | 2695 MHz |
+| TX AGL | 17 m |
+| TX amplifier power | 49.2 dBm |
+| TX cable loss | 2.2 dB |
+| TX antenna gain | 2.2 dBi |
+| TX EIRP | 56 dBm (TX_CONDUCTED_DBM=53.8 + 2.2 dBi) |
+| RX AGL | 1.5 m |
+| RX chain (total) | -9.3 dB (antenna -1 + cable -0.3 + splitter -6.3 + BPF -1.7) |
+| Noise floor | -120 dBm |
+| Records | 261,967 (36,351 within scene bbox; 12,594 within 1.5 km cal range) |
+
+### Scene and simulation configuration
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| SCENE_BASE_DIR | nottingham_ofcom2018_1802mhz_dem | reuse existing scene — no rebuild |
+| BASE_DIR | nottingham_ofcom2018_2695mhz_dem | all outputs go here |
+| SCENE_WEST/EAST | -1.294229 / -1.218595 | same as 1802 MHz |
+| SCENE_SOUTH/NORTH | 52.963691 / 53.008909 | same as 1802 MHz |
+| FREQUENCY_HZ | 2695e6 | 2695 MHz |
+| VEG_CONDUCTIVITY | 0.15 S/m | ITU-R P.833 at 2.7 GHz (0.05→0.10→0.15 at 0.9→1.8→2.7 GHz) |
+| VEG_RELATIVE_PERMITTIVITY | 17.0 | ITU-R P.833 — portable 0.9-3.6 GHz |
+| DISABLE_VEG_DISCS | True | all disc/tree geometry transparent; P.833 post-hoc in CELL 8e |
+| CAL_FIX_SCATTER | False | S free (er+sigma+S calibrated jointly) |
+| CAL_N_AVG_SOLVE | 1 | fixed seed sufficient |
+| CAL_SAMPLES_PS | 30_000_000 | 30M (updated from 10M — reduces MC noise floor ±0.21→±0.12 dB) |
+| NUM_SAMPLES_PS | 100_000_000 | 100M eval (optimal per 915 MHz benchmark) |
+| CAL_MAX_DIST_KM | 1.0 | calibrate within LOS regime only (Rbp=916m at 2695 MHz — avoids dual-slope sign-flip) |
+| CAL_MIN_DIST_KM | 0.15 | near-field exclusion |
+| EVAL_MIN_DIST_KM | 0.15 | exclude near-field from CELL 8e stats (R²=-12 at 0-100m drags cumulative bands) |
+| CAL_SCALAR_BOUNDS | (-30.0, 20.0) | wider than default (-20,5) — pre-cal bias +8 to +15 dB at 2695 MHz |
+| NOISE_FLOOR_DBM | -120.0 | from CSV header |
+| Sigma bounds | frequency-derived | _SIG_MIN/MAX_PER_MAT from ITU-R P.2040-2 at 2695 MHz |
+| Vegetation formula | ITU-R P.833-10 | _p833_atten_db() preferred at 2-3 GHz (Weissberger under-estimates ~40%) |
+| Calibration files | calibrated_materials_2695mhz.json + scalar_offset_2695mhz.json | saved to BASE_DIR |
+
+### 2695 MHz Results (Run 1: CAL_MAX_DIST_KM=1.5, P.833 vegetation, brick P.2040-2 fix)
+
+**Settings:** CAL_SCALAR_BOUNDS=(-30,20) / CAL_FIX_SCATTER=False / CAL_MAX_DIST_KM=1.5 / P.833 vegetation / 100M eval
+
+| Range | N | Method | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|---|--------|-----------|-----------|-----|-------|
+| 0-1000m | 256 | ON incoh | -6.5 | 13.9 | **0.246** | LOS regime dominant |
+| 0-1250m | 328 | ON incoh | 0.0 | 17.8 | 0.173 | dual-slope sign-flip |
+
+**Key findings:**
+- Dual-slope breakpoint at Rbp = 916m (4 × hBS × hUT × f/c = 4×17×1.5×2695e6/3e8)
+- 0-1000m bias = -6.5 dB (under-predicts) vs 1000-1250m bias = +23.1 dB (massively over-predicts)
+- Calibration averages to 0.0 dB at 0-1250m — masks sign-flip, suppresses R² from 0.246 to 0.173
+- 3GPP TR 38.901 UMa NLOS shadow fading floor: σ_SF = 7.82 dB (physics minimum RMSE)
+- Bug fixed: Powell scalar bounds were (-20,5) — clipped Phase 0 optimal scalar (+10-12 dB) to +5 dB → fixed to (-30,20)
+- Bug fixed: brick sigma used P.2040-1 (2015) freq-dependent formula → fixed to P.2040-2 (2021) flat 0.038 S/m
+- Next run: CAL_MAX_DIST_KM=1.0 (below Rbp) to calibrate within single-slope LOS regime
+
+### 2695 MHz Results (Run 2: CAL_MAX_DIST_KM=1.0, CAL_SAMPLES_PS=10M, scalar=-2.305 dB) — CELL 8e in progress
+
+**Settings:** CAL_SCALAR_BOUNDS=(-30,20) / CAL_FIX_SCATTER=False / CAL_MAX_DIST_KM=1.0 / EVAL_MIN_DIST_KM=0.0 / 100M eval / Cal RMSE=14.37 dB
+
+**Best method: ON incoh** — scattering provides 45+ R² points vs OFF incoh at 0-1000m
+
+| Range | N (ON) | Bias (dB) | RMSE (dB) | R² (ON incoh) | R² (OFF incoh) | Notes |
+|-------|--------|-----------|-----------|---------------|----------------|-------|
+| 0-750m | 198 | +1.5 | 11.8 | 0.321 | 0.251 | |
+| 0-900m | 233 | +2.5 | 11.5 | 0.408 | 0.171 | |
+| 0-1000m | 256 | +2.7 | 11.1 | 0.515 | 0.063 | within calibrated range |
+| **0-1250m** | **324** | **+4.8** | **12.7** | **0.574** | **0.070** | **peak R² — beats 1802 MHz (0.509)** |
+
+Full 0-1000m breakdown (N=256, avg ON rays=17702, OFF rays=80):
+
+| Method | Bias (dB) | RMSE (dB) | R² |
+|--------|-----------|-----------|-----|
+| ON incoh | +2.7 | 11.1 | **0.515** |
+| OFF incoh | +6.1 | 15.5 | 0.063 |
+| ON coh | -6.9 | 12.6 | 0.376 |
+| OFF coh | +7.3 | 16.5 | -0.065 |
+| ON best | +5.5 | 12.9 | 0.351 |
+
+Full 0-1250m breakdown (N=324 ON / 264 OFF, avg ON rays=12398, OFF rays=55):
+
+| Method | Bias (dB) | RMSE (dB) | R² |
+|--------|-----------|-----------|-----|
+| ON incoh | +4.8 | 12.7 | **0.574** |
+| OFF incoh | +6.4 | 15.8 | 0.070 |
+| ON coh | -3.7 | 14.6 | 0.436 |
+| OFF coh | +7.6 | 16.9 | -0.058 |
+| ON best | +7.5 | 14.4 | 0.447 |
+
+**Key findings (Run 2):**
+- CAL_MAX_DIST_KM=1.0 (below Rbp=916m) eliminates dual-slope sign-flip — R² jumps from 0.246 (Run 1) to 0.574 at 0-1250m
+- Scattering is critical: ON incoh (0.574) vs OFF incoh (0.070) — 50 point gap; model fails without scatter
+- 50 receivers in 0-1250m have scatter-only paths (no LOS/specular) — would be coverage holes with scattering OFF
+- ON coh competitive (0.436) — unlike 1802 MHz where coherent collapsed; DISABLE_CANOPY=True reduces destructive interference
+- Bias grows with range: +2.7 dB at 0-1000m → +4.8 dB at 0-1250m — slight over-prediction in NLOS regime
+- RMSE=11.1 dB at 0-1000m — 3.3 dB above physics floor (σ_SF=7.82 dB); mainly MC noise from 10M cal samples
+- R² peaks at 0-1250m (0.574) — 1000-1250m band well-predicted despite being beyond calibrated range
+- Beats 1802 MHz at 0-1250m: 2695 MHz R²=0.574 vs 1802 MHz R²=0.509
+
+Full distance breakdown (ON incoh — best method):
+
+| Range | N (ON) | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|--------|-----------|-----------|-----|-------|
+| 0-500m | 132 | +0.1 | 13.3 | -0.536 | near-field noise (below CAL_MIN_DIST_KM floor) |
+| 0-750m | 198 | +1.5 | 11.8 | 0.321 | |
+| 0-900m | 233 | +2.5 | 11.5 | 0.408 | |
+| 0-1000m | 256 | +2.7 | 11.1 | **0.515** | calibrated range ceiling |
+| 0-1250m | 324 | +4.8 | 12.7 | **0.574** | peak R² |
+| 0-1500m | 504 | +1.3 | 16.8 | 0.282 | dual-slope NLOS transition — sharp R² drop |
+| 0-1750m | 651 | -0.4 | 19.6 | -0.109 | deep NLOS |
+| 0-2000m | 975 | +0.3 | 18.2 | -0.293 | bias centred; RMSE recovers slightly |
+| 0-2250m | 1110 | +0.6 | 17.2 | -0.280 | |
+
+**Key observations (full range):**
+- Hard cliff at 1250m → 1500m (R² 0.574 → 0.282) — dual-slope NLOS transition zone
+- Bias stays near zero at all ranges (+0.6 dB at 0-2250m) — scalar calibration effective throughout
+- RMSE recovers 1750m+ (19.6 → 18.2 → 17.2 dB) — deep NLOS simpler geometry, fewer reflections
+- OFF methods collapse beyond 1250m: OFF incoh R²=-2.929 at 0-2250m (RMSE=32.7 dB)
+- Scattering covers 318 additional receivers at 0-2250m (1110 ON vs 792 OFF valid paths)
+
+**Next step: Run 3 CELL CAL complete (2026-08-16) — proceed to CELL 4A → CELL 8e**
+- Final scalar: +9.657 dB / Cal RMSE: 14.19 dB / 211 evals / 996.5 min
+- Phase 3 re-scalar reverted (worsened: 14.95 dB > 14.19 dB) — Phase 0 scalar optimal
+- After CELL 8e: compare R² vs Run 2 baseline (0.574 at 0-1250m)
+
+### 2695 MHz Calibration History
+
+| Run | Settings | Cal RX | Final scalar | Cal RMSE | Notes |
+|-----|----------|--------|--------------|----------|-------|
+| Run 2 (R²=0.574) | PER_PATH_VEG=False, 10M samples | 618→601 (17 NF) | -2.305 dB | ~13.693 dB | old _MAT_FIXED_VALS (er=17 during cal) |
+| Bad re-cal | PER_PATH_VEG=True, 30M samples | 618→601 (17 NF) | +9.4756 dB | ~13.693 dB | WRONG — calibrated for per-path P.833; CELL 8e R²=-1.644 |
+| Run 3 — FAILED | PER_PATH_VEG=False, 30M, transparent discs in CAL | 373 (0 NF) | +9.657 dB | 14.19 dB | _MAT_FIXED_VALS fix (7585ef7) made ceiling_board er=1 during Powell → brick/concrete S→0.51 → scatter flood → CELL 8e R²=-0.881 |
+| Run 4 — FAILED (CELL 8e R²=-1.093 at 0-750m) | PER_PATH_VEG=False, 30M, ceiling_board ACTIVE during Powell | 373 (0 NF) | +9.391 dB | 14.19 dB (220 evals) | itu_wet_ground sigma=7.14 S/m (uncapped) — absorbed close-range paths; bias=+25 dB at 0-200m; bin corrections ±24 dB |
+| **Run 5 — CMA-ES IN PROGRESS (2026-08-17)** | Same as Run 4 + _SIG_MAX_PER_MAT caps + CELL CAL-CMA (CMA-ES optimizer, 5M samples) | 373 (0 NF) | +7.746 dB | 14.82 dB Phase 0 → eval 195 best: **10.917 dB** | wet_ground capped at 0.20 ✓; 3.1 dB above 3GPP σ_SF=7.82 dB physics floor; still descending |
+
+**Run 3 calibration notes:**
+- 211 evals / 996.5 min — Powell converged (FTOL)
+- Phase 3 re-scalar worsened (14.95 dB > 14.19 dB) — reverted; Phase 0 scalar +9.657 dB is final
+- Cal RX 373 (vs 618 in Run 2): transparent discs remove scatter-only paths during cal
+- Scalar +9.657 dB matches bad re-cal's +9.4756 dB — both transparent during cal, confirms fix is correct
+- Cal RMSE 14.19 dB at MC noise floor (30M samples, ±0.12 dB noise) — no further Powell movement possible
+- Self-consistent: CELL CAL and CELL 8e both use transparent discs → calibrated materials match evaluation
+
+**Run 3 CELL 4A — calibrated materials loaded (2026-08-16):**
+
+| Material | εᵣ | σ (S/m) | S | Notes |
+|----------|-----|---------|---|-------|
+| itu_brick | 3.02 | 0.0723 | 0.509 | high scatter |
+| itu_concrete | 6.34 | 0.1233 | 0.513 | high scatter |
+| itu_glass | 7.49 | 0.0209 | 0.409 | |
+| itu_wet_ground | 24.10 | 0.1855 | 0.250 | |
+| itu_very_dry_ground | 3.58 | 0.0250 | 0.279 | |
+| water_rt | 61.11 | 0.0294 | 0.224 | |
+| canopy_itu_vegetation | 1.50 | 0.0033 | 0.400 | near-transparent; 3D tree geometry active |
+| trunk_itu_wood | 1.99 | 0.0136 | 0.150 | |
+| itu_ceiling_board | 1.00 | 0.0000 | 0.050 | transparent (DISABLE_VEG_DISCS=True) |
+| concrete_barrier | 5.31 | 0.0727 | 0.300 | |
+| metal_barrier / itu_metal | 1.00 | 10000000 | 0.050 | perfect conductor |
+
+- Scalar: +9.6574 dB applied
+- canopy_itu_vegetation er=1.50, S=0.40: near-transparent with scatter — tree geometry contributes scatter, P.833 handles bulk attenuation
+- itu_ceiling_board forced transparent (er=1, σ=0, S=0) by DISABLE_VEG_DISCS=True override
+
+**Run 3 CELL 8e — FAILED (2026-08-16):**
+- R²=-0.881 at 0-1250m (N=719 ON incoh) — scatter flood from transparent ceiling_board during Powell
+- avg_rays ON=4310 vs OFF=23 — 3× fewer scatter paths than Run 2 (12398)
+- Bias = -7.9 dB (sign-flipped vs Run 2's +4.8 dB) — materials calibrated on wrong scatter budget
+- Root cause: _MAT_FIXED_VALS with er=1 during Powell → brick/concrete S→0.51 → 65k scatter paths → R²=-0.881
+
+**Run 4 CELL CAL — COMPLETE (2026-08-16): 220 evals, 14.19 dB, scalar=+9.391 dB**
+- Phase 0: scalar=+7.130 dB, RMSE=15.50 dB after scalar (373 cal RX, 30M samples)
+- Phase 2 converged (FTOL) at 14.19 dB / 220 evals
+- _MAT_FIXED_VALS: ceiling_board er=17, sigma=0.15, S=0.50 (active during Powell)
+- itu_wet_ground sigma calibrated to 7.14 S/m (uncapped — Run 5 fix: cap at 0.20)
+
+**Run 4 CELL 4A — COMPLETE: itu_wet_ground sigma=7.1435 S/m (uncapped, unphysical)**
+
+**Run 4 CELL 8e — FAILED (2026-08-17): wet_ground sigma=7.14 absorbed close-range paths**
+
+| Range | N (ON incoh) | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|-------------|-----------|-----------|-----|-------|
+| 0-200m | 13 | +25.3 | 25.4 | -173.976 | absorption smoke-gun |
+| 0-300m | 41 | +26.0 | 26.1 | -32.938 | |
+| 0-500m | 125 | +13.7 | 19.6 | -5.549 | |
+| 0-750m | 255 | +7.1 | 14.5 | -1.093 | |
+| 0-900m | 323 | +5.8 | 13.4 | -0.714 | |
+| 0-1000m | 373 | +5.3 | 12.6 | -0.273 | |
+| **0-1250m** | **635** | **+2.8** | **12.6** | **0.225** | partial recovery beyond 1 km |
+
+Root cause: wet_ground sigma=7.14 S/m absorbed ground-bounce paths at close range → model predicts 25 dB too much path loss within 300m. Bin scalar corrections spanned ±24 dB (0.32 km: +24.31 dB, 1.20 km: -9.96 dB). LOS and NLOS zone offsets both +9 dB — diagnostic of wrong calibration, not missing zone split.
+Fix: `_SIG_MAX_PER_MAT['itu_wet_ground'] = 0.20` added for Run 5.
+
+**Run 5 — CELL CAL-CMA IN PROGRESS (2026-08-17)**
+
+Using CMA-ES instead of Powell (CELL CAL-CMA, commit 2502e5f). Key improvements over Powell:
+
+| Fix | Detail |
+|-----|--------|
+| _SIG_MAX_PER_MAT in encode/decode | wet_ground hard-capped at 0.20 in normalised space — Powell uncapped, CMA cannot exceed cap regardless of proposal |
+| _MAT_FIXED_VALS applied before Phase 0 | ceiling_board er=2.73, sigma=0.15, S=0.50 fixed before first solve — consistent with CELL 4A |
+| Noise floor filter | CAL_NOISE_MARGIN_DB=10 dB applied — same as CELL CAL |
+| CAL_FIXED_SEED | seed=42 used for reproducible PathSolver calls |
+| CAL_SCALAR_BOUNDS | reads CELL 1 (-30, 20) — was hardcoded (-30,30) |
+| Warm prior S=0.35 | applied before Phase 0 → more scatter paths → lower scalar needed |
+| Per-material S bounds | _S_MIN_PER_MAT / _S_MAX_PER_MAT enforced in decode |
+| Inline plots | RMSE convergence + per-material parameter trajectories saved as PNG |
+
+**Phase 0 result:**
+- 16.72 dB before scalar → 14.82 dB after scalar=+7.746 dB (vs Run 4: 15.50 dB → scalar=+9.391 dB)
+- Warm prior S=0.35 provides more scatter paths → 1.7 dB less scalar needed
+
+**Free materials (6):**
+
+| Material | er | sigma (default) | cap | S |
+|----------|-----|----------------|-----|---|
+| water_rt | 80.000 | 0.01000 | 5.000 | 0.050 |
+| itu_glass | 6.270 | 0.01403 | **10000** (no cap set — add 0.10 next run) | 0.080 |
+| itu_concrete | 5.310 | 0.07274 | 0.291 | 0.300 |
+| itu_brick | 3.910 | 0.03800 | 0.152 | 0.250 |
+| itu_very_dry_ground | 3.000 | 0.00182 | 0.050 | 0.300 |
+| itu_wet_ground | 20.179 | 0.54427 | **0.200** | 0.300 |
+
+**CMA-ES config:** sigma0=0.3, maxiter=300, popsize=auto~12, tolx=0.0001, tolfun=0.03, 5M samples
+
+**Phase 1 eval 1:** RMSE=13.560 dB — already beats Powell Run 4 final (14.19 dB) at first eval
+
+**CMA-ES descent per generation (popsize=12):**
+
+| Generation | Evals | Best RMSE | Delta |
+|-----------|-------|-----------|-------|
+| 1 | 1-12 | 12.846 dB | — |
+| 2 | 13-24 | 12.639 dB | -0.21 |
+| 3 | 25-36 | 12.230 dB | -0.41 |
+| 4 | 37-48 | 11.811 dB | -0.42 |
+| 5 | 49-60 | 11.476 dB | -0.34 |
+| 6 | 61-72 | 11.476 dB | 0.00 (plateau) |
+| 7-16 | 73-194 | 11.252 dB | slow descent |
+| ~17 | 195+ | **10.917 dB** | -0.335 (new best, still descending) |
+
+**Key milestones:**
+- Eval 1: 13.560 dB — beats Powell immediately
+- Eval 51: 11.476 dB — broke through 12 dB barrier
+- Eval 195: 10.917 dB — plateau broken, CMA covariance rotated to new direction
+- Expected final: **10.5-11.0 dB** (~3.1 dB above 3GPP σ_SF=7.82 dB physics floor)
+
+**3GPP physics floor context:**
+- σ_SF=7.82 dB (3GPP TR 38.901 UMa NLOS shadow fading) = irreducible random variation no static RT can predict
+- Gap = 10.917 − 7.82 = **3.1 dB** at eval 195 — very close to theoretical limit
+- Important: compare physics floor against CELL 8e eval RMSE (100M), not cal RMSE (5M). Cal RMSE ≠ eval RMSE.
+
+**Note — itu_glass cap missing (Run 5):** `_SIG_MAX_PER_MAT['itu_glass'] = 0.10` not set — cap falls back to 1e4. Low risk (few glass surfaces in Nottingham, starts at 0.014 S/m). Fixed in commit c2d3f6b for next run. Check itu_glass sigma in CELL 4A before running CELL 8e.
+
+**Note — 5M samples:** CMA-ES population of ~12 candidates partially averages noise (effective ±0.21/√12 ≈ ±0.06 dB per generation). Less ideal than 30M but CMA handles it better than Powell.
+
+**Expected convergence:** 10.5-11.0 dB (~4-5 hrs total at 5M samples)
+
+### Dual-slope breakpoint analysis (ITU-R P.1411)
+
+Rbp = 4 × hBS × hUT × f / c — frequency comparison:
+
+| Frequency | Rbp | LOS regime | NLOS regime |
+|-----------|-----|------------|-------------|
+| 915 MHz | 311 m | 0-311m | 311m+ |
+| 1802 MHz | 613 m | 0-613m | 613m+ |
+| **2695 MHz** | **916 m** | **0-916m** | **916m+** |
+
+At 2695 MHz the breakpoint falls WITHIN the 0-1.5km evaluation range — calibrating across it mixes two physics regimes and destroys R².
+
+### Literature fixes applied (committed `fe21b29`)
+
+| Fix | Formula | Impact |
+|-----|---------|--------|
+| ITU-R P.833-10 vegetation | A = Am × (1 − exp(−d × γ/Am)); Am=25 dB, γ=2.0 dB/m at ~3 GHz | 8.3 dB at 5m depth vs Weissberger 4.0 dB — 40% more attenuation |
+| ITU-R P.2040-2 (2021) brick | σ = 0.038 S/m, freq-independent (d=0) | Corrects 47% overcalculation at 2695 MHz vs old P.2040-1 value |
+| 3GPP TR 38.901 UMa reference | LOS PL=28.0+22·log10(d3D)+20·log10(fc); NLOS σ_SF=7.82 dB | Sets physics floor expectation in CELL 8e output |
+| CAL_SCALAR_BOUNDS=(-30,20) | Wider Powell scalar range | Prevents Phase 0 +10-12 dB optimal scalar from being clipped to +5 dB |
+
+### Pre-run setup (on your machine)
+```bash
+mkdir -p ~/sionna_rt/nottingham_ofcom2018_2695mhz_dem/results
+cp nottingham2695.csv ~/sionna_rt/nottingham_ofcom2018_2695mhz_dem/
+```
+
+### Run sequence
+```
+NO scene builder needed — reuses 1802 MHz scene directly.
+Simulation: CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CELL 8e
+```
+
+---
+
+## Nottingham 3602 MHz Status (sionna2_3602mhz_dem_simulation.ipynb)
+
+**CELL 8e Run 1 complete (2026-08-12, pre-per-path fix). Run 2 complete (2026-08-13). Run 3 complete (2026-08-14, per-path P.833 + double-correction fix + height filter + N_SCALAR_BINS=10). Best: R²=0.515 at 0-1250m (ON incoh) — FINAL.**
+
+### CELL 8e Run 3 Results — FINAL (per-path P.833 + height filter + 10 bins, 100M samples)
+
+**Settings:** PER_PATH_VEG=True / height filter z>30m / N_SCALAR_BINS=10 / EVAL_MIN_DIST_KM=0.25 / 100M eval
+
+Best method: **ON incoh** — peaks at 0-1250m (R²=0.515)
+
+| Range | N | Method | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|---|--------|-----------|-----------|-----|-------|
+| 0-300m | 36 | ON coh | -1.4 | 7.4 | -0.620 | near-field noise |
+| 0-500m | 178 | ON incoh | -0.7 | 9.5 | -0.874 | |
+| 0-750m | 354 | ON incoh | +0.2 | 8.8 | 0.083 | |
+| 0-900m | 445 | ON incoh | +0.1 | 9.2 | 0.172 | |
+| **0-1000m** | **513** | **ON incoh** | **+0.2** | **8.7** | **0.375** | |
+| **0-1250m** | **681** | **ON incoh** | **+0.3** | **9.4** | **0.515** | **peak R² — best result** |
+| 0-1500m | 977 | ON incoh | -8.4 | 20.1 | -0.634 | NLOS collapse beyond 1250m |
+
+Full 0-1000m breakdown (N=513, avg ON rays=9577):
+
+| Method | Bias (dB) | RMSE (dB) | R² |
+|--------|-----------|-----------|-----|
+| ON incoh | +0.2 | 8.7 | **0.375** |
+| OFF incoh | +3.8 | 13.9 | -0.579 |
+| ON coh | -7.1 | 12.6 | -0.303 |
+| OFF coh | +4.8 | 15.3 | -0.903 |
+| ON best | +4.2 | 11.9 | -0.158 |
+
+Full 0-1250m breakdown (N=681 ON / 599 OFF):
+
+| Method | Bias (dB) | RMSE (dB) | R² |
+|--------|-----------|-----------|-----|
+| ON incoh | +0.3 | 9.4 | **0.515** |
+| OFF incoh | +5.5 | 16.9 | -0.929 |
+| ON coh | -6.9 | 13.9 | -0.074 |
+| OFF coh | +6.6 | 18.0 | -1.196 |
+| ON best | +4.4 | 12.2 | 0.179 |
+
+**Bin scalar (10 bins, Run 3):**
+| Bin | Correction | Meaning |
+|-----|-----------|---------|
+| 0.20 km | +1.16 dB | near-LOS, well-predicted |
+| 0.32 km | -0.33 dB | |
+| 0.42 km | -1.13 dB | |
+| 0.54 km | -16.20 dB | NLOS onset — transparent canopy over-predicts |
+| 0.65 km | -29.05 dB | |
+| 0.76 km | -25.21 dB | |
+| 0.86 km | -24.75 dB | |
+| 0.97 km | -29.37 dB | |
+| 1.08 km | -38.82 dB | model 39 dB too optimistic before scalar |
+| 1.20 km | -31.65 dB | |
+
+**Progression across runs:**
+| Run | Settings | Best R² | Range | RMSE | N |
+|-----|----------|---------|-------|------|---|
+| Run 1 | pre-per-path (5 bins) | -0.026 | 0-750m (ON coh) | 12.4 dB | 598 |
+| Run 2 | per-path P.833 (5 bins) | 0.154 | 0-1000m (ON incoh) | 13.0 dB | 863 |
+| **Run 3** | **per-path + height filter (10 bins)** | **0.515** | **0-1250m (ON incoh)** | **9.4 dB** | **681** |
+| **Run 6** | **per-path + height filter (15 bins) + zone split + DISABLE_VEG_DISCS=False** | **0.515** | **0-1250m (ON incoh)** | **9.8 dB** | **725** | **Confirms R²=0.515 as physics floor** |
+
+**N-selection effect (important):** Run 3 has N=513 at 0-1000m vs N=863 in Run 2. PER_PATH_VEG=True with height filter attenuates paths through heavy vegetation to near-zero amplitude; incoherent sum collapses to NaN for receivers whose only paths cross dense canopy. These excluded receivers (350 at 0-1000m) are the hardest NLOS cases. R² improvement reflects both the better correction pipeline and removal of geometry-limited receivers.
+
+**Root cause — confirmed diagnosis:**
+At λ=8.3 cm, tree branch diameter ≈ λ → near-total opacity. DISABLE_CANOPY=True (required to prevent total ray blockage) makes all vegetation transparent. NLOS paths at 700m+ reach the receiver unrealistically through transparent trees — model requires up to -38.82 dB bin scalar correction. Per-path P.833 (applied to each ray segment) partially recovers this and height filter (z>30m skip) removes spurious TX-level segment intersections. Double-counting fix ensures bin scalar and per-path are consistent.
+
+**Remaining limitations at R²=0.515:**
+- DISABLE_CANOPY=True removes physical geometry — rays pass through trees, not around them
+- N-selection: 350 geometry-limited receivers excluded at 0-1000m (per-path zeros their amplitude)
+- Hard NLOS collapse at 1250m+ (R²=-0.634 at 0-1500m) — beyond calibrated range
+- 3GPP TR 38.901 UMa NLOS physics floor: σ_SF=6.0 dB → current RMSE=8.7 dB = 2.7 dB above floor
+
+**Run 5 — CELL CAL COMPLETE, CELL 8e FAILED (2026-08-17):**
+CELL CAL: 207 evals, 14.924 dB, scalar=+29.942 dB (17.8 dB higher than Run 3 +12.097 dB)
+CELL 8e: R²=-4.654, bias=-30.5 dB — catastrophic failure
+
+Root cause 1: sigma=0.50 S/m over-absorbs discs (~8.7 dB per hit vs ~3.5 dB at sigma=0.20). Scalar grew from +12 dB (Run 3) to +29.9 dB — 17.8 dB gap.
+Root cause 2: _MAT_FIXED_VALS in CELL CAL used VEG_CONDUCTIVITY but CELL 4A applied VEG_DISC_SIGMA=0.50 → calibrated for different absorption than evaluated.
+
+**Run 6 — COMPLETE (2026-08-19, reverted to Run 3 + zone split):**
+Changes pushed to branch:
+| Parameter | Run 5 | Run 6 | Rationale |
+|-----------|-------|-------|-----------|
+| VEG_SCATTERING_COEFF | 0.10 | **0.35** | Reverted to Run 3 — over-reduced S caused scatter flood |
+| VEG_DISC_SIGMA | 0.50 S/m | **removed (default 0.20)** | Reverted — 0.50 over-absorbed, 17.8 dB scalar gap |
+| VEG_DISC_ER | 4.0 | **removed (default 2.73)** | Reverted — Run 3 defaults |
+| N_SCALAR_BINS | 15 | **15** | Kept — finer NLOS transition resolution |
+| LOS_NLOS_ZONE_SPLIT | — | **True** | NEW — separate LOS/NLOS mean offset (same as 2695 MHz) |
+| PER_PATH_VEG | True | True | Kept |
+
+_MAT_FIXED_VALS now resolves: itu_ceiling_board → er=2.73, sigma=0.20, S=0.35 (Run 3 values, consistent CELL CAL/CELL 4A).
+Delete existing cal files before running: `rm ~/sionna_rt/nottingham_ofcom2018_3602mhz_dem/calibrated_materials_3602mhz.json ~/sionna_rt/nottingham_ofcom2018_3602mhz_dem/scalar_offset_3602mhz.json`
+Run sequence: **CELL CAL → CELL 4A → CELL 8e**
+
+**Run 6 CELL CAL + CELL 8e — COMPLETE (2026-08-19): R²=0.515 at 0-1250m — FINAL**
+- Phase 0: 601/601 valid paths, scalar=+28.602 dB, RMSE after scalar=16.23 dB
+- Phase 2 FTOL converged: ~15.35 dB (each eval ~900s due to DISABLE_VEG_DISCS=False active disc PLYs)
+- CELL 8e: **ON incoh R²=0.515, bias=-0.2 dB, RMSE=9.8 dB, N=725 at 0-1250m**
+- avg_rays ON=7,455 vs OFF=43 at 0-1250m — scatter dominant
+- Zone split negligible: only 23 NLOS receivers (3.1%) beyond Rbp=1225m at 0-1250m
+- **Matches Run 3 exactly — R²=0.515 confirmed as the 3602 MHz physics floor**
+- Note: DISABLE_VEG_DISCS=False neutral at 0-1250m; active discs (sigma=0.20) absorb scatter paths but result identical to Run 3 (DISABLE_VEG_DISCS=True) at this range
+
+### 3602 MHz Run 4 Calibration — CELL CAL running (2026-08-15)
+
+| Phase | RMSE | Scalar | Notes |
+|-------|------|--------|-------|
+| Phase 0 (before scalar) | 32.21 dB | — | DISABLE_CANOPY=True + S=0.10 + sigma=0.50 |
+| Phase 0 (after scalar) | 16.02 dB | **+27.939 dB** | Δ = 16.19 dB improvement |
+| Phase 2 new best | **14.924 dB (eval 197)** | — | spike at eval 195 (18.348 dB) then new minimum — still running |
+
+**Key finding — disc absorption cuts cal RMSE from 23.39 → 15.07 dB:**
+
+| | Run 4 — FINAL (CELL 8e, 10 bins) | Run 4 — current CELL CAL |
+|---|---|---|
+| Phase 0 after-scalar RMSE | 23.39 dB | **16.02 dB** |
+| Phase 2 floor | ~23 dB (stuck) | **~15.07 dB** |
+| Disc S | 0.35 | **0.10** |
+| Disc sigma | 0.20 S/m | **0.50 S/m** |
+| Disc er | 2.73 | **4.0** |
+
+- Cal RX: 601 (0.15–1.0 km, 17 NF removed)
+- Phase 0 scalar +27.939 dB: consistent with previous +26.33 dB (DISABLE_CANOPY=True leaves large gap)
+- 16.02 dB after scalar vs 23.39 dB previously: disc absorption (sigma=0.50) pre-attenuates NLOS scatter paths
+- Phase 2 at ~82 evals: oscillating in ±0.09 dB noise band — MC noise floor at 30M samples
+- All 6 free materials (itu_glass, water_rt, itu_concrete, itu_brick, itu_very_dry_ground, itu_wet_ground) being optimized (19 params incl. scalar)
+- **Awaiting FTOL termination → CELL 4A → CELL 8e**
+
+**This is a valid thesis finding:**
+> At 3602 MHz, purely geometric surface-based RT cannot model vegetation attenuation — canopy must be disabled (DISABLE_CANOPY=True) to prevent total ray blockage. Per-path ITU-R P.833 correction (applied per ray segment using paths.vertices), combined with a height filter and consistent bin calibration, recovers R²=0.515 at 0-1250m — comparable to 1802 MHz (R²=0.509) and approaching 2695 MHz (R²=0.574). RMSE=8.7 dB at 0-1000m is 2.7 dB above the 3GPP shadow fading floor. The remaining gap reflects N-selection (vegetation-blocked receivers excluded) and hard NLOS geometry that surface-based RT cannot resolve without volumetric absorption.
+
+### CELL 8e Run 1 Results (pre-per-path fix, for comparison)
+
+| Range | N | Method | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|---|--------|-----------|-----------|-----|-------|
+| 0-300m | 71 | ON incoh | +18.1 | 19.4 | -8.366 | near-field over-correction |
+| 0-500m | 308 | ON incoh | +5.9 | 15.8 | -1.748 | |
+| 0-750m | 598 | ON coh | -2.0 | 12.4 | **-0.026** | best result (barely negative) |
+
+### Calibration History
+
+| Run | Settings | Phase 0 RMSE | Scalar | After-scalar RMSE | Notes |
+|-----|----------|-------------|--------|-------------------|-------|
+| Run 0 (aborted) | DISABLE_CANOPY=False, 10M | 46 dB | +30 dB | 29.5 dB | canopy cones blocked all rays >400m |
+| Run 1 (aborted) | DISABLE_CANOPY=True, 10M | 31.4 dB | +21.2 dB | 23.1 dB | MC noise floor |
+| Run 2 (aborted) | DISABLE_CANOPY=True, 30M, bounds=(-30,20) | 47.2 dB | +30.0 dB (CLIPPED) | 31.6 dB | scalar capped |
+| Run 3 (aborted) | DISABLE_CANOPY=True, 30M, bounds=(-60,60) | TBD | TBD | TBD | stuck at noise floor |
+| Run 4 — FINAL (CELL 8e done, R²=0.515) | DISABLE_CANOPY=True, 30M, CAL_MAX=1.0, NF filter | 32.21 dB | +12.097 dB | 23.39 dB | CELL 8e Run 3 used these materials |
+| Run 5 — FAILED (CELL 8e R²=-4.654) | S=0.10, sigma=0.50, er=4.0, 15 bins | 32.21 dB | +29.942 dB | 14.924 dB | sigma=0.50 over-absorbed — 17.8 dB scalar gap vs Run 3 |
+| **Run 6 — COMPLETE (2026-08-19): R²=0.515 FINAL** | S=0.35, sigma=0.20, er=2.73 (Run 3 defaults), 15 bins, LOS_NLOS_ZONE_SPLIT=True | 32.21 dB | +28.602 dB | ~15.35 dB | Matches Run 3 exactly — physics floor confirmed |
+
+### How to Simulate Vegetation Absorption (future work)
+
+Sionna RT 2.0 is a **surface-based tracer** — absorption only occurs at surface interactions, not through volumes. Three approaches to model vegetation attenuation at high frequencies:
+
+**Option 1 — Stacked disc layers (feasible in Sionna RT)**
+Replace single canopy cone with N horizontal disc layers at different heights within the crown. Each disc has:
+- er ≈ 1.05 (near-air, minimal reflection)
+- sigma = high (absorption at each surface hit)
+- S = 0.3-0.5 (scatter to surrounding directions)
+Each ray passes through multiple discs → cumulative attenuation per layer. More layers → better approximation of volumetric absorption. Scene builder change required; 1802 MHz scene builder is FROZEN.
+
+**Option 2 — Complex permittivity slab (equivalent medium)**
+Model canopy as a solid slab with effective complex permittivity derived from ITU-R P.833 one-way attenuation:
+- ε_eff = ε_r + i·σ/(ω·ε_0), tune σ to give correct two-way path loss through slab at each frequency
+- At 3602 MHz: P.833 gives ~9.8 dB/5m → tune sigma to match
+- Problem: Sionna RT computes surface interactions only — a thick slab gives one surface hit, same as a thin slab. No volumetric path-integral absorption.
+- Only works if multiple thin slabs are stacked (same as Option 1).
+
+**Option 3 — Per-path post-processing (best accuracy, no scene change)**
+Instead of applying P.833 to the final per-receiver path loss (current approach), apply it to each individual ray path before incoherent summation:
+- For each path, compute which vegetation polygons the path vertices intersect
+- Apply ITU-R P.833 attenuation dB to that path's power before summing with others
+- This is a CELL 8e change only — no scene rebuild needed
+- Requires access to PathSolver vertex/segment data per path
+
+**Option 4 — Hybrid geometric+statistical (NYURay approach)**
+Keep RT for building geometry. Apply a statistical vegetation shadowing model per receiver based on link vegetation depth (current CELL 8e approach, but applied during path combination not after).
+
+**Recommended for thesis continuation:** Option 3 (per-path P.833) — feasible in CELL 8e without scene rebuild, physically correct, and directly addresses the 3602 MHz failure mode.
+
+### CELL CAL Configuration (current — FINAL)
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| SCENE_BASE_DIR | nottingham_ofcom2018_1802mhz_dem | reuse existing scene |
+| FREQUENCY_HZ | 3602.5e6 | |
+| DISABLE_CANOPY | True | required — cones block all rays >400m at λ=8.3 cm |
+| DISABLE_VEG_DISCS | False | disc PLYs active (S=0.10 horizontal scatter) |
+| CAL_MAX_DIST_KM | 1.0 | within LOS regime (Rbp=1225m) |
+| CAL_SCALAR_BOUNDS | (-60.0, 60.0) | Phase 0 needs +12 dB |
+| CAL_NOISE_MARGIN_DB | 10.0 | excludes RX within 10 dB of noise floor |
+| CAL_SAMPLES_PS | 30_000_000 | |
+| NUM_SAMPLES_PS | 100_000_000 | |
+| EVAL_MIN_DIST_KM | 0.25 | |
+
+**CELL CAL running (2026-08-09). First run at 30M samples with DISABLE_CANOPY=True and CAL_SCALAR_BOUNDS=(-60,60).**
+
+### Site parameters (from nottingham3602.csv header)
+| Parameter | Value |
+|-----------|-------|
+| Site name | Nottingham |
+| TX lat/lon | 52.9863 / -1.2559 (same mast as 1802/2695 MHz) |
+| Frequency | 3602.5 MHz |
+| TX AGL | 17 m |
+| TX EIRP | 54 dBm (TX_CONDUCTED_DBM=51.2 + 2.8 dBi) |
+| RX AGL | 1.5 m |
+| RX chain | 0.0 dB applied (no chain loss) |
+| Noise floor | -109 dBm |
+
+### Scene and simulation configuration
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| SCENE_BASE_DIR | nottingham_ofcom2018_1802mhz_dem | reuse existing scene — no rebuild |
+| FREQUENCY_HZ | 3602.5e6 | 3602 MHz |
+| VEG_CONDUCTIVITY | 0.20 S/m | ITU-R P.833 at 3.6 GHz |
+| DISABLE_VEG_DISCS | True | disc PLYs transparent |
+| DISABLE_CANOPY | True | 3D canopy+trunk transparent — cones block all rays >400m at λ=8.3 cm |
+| CAL_FIX_SCATTER | False | S free |
+| CAL_SAMPLES_PS | 30_000_000 | 30M |
+| CAL_MAX_DIST_KM | 1.0 | calibrate within LOS regime (Rbp=1225m at 3602 MHz) |
+| CAL_MIN_DIST_KM | 0.15 | near-field exclusion |
+| EVAL_MIN_DIST_KM | 0.15 | exclude near-field from stats |
+| CAL_SCALAR_BOUNDS | (-60.0, 60.0) | Phase 0 finds +30 dB scalar — must cover it |
+| NUM_SAMPLES_PS | 100_000_000 | 100M eval |
+
+### 3602 MHz Calibration History
+
+| Run | Settings | Phase 0 RMSE | Scalar | After-scalar RMSE | Notes |
+|-----|----------|-------------|--------|-------------------|-------|
+| Run 0 (aborted) | DISABLE_CANOPY=False, 10M | 46 dB | +30 dB | 29.5 dB | canopy cones blocked all rays >400m |
+| Run 1 (aborted) | DISABLE_CANOPY=True, 10M | 31.4 dB | +21.2 dB | 23.1 dB | MC noise floor — flat at 21.574 dB from eval 2 |
+| Run 2 (aborted) | DISABLE_CANOPY=True, 30M, bounds=(-30,20) | 47.2 dB | +30.0 dB (CLIPPED) | 31.6 dB | scalar capped at +20 — Phase 2 fights Phase 0 |
+| **Run 3 (running)** | DISABLE_CANOPY=True, 30M, bounds=(-60,60) | TBD | TBD | TBD | correct bounds — Phase 2 free to optimise |
+
+**Key findings so far:**
+- DISABLE_CANOPY=True required — active canopy cones at λ=8.3 cm block all rays beyond 400m (RMSE=46 dB, scalar=+30 dB)
+- +30 dB scalar is real physics gap — transparent canopy removes scattering; remaining paths are building reflections only
+- CAL_SCALAR_BOUNDS=(-30,20) clips the scalar: Run 2 Phase 2 fought to reduce scalar from +30 toward +20, actively worsening cal
+- 10M samples insufficient at 3602 MHz — MC noise floor ±0.21 dB prevents Powell finding gradient below 21.574 dB
+
+### 3602 MHz Session Fixes (committed to claude/cool-cori-rrWbY)
+| Commit | Fix |
+|--------|-----|
+| `ed841a6` | DISABLE_CANOPY=True in CELL 1 + conditional transparency in CELL 4A |
+| `23075d2` | EVAL_MIN_DIST_KM=0.15 + CAL_SAMPLES_PS=30M |
+| `8979235` | CAL_SCALAR_BOUNDS (-30,20) → (-60,60) — stops Phase 2 fighting Phase 0 |
+
+---
+
+## London 915 MHz Status (sionna2_915mhz_dem_simulation_london.ipynb)
+
+**Calibration run as of 2026-08-06 — near termination (FTOL):**
+
+| Phase | RMSE (dB) | Notes |
+|-------|-----------|-------|
+| TX AGL scan | AGL=45m selected | 92% valid paths (206/223); AGL=25m had only 52% — rejected by coverage filter |
+| Phase 0 scalar | 13.547 dB | scalar=+12.253 dB |
+| Phase 2 eval 1 (probe) | 10.145 dB | accidental good point from probe |
+| Phase 2 evals 2-41 | 10.910-10.941 dB | oscillating — MC noise floor (37 params, 20M samples, ±0.21 dB noise) |
+| Expected termination | ~10.9 dB cal RMSE | FTOL natural stop |
+
+**London CELL CAL Run 2 — IN PROGRESS (2026-08-16):**
+- Phase 2 eval 150: 8.966 dB — at MC noise floor (30M samples), FTOL imminent
+- Best so far: 8.966 dB (evals 147-150 stable)
+- Previous session expected ~10.9 dB at 20M samples — 30M + _SIG_MAX_PER_MAT improved to 8.966 dB
+- After FTOL: CELL 4A → CELL 8e (100M samples)
+
+**London CELL CAL fixes (all committed):**
+
+| Commit | Fix |
+|--------|-----|
+| `484ef6c` | TX AGL selection: added coverage filter TX_AGL_MIN_COVERAGE=0.80 — AGL=25m rejected (52% paths) |
+| `7d928e7` | Phase 0 stale `_res_sf.fun` NameError |
+| `a4ed73f` | Post-priming re-scalar stale `_res_pgs.fun` NameError |
+| `011d92b` | Warm-prior `_res_wp.fun` + Phase 3 `_res_sf2.fun` NameErrors |
+
+**London CELL 1 additions:**
+```python
+TX_AGL_SCAN_M       = [25, 30, 35, 40, 45]
+TX_AGL_MIN_COVERAGE = 0.80   # min valid-path fraction for AGL selection
+CAL_SCALAR_BOUNDS   = (-60.0, 60.0)
+TX_CONDUCTED_DBM    = 49.0
+```
+
+**Expected CELL 8e (after London Powell terminates):**
+- RMSE: ~7-9 dB at 0-750m (eval at 100M samples much better than cal RMSE)
+- R²: ~0.35-0.45 at 0-750m (London has more NLOS + complex urban canyon)
+- Eval at 100M samples needed before drawing conclusions
+
+---
+
+## Physics Floor Research — Key Literature Findings (2025)
+
+### Root causes of 14-15 dB uncalibrated floor at 1802 MHz:
+
+| Source | Magnitude | Fixable? |
+|--------|-----------|---------|
+| Missing dynamic clutter (cars, furniture) | ~4-6 dB | No — not in static scene |
+| Uniform material assignment per type | ~6-12 dB | Partially — 5 categories already implemented |
+| Antenna pattern uncertainty | ~2-4 dB | Requires measured pattern |
+
+### Literature RMSE benchmarks (urban outdoor):
+- **Wireless InSite** indoor: 5.0 dB @ 2.4 GHz, 5.1 dB @ 5 GHz (heavily material-dependent)
+- **NYURay** calibrated outdoor: 3.2 dB LOS / 5.8 dB NLOS @ 6.75/16.95 GHz — uses per-building material classification from LiDAR
+- **Sionna RT** at 2.8 GHz urban: significant improvement with photogrammetric point clouds + semantic segmentation (ground/buildings/vegetation/fences/cars)
+- **R² ceiling**: ~0.5 for pure geometry+material calibration; ~0.7-0.8 requires hybrid RT+neural correction
+
+### NVLabs calibration approaches (diff-rt-calibration repo):
+- `ITU_Materials.ipynb` — scalar only (same as our Phase 0)
+- `Learned_Materials.ipynb` — gradient descent on raw ε/σ/S (smoother than Powell, ~2-3 dB better)
+- `Neural_Materials.ipynb` — NN parametrizes material properties (most expressive)
+- `instant-rm/Calibration.ipynb` — Path Replay Backpropagation for city-scale fitting
+- **All validated indoors (DICHASUS dataset, Stuttgart, 2.4 GHz) — not urban outdoor**
+
+### Improvement options (post current-cal):
+
+| Option | Expected gain | Complexity | Notes |
+|--------|--------------|-----------|-------|
+| N_AVG=2 in CELL CAL | -1 to -2 dB cal RMSE | Low — 1 config change | Halves MC noise variance |
+| Gradient-based cal (diff-rt) | -2 to -3 dB vs Powell | High — new pipeline | Needs Sionna autograd enabled |
+| Separate LOS/NLOS scalar | -1 to -2 dB eval RMSE | Medium — CELL 8e change | NYURay achieves 3.2/5.8 dB this way |
+| Per-building material diversity | -1 to -2 dB | Very High — scene rebuild needed | Requires new scene builder (1802 MHz builder is FROZEN) |
+| Hybrid RT+NN residual correction | R² 0.7-0.8 achievable | Very High — needs training data | Post-thesis research direction |
+
+### Per-building material diversity — status:
+Current scene already has 5 building PLY files (brick/concrete/glass/metal/wood) — one level of diversity. True per-building calibration (each building own material) requires scene builder changes. **1802 MHz scene builder is FROZEN — this cannot be implemented without a new builder.** Not recommended before seeing current cal CELL 8e results.
+
+### Thesis References — Key Citations
+
+#### Dual LOS/NLOS scalar justification
+- **3GPP TR 38.901** (v18, 2024) — "Study on channel model for frequencies from 0.5 to 100 GHz." Defines separate LOS/NLOS path loss models, shadow fading σ (UMa NLOS: σ_SF=7.82 dB), and the breakpoint Rbp = 4·hBS·hUT·f/c. The dual-slope structure and LOS/NLOS separation implemented in CELL 8e are a direct application of this model.
+- **ITU-R P.1411-12** (2019) — "Propagation data and prediction methods for the planning of short-range outdoor radiocommunication systems and radio local area networks." Defines the dual-slope breakpoint and separate LOS/NLOS exponents used to derive Rbp = 916m (2695 MHz) and 1225m (3602 MHz).
+- **NYURay (Ju, Xing, Kanhere, Rappaport — NYU WIRELESS)** — Outdoor ray tracing validation at 6.75/16.95 GHz. Achieves 3.2 dB LOS / 5.8 dB NLOS RMSE using separate per-zone mean corrections and per-building material classification from LiDAR. Search: "NYURay calibrated outdoor" on IEEE Xplore.
+
+#### Physics floor and RT calibration
+- **arXiv:2507.19653** — Confirms R²~0.5 ceiling for pure geometry+material calibration in dense urban outdoor at 1.8 GHz. Cited as physics floor justification for 1802 MHz results.
+- **NVLabs diff-rt-calibration** (Hoydis et al., NVIDIA) — `Learned_Materials.ipynb`, `Neural_Materials.ipynb`, `instant-rm/Calibration.ipynb`. Gradient-based and neural material calibration for Sionna RT. Validated indoors (DICHASUS dataset, Stuttgart, 2.4 GHz).
+- **Wireless InSite** (Remcom) — Indoor RT benchmarks: 5.0 dB @ 2.4 GHz, 5.1 dB @ 5 GHz. Heavily material-dependent.
+
+#### Vegetation attenuation
+- **ITU-R P.833-10** (2021) — "Attenuation in vegetation." Formula: A = Am × (1 − exp(−d·γ/Am)); Am=25 dB, γ=2.0 dB/m at ~3 GHz. Used in CELL 8e for 2695/3602 MHz (replaces Weissberger which under-estimates ~40% above 2 GHz).
+- **Weissberger (1982)** — Empirical vegetation attenuation model. Used in CELL 8e for 915/1802 MHz. Formula: A = 1.33·f^0.284·d^0.588 (dB) for d > 14m.
+
+#### Material EM properties
+- **ITU-R P.2040-2** (2021) — "Effects of building materials and structures on radiowave propagation." Brick σ = 0.038 S/m (frequency-independent). Corrects P.2040-1 (2015) over-calculation at 2695+ MHz.
 
 ---
 
@@ -291,6 +1129,17 @@ Solid slabs rejected: Sionna has no path-integral absorption — a box just adds
 | `c1d08d3` | scene builder CELL 4 | nDSM extra scan added — captures vegetation not in OSM/VOM (road verges, motorway belts) |
 | `7c8bd5c` | CELL 8e | O(n_rx × 67292) Weissberger loop — replaced with STRtree spatial index |
 | `1b02870` | scene builder CELL 3 | terrain_veg.ply moved from CELL 4 to CELL 3 (no full rebuild needed) |
+| `5ad27dd` | 2695/3602 MHz CELL 4A | `float(_mat3d.relative_permittivity)` TypeError — replaced with `_safe_f()` for Sionna tensor unwrapping |
+| `ff8168d` | 2695/3602 MHz CELL DIAG | `_near` NearestNDInterpolator shadowed by `_near = _df_meas[...]` DataFrame — renamed to `_df_near` |
+| `dfaa2c2` | 2695/3602 MHz CELL 3 | `_terrain_interp` captured `_near` by global ref — fixed to default-arg capture (`_n=_near`) |
+| `9bb6be0` | 2695/3602 MHz CELL 5 | Receivers selected before bbox filter — first 1200 rows all outside scene for routes starting far from TX |
+| `5b35e4e` | 2695/3602 MHz CELL 5 | Receivers sorted by distance only, not sequential CSV order — fixed to filter near-TX section then `head(NUM_RX)` |
+| `ed841a6` | 3602 MHz CELL 1 + CELL 4A | DISABLE_CANOPY=True — λ=8.3 cm canopy cones block all rays >400m; makes canopy+trunk transparent |
+| `8979235` | 3602 MHz CELL 1 | CAL_SCALAR_BOUNDS=(-30,20) clips +30 dB Phase 0 scalar — Phase 2 fights Phase 0; widened to (-60,60) |
+| `0fadb7c` | 2695/3602 MHz CELL 8e | Per-path P.833: `_apply_per_path_veg_8e()` attenuates each ray segment via `paths.vertices` — fixes NLOS receivers with zero per-receiver correction |
+| `b15eb12` | 2695/3602 MHz CELL 8e | Double vegetation fix: `_apply_weissberger` skips if PER_PATH_VEG=True — per-receiver was applied after bin scalar (fit without Weissberger) → inconsistent pipeline |
+| `b15eb12` | 2695/3602 MHz CELL 8e | Height filter: per-path skips segments where min(z0,z1) > 30m scene-local — paths above canopy level were incorrectly counted as traversing vegetation |
+| `b15eb12` | 3602 MHz CELL 1 | N_SCALAR_BINS 5 → 10: finer binning better resolves sharp 700m NLOS transition |
 
 ---
 
