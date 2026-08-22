@@ -812,21 +812,74 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 ## London 915 MHz Status (sionna2_915mhz_dem_simulation_london.ipynb)
 
-**Calibration run as of 2026-08-06 — near termination (FTOL):**
+**CMA Run 1 COMPLETE (2026-08-22): eval 283, best=6.646 dB, scalar=+38.295 dB. CELL 8e COMPLETE.**
 
-| Phase | RMSE (dB) | Notes |
-|-------|-----------|-------|
-| TX AGL scan | AGL=45m selected | 92% valid paths (206/223); AGL=25m had only 52% — rejected by coverage filter |
-| Phase 0 scalar | 13.547 dB | scalar=+12.253 dB |
-| Phase 2 eval 1 (probe) | 10.145 dB | accidental good point from probe |
-| Phase 2 evals 2-41 | 10.910-10.941 dB | oscillating — MC noise floor (37 params, 20M samples, ±0.21 dB noise) |
-| Expected termination | ~10.9 dB cal RMSE | FTOL natural stop |
+### London CELL 8e Run 1 Results (100M samples, ON incoh best method)
 
-**London CELL CAL Run 2 — IN PROGRESS (2026-08-16):**
-- Phase 2 eval 150: 8.966 dB — at MC noise floor (30M samples), FTOL imminent
-- Best so far: 8.966 dB (evals 147-150 stable)
-- Previous session expected ~10.9 dB at 20M samples — 30M + _SIG_MAX_PER_MAT improved to 8.966 dB
-- After FTOL: CELL 4A → CELL 8e (100M samples)
+Best method: **ON incoh** — scatter essential (44% scatter-only receivers at 0-1000m)
+
+| Range | N (ON) | N (OFF) | Method | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|--------|---------|--------|-----------|-----------|-----|-------|
+| 0-100m | - | - | ON incoh | - | - | -10.3 | near-field geometry noise |
+| 0-300m | ~40 | - | ON incoh | - | ~16.5 | ~-2.1 | |
+| 0-500m | ~70 | - | ON incoh | - | ~14.3 | ~-0.3 | |
+| 0-750m | ~100 | - | ON incoh | - | ~12.8 | ~0.05 | |
+| **0-1000m** | **119** | **67** | **ON incoh** | **+3.x** | **~11.5** | **0.110** | **within calibrated range** |
+| 0-1250m | 142 | 70 | ON incoh | - | - | ~0.17 | OFF N frozen at 70 |
+| **0-2000m** | **165** | **70** | **ON incoh** | **+3.1** | **11.0** | **0.219** | **peak R² — best result** |
+| 0-2250m | 165 | 70 | ON incoh | - | - | ~0.21 | ON N frozen at 165 |
+| 0-2750m | 165 | 70 | ON incoh | - | - | ~0.19 | deep NLOS, R² levels off |
+
+OFF method collapse (0-1000m): RMSE=35.9 dB, R²=-22 — building-canyon multipath requires scatter to reach 44% of receivers.
+
+**Key findings:**
+- R² trend: -10.3 (0-100m) → 0.110 (0-1000m) → 0.219 (0-2000m) — near-field geometry + NLOS canyon effects dominate short range
+- 44% scatter-only receivers at 0-1000m (52/119 ON, zero OFF paths) — London urban canyons block all specular/LOS paths
+- ON N frozen at 165 from 0-2000m; OFF N frozen at 70 from 0-1250m — scatter covers 95 additional receivers
+- Cal RMSE 6.646 dB below 3GPP σ_SF=7.82 dB floor — mild overfitting (107 cal receivers / 37 free params)
+- Scalar=+38.295 dB (large) — TX at AGL=45m creates strong specular contribution not matched by geometry
+
+### London CMA Run 1 — Known Bugs (causes low R²)
+
+| Bug | Impact | Fix needed |
+|-----|--------|-----------|
+| itu_metal freed in CMA (εᵣ=31.787, should be ~1) | Unphysical; railings/barriers absorb instead of reflect | Lock itu_metal as perfect conductor |
+| metal_barrier no σ cap → σ=6922 S/m | Over-absorption at barriers | Add `_SIG_MAX_PER_MAT['metal_barrier'] = 10000.0` (perfect conductor) or lock entirely |
+| concrete_barrier S=0.949 at S cap ceiling | Scatter flood from barriers | Tighten `_S_MAX_PER_MAT['concrete_barrier'] = 0.70` |
+| medium_dry_ground S=0.950 at S cap ceiling | Ground scatter flood | Tighten `_S_MAX_PER_MAT['medium_dry_ground'] = 0.50` |
+| 12 free materials (too many for 107 cal receivers) | Overfitting | Reduce to ~6 free materials |
+
+### London CMA Run 2 — Planned Fixes (expected R² 0.30-0.40)
+
+```python
+# In CELL CAL-CMA — lock metals as perfect conductors:
+_MAT_LOCKED = ['itu_metal', 'metal_barrier', 'itu_asphalt']
+
+# Tighten S caps:
+_S_MAX_PER_MAT['concrete_barrier']      = 0.70
+_S_MAX_PER_MAT['itu_medium_dry_ground'] = 0.50
+
+# Add metal sigma cap (prevent S/m runaway):
+_SIG_MAX_PER_MAT['metal_barrier'] = 10000.0   # perfect conductor, not EM-absorber
+
+# Reduce free materials to ~6 (fewer params, 107 cal RX):
+# Free: itu_brick, itu_concrete, itu_wet_ground, itu_glass, itu_plywood, concrete_barrier
+# Locked: itu_metal, metal_barrier, canopy_itu_vegetation, trunk_itu_wood, itu_asphalt, itu_medium_dry_ground
+```
+
+Delete cal files before re-run:
+```bash
+rm ~/sionna_rt/london_ofcom_915mhz_dem/calibrated_materials_london_915mhz.json
+rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
+```
+
+### London Calibration History
+
+| Run | Cal RMSE | Scalar | Eval R² (0-2000m) | Notes |
+|-----|----------|--------|-------------------|-------|
+| Run 1 (Powell, 20M) | ~10.9 dB | +12.253 dB | — | stuck at MC noise floor |
+| Run 2 (CMA, 30M) — COMPLETE | **6.646 dB** | **+38.295 dB** | **0.219** | itu_metal freed (bug); metal_barrier no σ cap |
+| **Run 3 (CMA, 30M) — PLANNED** | **expected ~7-8 dB** | — | **expected 0.30-0.40** | lock metals; tighter S caps; 6 free materials |
 
 **London CELL CAL fixes (all committed):**
 
@@ -844,11 +897,6 @@ TX_AGL_MIN_COVERAGE = 0.80   # min valid-path fraction for AGL selection
 CAL_SCALAR_BOUNDS   = (-60.0, 60.0)
 TX_CONDUCTED_DBM    = 49.0
 ```
-
-**Expected CELL 8e (after London Powell terminates):**
-- RMSE: ~7-9 dB at 0-750m (eval at 100M samples much better than cal RMSE)
-- R²: ~0.35-0.45 at 0-750m (London has more NLOS + complex urban canyon)
-- Eval at 100M samples needed before drawing conclusions
 
 ---
 
