@@ -190,36 +190,9 @@ No study identified in this review combines these elements into a single, system
 
 Sionna RT, developed by NVIDIA, is the open-source Python library used throughout this thesis, integrating the Mitsuba 3 rendering engine [13] and the Dr.Jit differentiable compiler [12] for GPU-accelerated ray-tracing simulation [3].
 
-### 2.5.1 Components and Workflow
+### 2.5.1 Components and Capabilities
 
-The pipeline actually used in this thesis (as implemented across `sionna019_scene_builder.ipynb` and the per-frequency simulation notebooks) proceeds as follows:
-
-1. **Terrain acquisition** — UK Environment Agency 1 m LiDAR Digital Terrain and Surface Models are downloaded and merged for the scene area, and a normalised Digital Surface Model (nDSM = DSM − DTM) is computed to recover above-ground clutter height (scene-builder cells CELL 2b–2e) [8].
-2. **Terrain and building geometry** — the DTM is sampled onto a regular grid to build a terrain mesh, and OpenStreetMap building footprints are extruded into building PLY meshes, with nDSM-derived heights used to fill gaps in sparse OSM height tags (CELL 3–4). Where finer building detail is required, geometry is authored/refined in Blender, with materials standardised to Sionna-compatible names and exported per material as PLY meshes for import into the scene.
-3. **Scene assembly** — all PLY meshes are assembled into a single Sionna 2.0-format scene XML file (CELL B3).
-4. **Material assignment** — the scene is loaded into Sionna RT and each surface is assigned a `RadioMaterial` (relative permittivity, conductivity, scattering coefficient — Section 2.1.3), initialised from ITU-R P.2040-2 reference values [17] and later calibrated against measurements using Powell's derivative-free conjugate-direction optimisation method [28] (CELL 4A/4B; the multi-phase calibration procedure itself is detailed in Chapter 4).
-5. **Transmitter and receiver placement** — the transmitter is placed at the site's documented location and antenna height (CELL 4C), and receivers are extracted from the corresponding Ofcom 2018 drive-test CSV for that site and frequency [5] (CELL 5–6).
-6. **Path solving** — Sionna's `PathSolver` traces rays between transmitter and receivers, resolving reflection, diffraction, and scattering interactions (CELL 7, with a stratified distance-band variant in CELL 8 for scattering ON/OFF comparison across the full receiver set).
-7. **Vegetation post-processing** — ITU-R P.833-10 or Weissberger vegetation attenuation is applied post-hoc based on the vegetation depth intersected by each path (CELL P.833) [16], [18].
-8. **Evaluation** — simulated path loss is compared against the Ofcom measurements to compute bias, RMSE, and R² (CELL REPORT), the metrics used throughout Chapters 5–6.
-
-**[FIGURE 2.3 — PLACEHOLDER]**
-*Side-by-side comparison of coarse vs. detailed urban geometry for the Nottingham scene: (a) OSM-only building footprints with default heights, (b) full LiDAR/nDSM-informed geometry with Blender-refined building detail. To be inserted.*
-
-**Figure 2.4 — Simulation pipeline: from scene build to final radio map.**
-
-```mermaid
-flowchart TD
-    A["EA LiDAR DTM/DSM download + merge\n(nDSM = DSM − DTM)\nCELL 2b–2e"] --> C["Terrain PLY + OSM building PLYs\n(nDSM-informed heights;\nBlender-refined building detail\nexported per-material)\nCELL 3–4"]
-    C --> D["Scene assembly:\nSionna 2.0 scene XML\nCELL B3"]
-    D --> E["RadioMaterial assignment\n(ITU-R P.2040-2 initial values)\nCELL 4A/4B"]
-    E --> F["TX placement (site AGL/EIRP)\n+ RX extraction from Ofcom CSV\nCELL 4C, 5–6"]
-    F --> G["PathSolver ray tracing\n(reflection, diffraction, scattering)\nCELL 7 / CELL 8"]
-    G --> H["Vegetation post-processing\n(ITU-R P.833 / Weissberger)\nCELL P.833"]
-    H --> I["Radio environmental map +\nbias / RMSE / R² vs Ofcom\nCELL REPORT"]
-```
-
-*Figure 2.4 — This project's actual scene-build-to-evaluation pipeline (Nottingham/London/Scar Hill), traced directly from the scene-builder and simulation notebooks: EA LiDAR + OSM + Blender-refined geometry → Sionna 2.0 scene XML → RadioMaterial assignment → TX/RX placement → PathSolver ray tracing → vegetation post-processing → radio environmental map and evaluation metrics.*
+Sionna RT's Python API exposes four components relevant to this thesis: a scene-description format (Mitsuba-compatible XML, importing arbitrary PLY geometry), a `RadioMaterial` abstraction for the electromagnetic surface properties of Section 2.1.3, a `PathSolver` implementing the ray-tracing mechanisms of Section 2.1.2, and a `RadioMapSolver` for generating spatially continuous coverage predictions rather than only per-receiver path loss. Together these components make it possible to construct a scene from independently sourced geometry (terrain, buildings, vegetation), assign and later calibrate material parameters against measurement data, and evaluate the resulting model at the receiver locations of an arbitrary measurement campaign — precisely the capability profile the gap identified in Section 2.4 requires. The specific procedure by which this project uses these components — the scene-construction pipeline, calibration algorithm, and evaluation protocol — is the subject of Chapter 3 and is not repeated here.
 
 ### 2.5.2 Hardware and Computational Configuration
 

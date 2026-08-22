@@ -8,7 +8,7 @@ This is **simulation-based, model-driven quantitative research**, combining dete
 
 Two software generations were used across the project's timeline: an initial **Sionna 0.19** pipeline (TensorFlow backend, Mitsuba 2.1.0-format `scene.xml`), later migrated to **Sionna 2.0** (Mitsuba 3.5.2/Dr.Jit backend, `scene_sionna2.xml`) using a dedicated migration script, once the newer engine's GPU performance and differentiable-calibration support proved necessary for the sample counts this thesis required (Section 2.5.3).
 
-The overall workflow, applied independently at each site/frequency combination (Nottingham at 915/1802/2695/3602 MHz, London at 915 MHz, Scar Hill at 915 MHz), follows the pipeline already introduced as Figure 2.4:
+The overall workflow, applied independently at each site/frequency combination (Nottingham at 915/1802/2695/3602 MHz, London at 915 MHz, Scar Hill at 915 MHz), follows the pipeline detailed in full in Section 3.4 (Figure 3.1):
 
 1. Construct a 3D scene from terrain, building, and vegetation data for the site.
 2. Assign initial material electromagnetic properties from ITU-R reference values.
@@ -104,12 +104,28 @@ Within this overall strategy, the work also proceeded **iteratively rather than 
 
 ## 3.4 Experimental / Numerical / Analytical Procedures
 
-The procedure below extends Figure 2.4's pipeline with the calibration-, placement-, and verification-specific detail needed for reproduction.
+The procedure below is the complete, reproducible specification of this thesis's scene-construction, calibration, and evaluation pipeline, applied independently at each site/frequency combination (Section 3.1).
 
-**[FIGURE 3.1 — PLACEHOLDER]**
-*Detailed scene-construction organigram: EA LiDAR DTM/DSM download+merge → nDSM computation → terrain PLY sampling; in parallel, OSM building/road/water/land-use download → per-building Blender authoring/material standardisation → per-material PLY export; three vegetation sources (OSM polygons, VOM LiDAR canopy, nDSM-extra scan) → disc-grid generation (single-layer or 3-layer stacked, depending on frequency) → all PLYs assembled into the Sionna 2.0 scene XML. To be inserted as a diagram alongside Figure 2.4.*
+**Figure 3.1 — Scene-construction-to-evaluation pipeline.**
 
-**1. Scene construction.** Terrain (DTM/DSM/nDSM) and building/vegetation/infrastructure geometry are built as described in Section 2.5.1 and Figure 3.1. Two consistency rules are enforced before any run: the scene's bounding-box origin (`SCENE_WEST`, etc.) must match exactly between the scene-builder and simulation notebooks (a mismatch of 0.025° was found to cause an ~855 m coordinate offset, placing buildings incorrectly), and the terrain mesh and all building/vegetation meshes must share the same scene centre — verified with a bounding-box consistency check comparing the terrain mesh's actual half-span against the value expected from the configured scene extent.
+```mermaid
+flowchart TD
+    A["EA LiDAR DTM/DSM download + merge\n(nDSM = DSM − DTM)"] --> C["Terrain PLY + OSM building PLYs\n(nDSM-informed heights;\nBlender-authored/standardised\nbuilding detail, per-material PLY export)"]
+    B["Vegetation: OSM polygons + VOM LiDAR canopy\n+ nDSM-extra scan\n(single-layer or 3-layer stacked discs)"] --> C
+    C --> D["Scene assembly:\nSionna 2.0 scene XML"]
+    D --> E["RadioMaterial assignment\n(ITU-R P.2040-2 initial values, Table 3.2)"]
+    E --> F["TX placement (coverage-filtered\nAGL auto-scan) + RX extraction\nand geometric validation"]
+    F --> G["Powell calibration\n(Phase 0 scalar → Phase 2 joint refinement,\nEquation 3.1)"]
+    G --> H["Post-processing:\nbin scalar, LOS/NLOS split,\nvegetation attenuation"]
+    H --> I["Evaluation: bias/RMSE/R² vs Ofcom\n+ RadioMapSolver coverage maps"]
+```
+
+*This diagram consolidates the scene-construction detail (LiDAR/OSM/Blender/vegetation sources) with the calibration and evaluation stages into a single reference pipeline for the procedure described in Steps 1–7 below.*
+
+**[FIGURE 3.2 — PLACEHOLDER]**
+*Side-by-side comparison of coarse vs. detailed urban geometry for the Nottingham scene: (a) OSM-only building footprints with default heights, (b) full LiDAR/nDSM-informed geometry with Blender-refined building detail. To be inserted.*
+
+**1. Scene construction.** Terrain (DTM/DSM/nDSM) and building/vegetation/infrastructure geometry are built as summarised in Figure 3.1. Two consistency rules are enforced before any run: the scene's bounding-box origin (`SCENE_WEST`, etc.) must match exactly between the scene-builder and simulation notebooks (a mismatch of 0.025° was found to cause an ~855 m coordinate offset, placing buildings incorrectly), and the terrain mesh and all building/vegetation meshes must share the same scene centre — verified with a bounding-box consistency check comparing the terrain mesh's actual half-span against the value expected from the configured scene extent.
 
 **2. Material initialisation.** Each surface material (Table 3.2) is assigned initial relative permittivity and conductivity from ITU-R P.2040-2 [17], with a scattering coefficient consistent with the Effective Roughness model (Section 2.1.6) [27].
 
