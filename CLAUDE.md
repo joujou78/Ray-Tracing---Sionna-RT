@@ -900,6 +900,52 @@ TX_CONDUCTED_DBM    = 49.0
 
 ---
 
+## Nottingham 3602 MHz HF DEM Status (sionna2_3602mhz_hf_dem_simulation.ipynb)
+
+**Uses HF scene (stacked 3-layer vegetation, 10m disc spacing). CMA Run 1 complete (scatter flood — preliminary). CMA Run 2 in progress (30M samples, popsize=36).**
+
+### CELL 8e Run 1 — PRELIMINARY (scatter flood from 5M CMA checkpoint, not final)
+
+**Settings:** DISABLE_CANOPY=True / DISABLE_VEG_DISCS=False / 100M eval / bin scalar 15 bins
+**Note:** Materials calibrated with 5M samples → scatter flood (ON/OFF ratio 300×, bin corrections −16 to −35 dB). R² values below reflect HF scene geometry + bin correction, not valid material calibration. Use as geometry baseline only.
+
+| Range | N (ON) | Bias (dB) | RMSE (dB) | R² | vs Old DEM Run 6 | Notes |
+|-------|--------|-----------|-----------|-----|-----------------|-------|
+| 0-300m | 36 | +2.1 | 14.3 | -5.113 | — | scatter flood |
+| 0-500m | 178 | -1.0 | 9.9 | -1.046 | — | scatter flood |
+| 0-750m | 354 | -0.1 | 9.0 | 0.049 | — | |
+| 0-900m | 445 | 0.0 | 9.0 | 0.209 | — | |
+| 0-1000m | 513 | +0.1 | 8.3 | 0.437 | +0.062 | |
+| **0-1250m** | **711** | **+0.1** | **8.1** | **0.658** | **+0.143** | **peak — best preliminary** |
+| 0-1500m | 1006 | -2.0 | 10.1 | 0.579 | +1.213 | old DEM collapsed to -0.634 |
+
+**Key geometry finding:** Old DEM R²=−0.634 at 0-1500m (NLOS collapse); HF scene R²=+0.579 — 3-layer vegetation extends valid prediction well past Rbp=1225m. R² improvement at 0-1250m: +0.143 (0.515→0.658). These improvements are from HF geometry, not material calibration.
+
+**avg_rays at 0-1250m:** ON=8,720 vs OFF=29 — scatter covers 174 additional receivers (711 ON vs 537 OFF)
+
+### CMA Calibration History
+
+| Run | Cal RMSE | Samples | Scalar | Eval R² (0-1250m) | Notes |
+|-----|---------|---------|--------|-------------------|-------|
+| Run 1 (5M, scatter flood) | 13.063 dB | 5M | +26.45 dB | 0.658 (preliminary) | Bad local minimum; scatter flood; BASE_DIR wrong (saved to old DEM dir) |
+| **Run 2 (30M) — IN PROGRESS** | **TBD** | **30M** | TBD | TBD | Fixed BASE_DIR → `nottingham_ofcom2018_3602mhz_hf_dem`; popsize=36; tolfun=0.10 |
+
+### Scene configuration
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| SCENE_BASE_DIR | nottingham_ofcom2018_hf_dem | HF scene with 3-layer stacked discs |
+| BASE_DIR | nottingham_ofcom2018_3602mhz_hf_dem | **fixed — was pointing to old DEM dir** |
+| FREQUENCY_HZ | 3602.5e6 | |
+| DISABLE_CANOPY | True | λ=8.3 cm requires transparent canopy |
+| DISABLE_VEG_DISCS | False | disc PLYs active (3-layer HF geometry) |
+| CAL_CMA_SAMPLES | 30_000_000 | fixed (was 5M — caused scatter flood) |
+| CAL_CMA_POPSIZE | 36 | fixed (was auto ~12) |
+| CAL_CMA_TOLFUN | 0.10 | fixed (was 0.03 — smaller than noise floor) |
+
+**Expected from CMA Run 2:** R²=0.65–0.70 at 0-1250m (proper calibration with HF geometry).
+
+---
+
 ## Physics Floor Research — Key Literature Findings (2025)
 
 ### Root causes of 14-15 dB uncalibrated floor at 1802 MHz:
