@@ -402,7 +402,8 @@ Full distance breakdown (ON incoh — best method):
 | Bad re-cal | PER_PATH_VEG=True, 30M samples | 618→601 (17 NF) | +9.4756 dB | ~13.693 dB | WRONG — calibrated for per-path P.833; CELL 8e R²=-1.644 |
 | Run 3 — FAILED | PER_PATH_VEG=False, 30M, transparent discs in CAL | 373 (0 NF) | +9.657 dB | 14.19 dB | _MAT_FIXED_VALS fix (7585ef7) made ceiling_board er=1 during Powell → brick/concrete S→0.51 → scatter flood → CELL 8e R²=-0.881 |
 | Run 4 — FAILED (CELL 8e R²=-1.093 at 0-750m) | PER_PATH_VEG=False, 30M, ceiling_board ACTIVE during Powell | 373 (0 NF) | +9.391 dB | 14.19 dB (220 evals) | itu_wet_ground sigma=7.14 S/m (uncapped) — absorbed close-range paths; bias=+25 dB at 0-200m; bin corrections ±24 dB |
-| **Run 5 — CMA-ES IN PROGRESS (2026-08-17)** | Same as Run 4 + _SIG_MAX_PER_MAT caps + CELL CAL-CMA (CMA-ES optimizer, 5M samples) | 373 (0 NF) | +7.746 dB | 14.82 dB Phase 0 → eval 195 best: **10.917 dB** | wet_ground capped at 0.20 ✓; 3.1 dB above 3GPP σ_SF=7.82 dB physics floor; still descending |
+| Run 5 — CMA-ES (5M samples, old run) | Same as Run 4 + _SIG_MAX_PER_MAT caps + CELL CAL-CMA | 373 (0 NF) | +7.746 dB | eval 195 best: 10.917 dB | wet_ground capped at 0.20 ✓; itu_glass no cap (risk); 5M samples |
+| **Run 6 — CMA-ES (30M, popsize=12, tolfun=0.03) — RUNNING** | 30M samples, old popsize/tolfun; Phase 0 scalar=+9.900 dB, RMSE=15.02 dB | 373/373 valid | +9.900 dB | eval 440 best: **11.768 dB** (eval 456 latest) | Still running — recommend STOP now; 11.768 dB is good at 30M; expect R²>0.574 in CELL 8e |
 
 **Run 3 calibration notes:**
 - 211 evals / 996.5 min — Powell converged (FTOL)
@@ -879,7 +880,7 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 |-----|----------|--------|-------------------|-------|
 | Run 1 (Powell, 20M) | ~10.9 dB | +12.253 dB | — | stuck at MC noise floor |
 | Run 2 (CMA, 30M) — COMPLETE | **6.646 dB** | **+38.295 dB** | **0.219** | itu_metal freed (bug); metal_barrier no σ cap |
-| **Run 3 (CMA, 30M) — PLANNED** | **expected ~7-8 dB** | — | **expected 0.30-0.40** | lock metals; tighter S caps; 6 free materials |
+| **Run 3 (CMA, 15M, popsize=36) — CONVERGED (eval 223, best=6.601 dB)** | **6.601 dB** | **+38.656 dB** | **TBD — CELL 8e pending** | metals fixed; concrete_barrier S≤0.70; dry_ground S≤0.50; 10 free mats (142 cal RX — overfitting risk); CELL 4A → CELL 8e next |
 
 **London CELL CAL fixes (all committed):**
 
