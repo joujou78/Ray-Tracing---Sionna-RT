@@ -23,7 +23,7 @@ project note) versus provided directly by the student.
 [4] L. Yu, Y. Miao, J. Zhang, S. Liu, Y. Zhang, and G. Liu, "Road to 6G Digital Twin Networks: Multi-Task Adaptive Ray-Tracing as a Key Enabler," arXiv:2502.14290, 2025.
 — Verified via arXiv abstract page search, 2026-08-16.
 
-[5] Ofcom, "UK Radiowave Propagation Measurement Data" (sub-6 GHz propagation measurement dataset), Ofcom Open Data, published 2 Aug. 2019 (data collected 2015–2018 at Boston, London, Merthyr Tydfil, Nottingham, Scar Hill, Southampton; 449/915/1802/2695/3602/5850 MHz).
+[5] Ofcom, "UK Radiowave Propagation Measurement Data" (sub-6 GHz propagation measurement dataset), Ofcom Open Data, published 2 Aug. 2019 (data collected 2015–2018 at Boston, London, Merthyr Tydfil, Nottingham, Scar Hill, Southampton, Stevenage; 449/915/1802/2695/3602/5850 MHz).
 — Verified via Ofcom open data portal document search, 2026-08-16. THIS is the dataset used throughout the thesis.
 
 [6] 3GPP, "Study on channel model for frequencies from 0.5 to 100 GHz," 3GPP TR 38.901 V18.0.0, May 2024.
