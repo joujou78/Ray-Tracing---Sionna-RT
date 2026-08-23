@@ -116,17 +116,7 @@ The procedure below is the complete, reproducible specification of this thesis's
 
 **Figure 3.2 — Scene-construction-to-evaluation pipeline.**
 
-```mermaid
-flowchart TD
-    A["EA LiDAR DTM/DSM download + merge\n(nDSM = DSM − DTM)"] --> C["Terrain PLY + OSM building PLYs\n(nDSM-informed heights;\nBlender-authored/standardised\nbuilding detail, per-material PLY export)"]
-    B["Vegetation: OSM polygons + VOM LiDAR canopy\n+ nDSM-extra scan\n(single-layer or 3-layer stacked discs)"] --> C
-    C --> D["Scene assembly:\nSionna 2.0 scene XML"]
-    D --> E["RadioMaterial assignment\n(ITU-R P.2040-2 initial values, Table 3.2)"]
-    E --> F["TX placement (coverage-filtered\nAGL auto-scan) + RX extraction\nand geometric validation"]
-    F --> G["Powell calibration\n(Phase 0 scalar → Phase 2 joint refinement,\nEquation 3.1)"]
-    G --> H["Post-processing:\nbin scalar, LOS/NLOS split,\nvegetation attenuation"]
-    H --> I["Evaluation: bias/RMSE/R² vs Ofcom\n+ RadioMapSolver coverage maps"]
-```
+![Figure 3.2 — Scene-construction-to-evaluation pipeline](figures/fig3_2_pipeline.png)
 
 *This diagram consolidates the scene-construction detail (LiDAR/OSM/Blender/vegetation sources) with the calibration and evaluation stages into a single reference pipeline for the procedure described in Steps 1–7 below.*
 
@@ -147,12 +137,7 @@ where RMSE(θ) is Equation (2.15), evaluated over a calibration receiver subset 
 
 **Figure 3.5 — Three-phase Powell calibration procedure.**
 
-```mermaid
-flowchart LR
-    A["Phase 0\nFit scalar offset s only\n(materials at ITU-R initial values)"] --> B["Phase 1 — SKIPPED\nCoordinate-descent warm-up\n(no improvement over Phase 0)"]
-    B -.-> C["Phase 2\nJoint Powell refinement\nover full theta in R^19\n(Equation 3.1)"]
-    C --> D["theta* : calibrated\nmaterials + scalar offset"]
-```
+![Figure 3.5 — Three-phase Powell calibration procedure](figures/fig3_5_calibration_phases.png)
 
    - *Phase 0*: the scalar offset *s* alone is fit first (all material parameters held at their ITU-R-derived initial values), absorbing antenna-gain, cable-loss, and absolute-power uncertainty not captured by the geometric model.
    - *Phase 1* (coordinate-descent warm-up): skipped in the runs reported in this thesis, based on evidence that it did not improve on Phase 0's starting point for this problem.
@@ -163,16 +148,7 @@ flowchart LR
 
 **Figure 3.6 — Post-processing correction chain.**
 
-```mermaid
-flowchart TD
-    A["Calibrated simulated path loss\n(theta* from Equation 3.1)"] --> B["Per-distance-bin\nmean offset\n(N_SCALAR_BINS bins)"]
-    B --> C["LOS/NLOS mean offset split\nat breakpoint R_bp\n(Equation 2.13)"]
-    C --> D{"Frequency?"}
-    D -->|"915 / 1802 MHz"| E["Weissberger,\napplied per-receiver\n(Equation 2.11)"]
-    D -->|"2695 / 3602 MHz"| F["ITU-R P.833-10,\napplied per-path per ray segment\n(Equation 2.12)"]
-    E --> G["Corrected path loss\n(compared to Ofcom in Step 6)"]
-    F --> G
-```
+![Figure 3.6 — Post-processing correction chain](figures/fig3_6_postprocessing.png)
 
 **6. Evaluation and coverage mapping.** The calibrated, corrected model is compared against the full (not just the calibration-subset) Ofcom measurements at each site/frequency, computing bias, RMSE, and R² (Equations 2.14–2.16) over cumulative distance bands (e.g., 0–500 m, 0–750 m, ..., 0–1500 m), and separately for each combination of scattering ON/OFF and coherent/incoherent summation (Section 2.1.5), to identify the best-performing method at each frequency rather than assuming one in advance. Beyond per-receiver statistics, Sionna's `RadioMapSolver` is used to generate spatially continuous 2D/3D coverage maps of the calibrated scene, visualised as colour-coded received-signal-strength heatmaps alongside the discrete drive-test comparison, and an outlier diagnostic lists the worst-performing individual receivers in a chosen distance band for manual inspection. A runtime scattering-coefficient sweep is also used as a targeted sensitivity analysis, independent of the full Powell search, to check how strongly overall accuracy responds to the scattering coefficient alone.
 
