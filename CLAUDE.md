@@ -877,6 +877,41 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 ## London 915 MHz Status (sionna2_915mhz_dem_simulation_london.ipynb)
 
 **CMA Run 1 COMPLETE (2026-08-22): eval 283, best=6.646 dB, scalar=+38.295 dB. CELL 8e COMPLETE.**
+**CMA Run 4 COMPLETE (2026-08-24): eval 441, best=6.888 dB, scalar=+28.766 dB. CELL 8e IN PROGRESS (2026-08-24).**
+
+### London CELL 8e Run 4 Results — IN PROGRESS (100M samples, ON incoh best method)
+
+**Settings:** 5 free materials / metals locked / concrete_barrier S≤0.70 / dry_ground S≤0.50 / 223 cal RX (0.15-1.75 km) / scalar=+28.766 dB
+
+Best method: **ON incoh** — scatter dominant (44% scatter-only receivers at 0-1000m)
+
+| Range | N (ON) | N (OFF) | Bias (dB) | RMSE (dB) | R² | avg_rays ON/OFF | Notes |
+|-------|--------|---------|-----------|-----------|-----|-----------------|-------|
+| 0-300m | 22 | 22 | -1.8 | 10.8 | -2.922 | 3950 / 51 | near-field geometry noise |
+| 0-500m | 41 | 33 | -0.9 | 8.8 | -1.606 | 2862 / 31 | |
+| 0-750m | 85 | 66 | -1.0 | 7.8 | -0.233 | 2031 / 17 | RMSE at physics floor |
+| 0-900m | 113 | 68 | +0.5 | 7.8 | **0.222** | 1618 / 13 | first positive R² |
+| **0-1000m** | **125** | **70** | **-0.3** | **8.2** | **0.365** | **1479 / 12** | **+0.255 vs Run 1** |
+
+Full 0-1000m breakdown (N=125 ON / 70 OFF, avg ON rays=1479, OFF rays=12):
+
+| Method | Bias (dB) | RMSE (dB) | R² |
+|--------|-----------|-----------|-----|
+| ON incoh | -0.3 | 8.2 | **0.365** |
+| OFF incoh | +23.9 | 37.0 | -22.666 |
+| ON coh | +0.5 | 11.5 | -0.249 |
+| OFF coh | +24.0 | 37.1 | -22.899 |
+| ON best | +5.2 | 11.0 | -0.156 |
+
+**Key findings (partial — run still in progress):**
+- R² trajectory: -2.922 (0-300m) → -0.233 (0-750m) → 0.222 (0-900m) → **0.365 (0-1000m)** — strong upward trend
+- RMSE=7.8 dB at 0-750m and 0-900m — at the 3GPP UMa σ_SF=7.82 dB physics floor
+- ON=125 vs OFF=70 at 0-1000m — scatter generates valid paths for 55 receivers (44%) with no specular/LOS path
+- OFF total collapse at all ranges (RMSE=35-37 dB) — London urban canyons require scatter for coverage
+- avg_rays ON/OFF ratio = 128x at 0-1000m — scatter providing dominant propagation mechanism
+- **Run 4 already exceeds Run 1 peak R²=0.219 at 0-1000m (+0.146 improvement)**
+- Metals-locked + 5 free materials + tighter S caps: eliminated scatter flood that caused Run 1 overfit
+- Peak R² expected at 0-1250m to 0-2000m — awaiting further results
 
 ### London CELL 8e Run 1 Results (100M samples, ON incoh best method)
 
@@ -944,7 +979,7 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | Run 1 (Powell, 20M) | ~10.9 dB | +12.253 dB | — | stuck at MC noise floor |
 | Run 2 (CMA, 30M) — COMPLETE | **6.646 dB** | **+38.295 dB** | **0.219** | itu_metal freed (bug); metal_barrier no σ cap |
 | **Run 3 (CMA, 15M, popsize=36) — CONVERGED (eval 223, best=6.601 dB)** | **6.601 dB** | **+38.656 dB** | **TBD — CELL 8e pending** | metals fixed; concrete_barrier S≤0.70; dry_ground S≤0.50; 10 free mats (142 cal RX — overfitting risk); CELL 4A → CELL 8e next |
-| **Run 4 (CMA, 15M, popsize=36) — CONVERGED (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **TBD — CELL 8e next** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; best below σ_SF=7.82 dB floor (mild overfit); Phase 2 re-scalar complete: scalar=+28.766 dB, RMSE=6.89 dB; CELL 4A → CELL 8e next |
+| **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (partial, run in progress)** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e IN PROGRESS — exceeds Run 1 peak (0.219) at 0-1000m already |
 
 **Run 4 calibrated materials (2026-08-24, eval 441, best=6.888 dB):**
 
