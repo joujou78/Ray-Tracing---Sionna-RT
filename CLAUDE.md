@@ -836,8 +836,8 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 | Cell | Status | Notes |
 |------|--------|-------|
 | CELL 0-2 | Done | Config + DTM download |
-| CELL 2vom_poly | **BLOCKED** | nDSM anomaly (see below) |
-| CELL 2h | Pending | |
+| CELL 2vom_poly | **DONE** | 54,257 polygons; nDSM p5/p50/p95=1.9/17.8/19.8 m; VOM dm auto-detected ✓ |
+| CELL 2h | **Next** | |
 | CELL 3 | Pending | |
 | CELL 3b | Pending | |
 | CELL 4 | Pending | |
