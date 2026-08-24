@@ -1056,7 +1056,18 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | Run 2 (CMA, 30M) — COMPLETE | **6.646 dB** | **+38.295 dB** | **0.219** | itu_metal freed (bug); metal_barrier no σ cap |
 | **Run 3 (CMA, 15M, popsize=36) — CONVERGED (eval 223, best=6.601 dB)** | **6.601 dB** | **+38.656 dB** | **TBD — CELL 8e pending** | metals fixed; concrete_barrier S≤0.70; dry_ground S≤0.50; 10 free mats (142 cal RX — overfitting risk); CELL 4A → CELL 8e next |
 | **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.335 at 0-2000m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE through 0-2000m |
-| **Run 5 (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-24)** | TBD | +31.035 dB (Phase 0) | TBD — CELL 8e pending | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); water_rt/concrete_barrier/wet_ground locked (no paths within 0.45 km); Phase 0 RMSE=12.78 dB; eval 1 best=4.409 dB (at LOS σ_SF=4.0 dB floor) |
+| **Run 5 (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-24)** | TBD | +31.035 dB (Phase 0) | TBD — CELL 8e pending | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); Phase 0 RMSE=12.78 dB; eval 34 best=**4.409 dB** (at LOS σ_SF=4.0 dB floor — CMA exploring wide range 4.4-12.2 dB) |
+
+**Run 5 CMA descent (popsize=36, LOS-only cal, 26 RX, 0.15-0.45 km):**
+
+| Generation | Evals | Best RMSE | Notes |
+|-----------|-------|-----------|-------|
+| Phase 0 | — | 12.78 dB | scalar=+31.035 dB |
+| 1 (partial) | 1-34 | **4.409 dB** | at LOS σ_SF=4.0 dB floor; wide exploration (4.4-12.2 dB range) |
+
+- Best 4.409 dB = 0.4 dB above LOS physics floor (σ_SF=4.0 dB) — outstanding result on pure LOS data
+- Only 3 free materials (brick, concrete, glass); ~26 cal RX — small LOS dataset with clean single-slope physics
+- Expected: converge at ~4.0-5.0 dB; then CELL 4A → CELL 8e (target R²=0.40-0.50 at 0-1000m)
 
 **Run 4 calibrated materials (2026-08-24, eval 441, best=6.888 dB):**
 
