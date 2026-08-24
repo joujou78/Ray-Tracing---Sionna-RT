@@ -941,7 +941,22 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | Run 1 (Powell, 20M) | ~10.9 dB | +12.253 dB | — | stuck at MC noise floor |
 | Run 2 (CMA, 30M) — COMPLETE | **6.646 dB** | **+38.295 dB** | **0.219** | itu_metal freed (bug); metal_barrier no σ cap |
 | **Run 3 (CMA, 15M, popsize=36) — CONVERGED (eval 223, best=6.601 dB)** | **6.601 dB** | **+38.656 dB** | **TBD — CELL 8e pending** | metals fixed; concrete_barrier S≤0.70; dry_ground S≤0.50; 10 free mats (142 cal RX — overfitting risk); CELL 4A → CELL 8e next |
-| **Run 4 (CMA, 15M, popsize=36) — RUNNING (eval 363+, best=6.888 dB)** | **6.888 dB** | **+38.656 dB** | **TBD** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; best below σ_SF=7.82 dB floor (mild overfit); still descending at eval 355+ |
+| **Run 4 (CMA, 15M, popsize=36) — CONVERGED (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **TBD — CELL 8e next** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; best below σ_SF=7.82 dB floor (mild overfit); Phase 2 re-scalar complete: scalar=+28.766 dB, RMSE=6.89 dB; CELL 4A → CELL 8e next |
+
+**Run 4 calibrated materials (2026-08-24, eval 441, best=6.888 dB):**
+
+| Material | εᵣ | σ (S/m) | S | Notes |
+|----------|-----|---------|---|-------|
+| itu_glass | 9.003 | 0.00039 | 0.286 | very low σ — nearly lossless transmissive glass |
+| itu_brick | 6.514 | 0.02205 | 0.448 | high scatter |
+| itu_concrete | 6.488 | 0.02649 | 0.291 | moderate scatter |
+| concrete_barrier | 7.220 | 0.21113 | 0.617 | high scatter (within S≤0.70 cap) |
+| itu_wet_ground | 29.197 | 0.05760 | 0.130 | moderate er, low scatter |
+
+- Scalar: +28.766 dB applied (lower than Run 2's +38.295 dB — brick S=0.448 provides more scatter)
+- Locked materials (perfect conductor): itu_metal, metal_barrier
+- Locked materials (default ITU): itu_asphalt, itu_very_dry_ground, canopy_itu_vegetation, trunk_itu_wood
+- Watch: concrete_barrier S=0.617 — could cause scatter flood at barriers; check avg_rays in CELL 8e
 
 **London CELL CAL fixes (all committed):**
 
