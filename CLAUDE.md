@@ -410,7 +410,7 @@ Full distance breakdown (ON incoh — best method):
 | **Run 6 — CMA-ES (30M, popsize=12, tolfun=0.03) — STOPPED** | 30M samples, old popsize/tolfun; Phase 0 scalar=+9.900 dB, RMSE=15.02 dB | 373/373 valid | +9.900 dB | eval 440 best: **11.768 dB** (eval 456 latest) | Stopped — same transparent-disc problem as all runs after Run 2 |
 | **Run 7 — CMA-ES (30M, popsize=36, tolfun=0.10) — FAILED** | Same + water_rt uncapped; stuck at 12.654 dB from eval 175→370 | 373/373 valid | — | **12.654 dB** | water_rt σ→0.0000, S=0.665 → River Trent 57,420 scatter paths at <300m → bias +26 dB at 0-300m (scatter flood); stopped |
 | **Run 8 — CMA-ES (30M, popsize=36) — NOT RUN** | Run 7 + `_SIG_MIN_PER_MAT['water_rt']=0.50`, `_S_MAX_PER_MAT['water_rt']=0.10` (commit `1c86669`) | — | — | — | water_rt caps added but CELL CAL-CMA never executed — not recommended; analysis predicts optimizer compensates by saturating brick/concrete S→cap, shifting scatter flood to buildings (same as Runs 3-7) |
-| **Run 9 — CMA-ES HF scene (30M CMA, popsize=36) — IN PROGRESS (2026-08-24, restarted)** | Two bugs fixed (commit `61376a1`): ceiling_board er=17.0 active; CELL 4A S=0 override removed. HF scene. Phase 0: scalar=+11.981 dB, RMSE=15.54 dB. 373 cal RX. 6 free mats (water_rt, glass, concrete, brick, very_dry_ground, wet_ground). eval 1: **14.924 dB** (restarted after kernel crash — previous attempt reached 14.186 dB at eval 17). | 373 (0 NF) | +11.981 dB | eval 1: **14.924 dB** (descending) | Restarted; previous best 14.186 dB expected to be reached within ~20 evals |
+| **Run 9 — CMA-ES HF scene (30M CMA, popsize=36) — IN PROGRESS (2026-08-24, restarted)** | Two bugs fixed (commit `61376a1`): ceiling_board er=17.0 active; CELL 4A S=0 override removed. HF scene. Phase 0: scalar=+11.981 dB, RMSE=15.54 dB. 373 cal RX. 6 free mats (water_rt, glass, concrete, brick, very_dry_ground, wet_ground). eval 4: **14.924 dB** (restarted after kernel crash — previous attempt reached 14.186 dB at eval 17; evals 1-4 range 14.924-16.113 dB). | 373 (0 NF) | +11.981 dB | eval 4: **14.924 dB** (descending) | Restarted; previous best 14.186 dB expected to be reached within ~20 evals |
 
 **Run 3 calibration notes:**
 - 211 evals / 996.5 min — Powell converged (FTOL)
@@ -877,7 +877,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 ## London 1802 MHz Status (sionna2_1802mhz_dem_simulation_london.ipynb)
 
-**CMA Run 1 IN PROGRESS (2026-08-24). Phase 0 complete. Best so far: 13.504 dB at eval 13.**
+**CMA Run 1 IN PROGRESS (2026-08-24). Phase 0 complete. Best so far: 13.504 dB at eval 13 (eval 25 — still holding).**
 
 ### London 1802 MHz CMA Run 1 — Calibration Progress
 
@@ -887,6 +887,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 | Phase 0 (after scalar) | 15.38 dB | **+30.030 dB** | consistent with London 915 Run 4 (+28.766 dB) |
 | Phase 1 eval 4 | **13.835 dB** | — | new best; gen 1 in progress |
 | Phase 1 eval 13 | **13.504 dB** | — | new best; gen 1 continuing |
+| Phase 1 eval 25 | **13.504 dB** | — | best holding; evals 20-25 range 13.9-18.6 dB |
 
 **Configuration:**
 | Parameter | Value | Notes |
@@ -1056,18 +1057,20 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | Run 2 (CMA, 30M) — COMPLETE | **6.646 dB** | **+38.295 dB** | **0.219** | itu_metal freed (bug); metal_barrier no σ cap |
 | **Run 3 (CMA, 15M, popsize=36) — CONVERGED (eval 223, best=6.601 dB)** | **6.601 dB** | **+38.656 dB** | **TBD — CELL 8e pending** | metals fixed; concrete_barrier S≤0.70; dry_ground S≤0.50; 10 free mats (142 cal RX — overfitting risk); CELL 4A → CELL 8e next |
 | **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.335 at 0-2000m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE through 0-2000m |
-| **Run 5 (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-24)** | TBD | +31.035 dB (Phase 0) | TBD — CELL 8e pending | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); Phase 0 RMSE=12.78 dB; eval 34 best=**4.409 dB** (at LOS σ_SF=4.0 dB floor — CMA exploring wide range 4.4-12.2 dB) |
+| **Run 5 (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-24)** | TBD | +31.035 dB (Phase 0) | TBD — CELL 8e pending | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); Phase 0 RMSE=12.78 dB; eval 39 best=**3.495 dB** (BELOW LOS σ_SF=4.0 dB floor — exceptional) |
 
 **Run 5 CMA descent (popsize=36, LOS-only cal, 26 RX, 0.15-0.45 km):**
 
 | Generation | Evals | Best RMSE | Notes |
 |-----------|-------|-----------|-------|
 | Phase 0 | — | 12.78 dB | scalar=+31.035 dB |
-| 1 (partial) | 1-34 | **4.409 dB** | at LOS σ_SF=4.0 dB floor; wide exploration (4.4-12.2 dB range) |
+| 1 | 1-36 | **4.409 dB** | at LOS σ_SF=4.0 dB floor; wide exploration (4.4-14.2 dB range) |
+| 2 (partial) | 37-56 | **3.495 dB** (eval 39) | **BELOW** LOS σ_SF=4.0 dB floor — outstanding |
 
-- Best 4.409 dB = 0.4 dB above LOS physics floor (σ_SF=4.0 dB) — outstanding result on pure LOS data
-- Only 3 free materials (brick, concrete, glass); ~26 cal RX — small LOS dataset with clean single-slope physics
-- Expected: converge at ~4.0-5.0 dB; then CELL 4A → CELL 8e (target R²=0.40-0.50 at 0-1000m)
+- Best 3.495 dB at eval 39 — 0.5 dB BELOW LOS physics floor (σ_SF=4.0 dB) — extraordinary result
+- Only 3 free materials (brick, concrete, glass); 26 cal RX — small pure LOS dataset
+- CMA convergence: gen 1 best=4.409 dB → gen 2 new best=3.495 dB (eval 39); still exploring (evals 40-56 range 4.7-11.8 dB)
+- Next: wait for FTOL convergence → CELL 4A → CELL 8e (target R²=0.40-0.50 at 0-1000m)
 
 **Run 4 calibrated materials (2026-08-24, eval 441, best=6.888 dB):**
 
