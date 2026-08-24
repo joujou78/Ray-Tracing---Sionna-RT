@@ -404,6 +404,8 @@ Full distance breakdown (ON incoh — best method):
 | Run 4 — FAILED (CELL 8e R²=-1.093 at 0-750m) | PER_PATH_VEG=False, 30M, ceiling_board ACTIVE during Powell | 373 (0 NF) | +9.391 dB | 14.19 dB (220 evals) | itu_wet_ground sigma=7.14 S/m (uncapped) — absorbed close-range paths; bias=+25 dB at 0-200m; bin corrections ±24 dB |
 | Run 5 — CMA-ES (5M samples, old run) | Same as Run 4 + _SIG_MAX_PER_MAT caps + CELL CAL-CMA | 373 (0 NF) | +7.746 dB | eval 195 best: 10.917 dB | wet_ground capped at 0.20 ✓; itu_glass no cap (risk); 5M samples |
 | **Run 6 — CMA-ES (30M, popsize=12, tolfun=0.03) — RUNNING** | 30M samples, old popsize/tolfun; Phase 0 scalar=+9.900 dB, RMSE=15.02 dB | 373/373 valid | +9.900 dB | eval 440 best: **11.768 dB** (eval 456 latest) | Still running — recommend STOP now; 11.768 dB is good at 30M; expect R²>0.574 in CELL 8e |
+| **Run 7 — CMA-ES (30M, popsize=36, tolfun=0.10) — FAILED** | Same + water_rt uncapped; stuck at 12.654 dB from eval 175→370 | 373/373 valid | — | **12.654 dB** | water_rt σ→0.0000, S=0.665 → River Trent 57,420 scatter paths at <300m → bias +26 dB at 0-300m (scatter flood); stopped |
+| **Run 8 — CMA-ES (30M, popsize=36) — PENDING** | Run 7 + `_SIG_MIN_PER_MAT['water_rt']=0.50`, `_S_MAX_PER_MAT['water_rt']=0.10` (commit `1c86669`) | 373/373 valid | TBD | TBD | water_rt flood fix applied; delete cal files and re-run CELL CAL-CMA |
 
 **Run 3 calibration notes:**
 - 211 evals / 996.5 min — Powell converged (FTOL)
@@ -811,6 +813,57 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 ---
 
+## Stevenage 915 MHz Status (sionna019_scene_builder_stevenage.ipynb)
+
+**Scene build IN PROGRESS (2026-08-24). CELL 2vom_poly stuck on nDSM anomaly — VOM heights showing ASL (~60m) instead of tree heights (~8-15m).**
+
+### Site parameters
+| Parameter | Value |
+|-----------|-------|
+| Site name | Stevenage |
+| TX lat/lon | TBD (from CSV header) |
+| Frequency | 915 MHz |
+| CRS | EPSG:27700 (British National Grid) |
+| Scene builder | `sionna019_scene_builder_stevenage.ipynb` |
+| BASE_DIR | `~/sionna_rt/stevenage_ofcom_915mhz_dem/` |
+
+### Scene build progress
+| Cell | Status | Notes |
+|------|--------|-------|
+| CELL 0-2 | Done | Config + DTM download |
+| CELL 2vom_poly | **BLOCKED** | nDSM anomaly (see below) |
+| CELL 2h | Pending | |
+| CELL 3 | Pending | |
+| CELL 3b | Pending | |
+| CELL 4 | Pending | |
+| CELL B3 | Pending | |
+
+### nDSM Anomaly — VOM Diagnostic History
+
+**Observed:** nDSM p5/p50/p95 = −82.0 / 59.3 / 102.5 m. Expected for urban tree canopy: p50 ≈ 8–15 m.
+
+**DTM coverage confirmed correct:** DTM bounds E 505000-545000, N 210000-240000 fully covers VOM clip E 512268-525000, N 214426-225000.
+
+**Root cause hypothesis:** DTM reprojection produces incorrect values, causing nDSM ≈ VOM_ASL ≈ 60m instead of VOM_ASL − DTM_ASL ≈ 10m. Negative p5 (−82m) indicates pixel misalignment.
+
+**nDSM range: −165.5 – 196.6 m** — the 362m span is diagnostic of either misalignment or failed DTM subtraction.
+
+| Fix | Commit | Effect | Outcome |
+|-----|--------|--------|---------|
+| Add DTM subtraction (nDSM = VOM − DTM) | `eeb8521` | Removes ASL offset from heights | p50 still ~228m (DTM reprojected over full 17km×17km VOM) |
+| Clip VOM to scene bbox FIRST, then subtract DTM | `b4d2156` | DTM tiles fully cover smaller clipped area | p50 = 59.3m (progress — was 228m, but still wrong) |
+| Fix pc_bld nodata + DTM/VOM bounds diagnostic + empty guard | `2bceb7d` | pc_bld exclusion now correct (5,265 not 115M pixels) | pc_bld fixed; nDSM p50 still 59.3m |
+| Add pixel-level DTM/VOM/nDSM sample diagnostics | `73b967b` | Prints centre-pixel values to pinpoint failure | **Pending** — user must share DTM/VOM/nDSM sample lines |
+
+**Next diagnostic:** The lines printed just before "nDSM range: −165.5 – 196.6 m" show actual DTM/VOM/nDSM pixel values. If:
+- DTM sample ≈ 0 → reproject filling with 0 for out-of-coverage pixels (nodata not propagated)
+- DTM sample ≈ 60m AND nDSM ≈ 60m → VOM is ≈ 120m ASL (wrong — investigate VOM data)
+- DTM sample ≈ 60m AND nDSM ≈ 10m → computation correct; p50=59m driven by outliers/gaps
+
+**Thesis note:** nDSM p5=−82m (negative heights physically impossible), p50=59.3m (matches Stevenage ground ASL), p95=102.5m all confirm the DTM subtraction is not producing correct relative heights. The anomaly is documented with a thesis figure showing threshold sensitivity.
+
+---
+
 ## London 915 MHz Status (sionna2_915mhz_dem_simulation_london.ipynb)
 
 **CMA Run 1 COMPLETE (2026-08-22): eval 283, best=6.646 dB, scalar=+38.295 dB. CELL 8e COMPLETE.**
@@ -881,6 +934,7 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | Run 1 (Powell, 20M) | ~10.9 dB | +12.253 dB | — | stuck at MC noise floor |
 | Run 2 (CMA, 30M) — COMPLETE | **6.646 dB** | **+38.295 dB** | **0.219** | itu_metal freed (bug); metal_barrier no σ cap |
 | **Run 3 (CMA, 15M, popsize=36) — CONVERGED (eval 223, best=6.601 dB)** | **6.601 dB** | **+38.656 dB** | **TBD — CELL 8e pending** | metals fixed; concrete_barrier S≤0.70; dry_ground S≤0.50; 10 free mats (142 cal RX — overfitting risk); CELL 4A → CELL 8e next |
+| **Run 4 (CMA, 15M, popsize=36) — RUNNING (eval 363+, best=6.888 dB)** | **6.888 dB** | **+38.656 dB** | **TBD** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; best below σ_SF=7.82 dB floor (mild overfit); still descending at eval 355+ |
 
 **London CELL CAL fixes (all committed):**
 
