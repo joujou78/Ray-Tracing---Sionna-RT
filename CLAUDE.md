@@ -325,7 +325,7 @@ Simulation:    CELL 0 → CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CE
 - Bug fixed: brick sigma used P.2040-1 (2015) freq-dependent formula → fixed to P.2040-2 (2021) flat 0.038 S/m
 - Next run: CAL_MAX_DIST_KM=1.0 (below Rbp) to calibrate within single-slope LOS regime
 
-### 2695 MHz Results (Run 2: CAL_MAX_DIST_KM=1.0, CAL_SAMPLES_PS=10M, scalar=-2.305 dB) — CELL 8e in progress
+### 2695 MHz Results (Run 2: CAL_MAX_DIST_KM=1.0, CAL_SAMPLES_PS=10M, scalar=-2.305 dB) — **FINAL**
 
 **Settings:** CAL_SCALAR_BOUNDS=(-30,20) / CAL_FIX_SCATTER=False / CAL_MAX_DIST_KM=1.0 / EVAL_MIN_DIST_KM=0.0 / 100M eval / Cal RMSE=14.37 dB
 
@@ -389,10 +389,11 @@ Full distance breakdown (ON incoh — best method):
 - OFF methods collapse beyond 1250m: OFF incoh R²=-2.929 at 0-2250m (RMSE=32.7 dB)
 - Scattering covers 318 additional receivers at 0-2250m (1110 ON vs 792 OFF valid paths)
 
-**Next step: Run 3 CELL CAL complete (2026-08-16) — proceed to CELL 4A → CELL 8e**
-- Final scalar: +9.657 dB / Cal RMSE: 14.19 dB / 211 evals / 996.5 min
-- Phase 3 re-scalar reverted (worsened: 14.95 dB > 14.19 dB) — Phase 0 scalar optimal
-- After CELL 8e: compare R² vs Run 2 baseline (0.574 at 0-1250m)
+**STATUS: FINAL — Run 2 (R²=0.574) accepted as the 2695 MHz physics floor (2026-08-24)**
+- Runs 3-8 all failed: every attempt with DISABLE_VEG_DISCS=True floods via building scatter (brick/concrete S→cap)
+- Root cause: Run 2 used ceiling_board er=17 ACTIVE during calibration (DISABLE_VEG_DISCS=False at cal time), giving different scatter budget (scalar=-2.305 dB). All subsequent runs use transparent discs (scalar=+9-10 dB) — optimizer compensates by saturating building S, causing scatter flood.
+- Run 8 final evidence: ON incoh bias=+5.5 dB at 0-900m, avg_rays ON/OFF=178x, R²=0.019 at 0-1250m despite water_rt flood fix.
+- **No further calibration attempts planned for 2695 MHz.**
 
 ### 2695 MHz Calibration History
 
@@ -403,9 +404,9 @@ Full distance breakdown (ON incoh — best method):
 | Run 3 — FAILED | PER_PATH_VEG=False, 30M, transparent discs in CAL | 373 (0 NF) | +9.657 dB | 14.19 dB | _MAT_FIXED_VALS fix (7585ef7) made ceiling_board er=1 during Powell → brick/concrete S→0.51 → scatter flood → CELL 8e R²=-0.881 |
 | Run 4 — FAILED (CELL 8e R²=-1.093 at 0-750m) | PER_PATH_VEG=False, 30M, ceiling_board ACTIVE during Powell | 373 (0 NF) | +9.391 dB | 14.19 dB (220 evals) | itu_wet_ground sigma=7.14 S/m (uncapped) — absorbed close-range paths; bias=+25 dB at 0-200m; bin corrections ±24 dB |
 | Run 5 — CMA-ES (5M samples, old run) | Same as Run 4 + _SIG_MAX_PER_MAT caps + CELL CAL-CMA | 373 (0 NF) | +7.746 dB | eval 195 best: 10.917 dB | wet_ground capped at 0.20 ✓; itu_glass no cap (risk); 5M samples |
-| **Run 6 — CMA-ES (30M, popsize=12, tolfun=0.03) — RUNNING** | 30M samples, old popsize/tolfun; Phase 0 scalar=+9.900 dB, RMSE=15.02 dB | 373/373 valid | +9.900 dB | eval 440 best: **11.768 dB** (eval 456 latest) | Still running — recommend STOP now; 11.768 dB is good at 30M; expect R²>0.574 in CELL 8e |
+| **Run 6 — CMA-ES (30M, popsize=12, tolfun=0.03) — STOPPED** | 30M samples, old popsize/tolfun; Phase 0 scalar=+9.900 dB, RMSE=15.02 dB | 373/373 valid | +9.900 dB | eval 440 best: **11.768 dB** (eval 456 latest) | Stopped — same transparent-disc problem as all runs after Run 2 |
 | **Run 7 — CMA-ES (30M, popsize=36, tolfun=0.10) — FAILED** | Same + water_rt uncapped; stuck at 12.654 dB from eval 175→370 | 373/373 valid | — | **12.654 dB** | water_rt σ→0.0000, S=0.665 → River Trent 57,420 scatter paths at <300m → bias +26 dB at 0-300m (scatter flood); stopped |
-| **Run 8 — CMA-ES (30M, popsize=36) — PENDING** | Run 7 + `_SIG_MIN_PER_MAT['water_rt']=0.50`, `_S_MAX_PER_MAT['water_rt']=0.10` (commit `1c86669`) | 373/373 valid | TBD | TBD | water_rt flood fix applied; delete cal files and re-run CELL CAL-CMA |
+| **Run 8 — CMA-ES (30M, popsize=36) — FAILED (CELL 8e R²=0.019 at 0-1250m)** | Run 7 + `_SIG_MIN_PER_MAT['water_rt']=0.50`, `_S_MAX_PER_MAT['water_rt']=0.10` (commit `1c86669`) | 373/373 valid | TBD | TBD | water_rt flood fixed; optimizer compensated by pushing brick/concrete S→0.45 cap; scatter flood shifts to buildings; ON incoh bias=+5.5 dB at 0-900m; avg_rays ON/OFF=178x; R²=-0.872 (0-900m), -0.404 (0-1000m), 0.019 (0-1250m) |
 
 **Run 3 calibration notes:**
 - 211 evals / 996.5 min — Powell converged (FTOL)
