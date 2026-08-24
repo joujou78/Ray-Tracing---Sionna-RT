@@ -855,12 +855,18 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 | Fix pc_bld nodata + DTM/VOM bounds diagnostic + empty guard | `2bceb7d` | pc_bld exclusion now correct (5,265 not 115M pixels) | pc_bld fixed; nDSM p50 still 59.3m |
 | Add pixel-level DTM/VOM/nDSM sample diagnostics | `73b967b` | Prints centre-pixel values to pinpoint failure | **Pending** — user must share DTM/VOM/nDSM sample lines |
 
-**Next diagnostic:** The lines printed just before "nDSM range: −165.5 – 196.6 m" show actual DTM/VOM/nDSM pixel values. If:
-- DTM sample ≈ 0 → reproject filling with 0 for out-of-coverage pixels (nodata not propagated)
-- DTM sample ≈ 60m AND nDSM ≈ 60m → VOM is ≈ 120m ASL (wrong — investigate VOM data)
-- DTM sample ≈ 60m AND nDSM ≈ 10m → computation correct; p50=59m driven by outliers/gaps
+**Root cause resolved (2026-08-24):** Pixel diagnostics revealed:
+- DTM sample = 124.34 m (correct — Stevenage ground elevation ASL)
+- VOM sample = 180.00 m (NOT metres — 180 dm = 18.0 m above ground)
+- EA VOM stores canopy height above ground in **decimetres** for this tile set
 
-**Thesis note:** nDSM p5=−82m (negative heights physically impossible), p50=59.3m (matches Stevenage ground ASL), p95=102.5m all confirm the DTM subtraction is not producing correct relative heights. The anomaly is documented with a thesis figure showing threshold sensitivity.
+**Fix (commits `ff637c2`, `ac0f341`, `bed0c34`):**
+- Remove DTM subtraction entirely — VOM is already height above ground
+- Auto-detect dm vs m: if VOM median > 20 → divide by 10
+- Match original `sionna019_scene_builder.ipynb` approach exactly
+- Add data-driven min height threshold (p5), STRtree building exclusion, per-polygon heights
+
+**CONFIRMED WORKING:** nDSM p5/p50/p95 = 1.9 / 17.8 / 19.8 m — realistic urban tree heights ✓
 
 ---
 
