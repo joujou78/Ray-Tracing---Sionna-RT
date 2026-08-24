@@ -392,7 +392,7 @@ Full distance breakdown (ON incoh — best method):
 **STATUS: FINAL — Run 2 (R²=0.574) accepted as the 2695 MHz physics floor (2026-08-24)**
 - Runs 3-8 all failed: every attempt with DISABLE_VEG_DISCS=True floods via building scatter (brick/concrete S→cap)
 - Root cause: Run 2 used ceiling_board er=17 ACTIVE during calibration (DISABLE_VEG_DISCS=False at cal time), giving different scatter budget (scalar=-2.305 dB). All subsequent runs use transparent discs (scalar=+9-10 dB) — optimizer compensates by saturating building S, causing scatter flood.
-- Run 8 final evidence: ON incoh bias=+5.5 dB at 0-900m, avg_rays ON/OFF=178x, R²=0.019 at 0-1250m despite water_rt flood fix.
+- Run 6 CELL 8e evidence: ON incoh bias=+5.5 dB at 0-900m, avg_rays ON/OFF=178x, R²=0.019 at 0-1250m — scalar≈+9.9 dB with brick/concrete S→cap → scatter flood from buildings.
 - **No further calibration attempts planned for 2695 MHz.**
 
 ### 2695 MHz Calibration History
@@ -406,7 +406,7 @@ Full distance breakdown (ON incoh — best method):
 | Run 5 — CMA-ES (5M samples, old run) | Same as Run 4 + _SIG_MAX_PER_MAT caps + CELL CAL-CMA | 373 (0 NF) | +7.746 dB | eval 195 best: 10.917 dB | wet_ground capped at 0.20 ✓; itu_glass no cap (risk); 5M samples |
 | **Run 6 — CMA-ES (30M, popsize=12, tolfun=0.03) — STOPPED** | 30M samples, old popsize/tolfun; Phase 0 scalar=+9.900 dB, RMSE=15.02 dB | 373/373 valid | +9.900 dB | eval 440 best: **11.768 dB** (eval 456 latest) | Stopped — same transparent-disc problem as all runs after Run 2 |
 | **Run 7 — CMA-ES (30M, popsize=36, tolfun=0.10) — FAILED** | Same + water_rt uncapped; stuck at 12.654 dB from eval 175→370 | 373/373 valid | — | **12.654 dB** | water_rt σ→0.0000, S=0.665 → River Trent 57,420 scatter paths at <300m → bias +26 dB at 0-300m (scatter flood); stopped |
-| **Run 8 — CMA-ES (30M, popsize=36) — FAILED (CELL 8e R²=0.019 at 0-1250m)** | Run 7 + `_SIG_MIN_PER_MAT['water_rt']=0.50`, `_S_MAX_PER_MAT['water_rt']=0.10` (commit `1c86669`) | 373/373 valid | TBD | TBD | water_rt flood fixed; optimizer compensated by pushing brick/concrete S→0.45 cap; scatter flood shifts to buildings; ON incoh bias=+5.5 dB at 0-900m; avg_rays ON/OFF=178x; R²=-0.872 (0-900m), -0.404 (0-1000m), 0.019 (0-1250m) |
+| **Run 8 — CMA-ES (30M, popsize=36) — NOT RUN** | Run 7 + `_SIG_MIN_PER_MAT['water_rt']=0.50`, `_S_MAX_PER_MAT['water_rt']=0.10` (commit `1c86669`) | — | — | — | water_rt caps added but CELL CAL-CMA never executed — not recommended; analysis predicts optimizer compensates by saturating brick/concrete S→cap, shifting scatter flood to buildings (same as Runs 3-7) |
 
 **Run 3 calibration notes:**
 - 211 evals / 996.5 min — Powell converged (FTOL)
