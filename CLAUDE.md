@@ -875,6 +875,32 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 ---
 
+## London 1802 MHz Status (sionna2_1802mhz_dem_simulation_london.ipynb)
+
+**CMA Run 1 IN PROGRESS (2026-08-24). Phase 0 complete. Best so far: 13.504 dB at eval 13.**
+
+### London 1802 MHz CMA Run 1 — Calibration Progress
+
+| Phase | RMSE | Scalar | Notes |
+|-------|------|--------|-------|
+| Phase 0 (before scalar) | 33.74 dB | — | 5 free mats; 109 cal RX (0.15-0.9 km, below Rbp=901m) |
+| Phase 0 (after scalar) | 15.38 dB | **+30.030 dB** | consistent with London 915 Run 4 (+28.766 dB) |
+| Phase 1 eval 4 | **13.835 dB** | — | new best; gen 1 in progress |
+| Phase 1 eval 13 | **13.504 dB** | — | new best; gen 1 continuing |
+
+**Configuration:**
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| Free materials | 5: glass, brick, concrete_barrier, concrete, wet_ground | water_rt locked |
+| Cal RX | 109 (0.15-0.9 km) | below Rbp=901m (4×25×1.5×1802.5e6/3e8) |
+| CAL_MAX_DIST_KM | 0.90 | pure LOS calibration regime |
+| CAL_CMA_SAMPLES | 15M | GPU OOM at 30M |
+| CAL_CMA_POPSIZE | 36 | |
+| itu_ceiling_board | er=17.0, sigma=0.10, S=0.35 | locked — ITU-R P.833 at 1.8 GHz |
+| Frequency | 1802.5 MHz | Rbp=901m |
+
+---
+
 ## London 915 MHz Status (sionna2_915mhz_dem_simulation_london.ipynb)
 
 **CMA Run 1 COMPLETE (2026-08-22): eval 283, best=6.646 dB, scalar=+38.295 dB. CELL 8e COMPLETE.**
@@ -1029,7 +1055,8 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | Run 1 (Powell, 20M) | ~10.9 dB | +12.253 dB | — | stuck at MC noise floor |
 | Run 2 (CMA, 30M) — COMPLETE | **6.646 dB** | **+38.295 dB** | **0.219** | itu_metal freed (bug); metal_barrier no σ cap |
 | **Run 3 (CMA, 15M, popsize=36) — CONVERGED (eval 223, best=6.601 dB)** | **6.601 dB** | **+38.656 dB** | **TBD — CELL 8e pending** | metals fixed; concrete_barrier S≤0.70; dry_ground S≤0.50; 10 free mats (142 cal RX — overfitting risk); CELL 4A → CELL 8e next |
-| **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.302 at 0-1500m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE; R² dip at 0-1250m (0.183) then recovers (0.302 at 0-1500m) |
+| **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.335 at 0-2000m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE through 0-2000m |
+| **Run 5 (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-24)** | TBD | +31.035 dB (Phase 0) | TBD — CELL 8e pending | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); water_rt/concrete_barrier/wet_ground locked (no paths within 0.45 km); Phase 0 RMSE=12.78 dB; eval 1 best=4.409 dB (at LOS σ_SF=4.0 dB floor) |
 
 **Run 4 calibrated materials (2026-08-24, eval 441, best=6.888 dB):**
 
