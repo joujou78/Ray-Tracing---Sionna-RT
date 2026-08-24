@@ -895,6 +895,7 @@ Best method: **ON incoh** — scatter dominant (44% scatter-only receivers at 0-
 | **0-1000m** | **125** | **70** | **-0.3** | **8.2** | **0.365** | **1479 / 12** | **peak R²** |
 | 0-1250m | 148 | 71 | -0.2 | 9.9 | 0.183 | 999 / 8 | R² drops at Rbp=458m |
 | **0-1500m** | **164** | **71** | **-0.4** | **9.8** | **0.302** | **898 / 7** | **R² recovers — 1250-1500m band well-predicted** |
+| 0-1750m | 171 | 71 | -0.1 | 9.8 | **0.333** | — / — | R² continues rising — 1500-1750m band well-predicted |
 
 Full 0-1000m breakdown (N=125 ON / 70 OFF, avg ON rays=1479, OFF rays=12):
 
@@ -926,9 +927,15 @@ Full 0-1500m breakdown (N=164 ON / 71 OFF, avg ON rays=898, OFF rays=7):
 | OFF coh | +23.3 | 37.0 | -21.734 |
 | ON best | +4.6 | 11.6 | 0.028 |
 
+Full 0-1750m breakdown (N=171 ON / 71 OFF):
+
+| Method | Bias (dB) | RMSE (dB) | R² |
+|--------|-----------|-----------|-----|
+| ON incoh | -0.1 | 9.8 | **0.333** |
+
 **Key findings:**
-- R² trajectory: -2.922 (0-300m) → -0.233 (0-750m) → 0.222 (0-900m) → **0.365 (0-1000m)** → 0.183 (0-1250m) → **0.302 (0-1500m)**
-- **R² peaks at 0-1000m (0.365) — dual-slope Rbp=458m confirmed.** Short dip at 0-1250m; recovers to 0.302 at 0-1500m (1250-1500m band well-predicted)
+- R² trajectory: -2.922 (0-300m) → -0.233 (0-750m) → 0.222 (0-900m) → **0.365 (0-1000m)** → 0.183 (0-1250m) → **0.302 (0-1500m)** → **0.333 (0-1750m)**
+- **R² peaks at 0-1000m (0.365) — dual-slope Rbp=458m confirmed.** Short dip at 0-1250m; recovers and continues rising to 0.333 at 0-1750m — 1250-1750m band well-predicted (RMSE=9.8 dB, near-zero bias)
 - RMSE=7.8 dB at 0-750m/0-900m — at 3GPP UMa σ_SF=7.82 dB physics floor
 - ON=125 vs OFF=70 at 0-1000m — scatter generates valid paths for 55 receivers (44%) with no specular/LOS path
 - OFF total collapse at all ranges (RMSE=35-37 dB) — London urban canyons require scatter for coverage
