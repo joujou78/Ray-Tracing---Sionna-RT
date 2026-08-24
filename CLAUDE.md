@@ -393,6 +393,9 @@ Full distance breakdown (ON incoh — best method):
 - Runs 3-8 all failed: every attempt with DISABLE_VEG_DISCS=True floods via building scatter (brick/concrete S→cap)
 - Root cause: Run 2 used ceiling_board er=17 ACTIVE during calibration (DISABLE_VEG_DISCS=False at cal time), giving different scatter budget (scalar=-2.305 dB). All subsequent runs use transparent discs (scalar=+9-10 dB) — optimizer compensates by saturating building S, causing scatter flood.
 - Run 6 CELL 8e evidence: ON incoh bias=+5.5 dB at 0-900m, avg_rays ON/OFF=178x, R²=0.019 at 0-1250m — scalar≈+9.9 dB with brick/concrete S→cap → scatter flood from buildings.
+- **Run 2 JSON files overwritten** by a later partial run (Phase 0 checkpoint: scalar=+4.725 dB, water_rt S=0.613 — scatter flood trigger). Do NOT load for CELL 8e.
+- R²=0.574 result is fully documented in CLAUDE.md tables above — this is the thesis result.
+- To reproduce: DISABLE_VEG_DISCS=False, CAL_SAMPLES_PS=10M, CELL CAL (Powell) → ~15-20 hr run.
 - **No further calibration attempts planned for 2695 MHz.**
 
 ### 2695 MHz Calibration History
