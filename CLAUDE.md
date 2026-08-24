@@ -410,6 +410,7 @@ Full distance breakdown (ON incoh — best method):
 | **Run 6 — CMA-ES (30M, popsize=12, tolfun=0.03) — STOPPED** | 30M samples, old popsize/tolfun; Phase 0 scalar=+9.900 dB, RMSE=15.02 dB | 373/373 valid | +9.900 dB | eval 440 best: **11.768 dB** (eval 456 latest) | Stopped — same transparent-disc problem as all runs after Run 2 |
 | **Run 7 — CMA-ES (30M, popsize=36, tolfun=0.10) — FAILED** | Same + water_rt uncapped; stuck at 12.654 dB from eval 175→370 | 373/373 valid | — | **12.654 dB** | water_rt σ→0.0000, S=0.665 → River Trent 57,420 scatter paths at <300m → bias +26 dB at 0-300m (scatter flood); stopped |
 | **Run 8 — CMA-ES (30M, popsize=36) — NOT RUN** | Run 7 + `_SIG_MIN_PER_MAT['water_rt']=0.50`, `_S_MAX_PER_MAT['water_rt']=0.10` (commit `1c86669`) | — | — | — | water_rt caps added but CELL CAL-CMA never executed — not recommended; analysis predicts optimizer compensates by saturating brick/concrete S→cap, shifting scatter flood to buildings (same as Runs 3-7) |
+| **Run 9 — CMA-ES HF scene (10M cal, 30M CMA, popsize=36) — IN PROGRESS (2026-08-24)** | Two bugs fixed (commit `61376a1`): (1) `_MAT_FIXED_VALS` `VEG_DISC_ER`→`VEG_RELATIVE_PERMITTIVITY` so ceiling_board er=17.0 not 2.73; (2) CELL 4A S=0 override removed — er=17, S=0.50 active in both CMA and CELL 8e. HF scene (3-layer stacked discs, 10m spacing). Phase 0: scalar=+11.947 dB (vs Run 2's -2.305 dB — HF scene 12× more disc area absorbs more power). eval 17 best=**14.186 dB** — matched Run 3 final in 17 evals. | 373 (0 NF) | +11.947 dB | eval 17 best: **14.186 dB** (descending) | Scalar differs from Run 2 because HF scene has ~12× more disc surface area; CMA calibrating actively er=17 discs → expect different but valid material parameters |
 
 **Run 3 calibration notes:**
 - 211 evals / 996.5 min — Powell converged (FTOL)
@@ -889,9 +890,10 @@ Best method: **ON incoh** — scatter dominant (44% scatter-only receivers at 0-
 |-------|--------|---------|-----------|-----------|-----|-----------------|-------|
 | 0-300m | 22 | 22 | -1.8 | 10.8 | -2.922 | 3950 / 51 | near-field geometry noise |
 | 0-500m | 41 | 33 | -0.9 | 8.8 | -1.606 | 2862 / 31 | |
-| 0-750m | 85 | 66 | -1.0 | 7.8 | -0.233 | 2031 / 17 | RMSE at physics floor |
+| 0-750m | 85 | 66 | -1.0 | 7.8 | -0.233 | 2031 / 17 | RMSE at 3GPP physics floor |
 | 0-900m | 113 | 68 | +0.5 | 7.8 | **0.222** | 1618 / 13 | first positive R² |
-| **0-1000m** | **125** | **70** | **-0.3** | **8.2** | **0.365** | **1479 / 12** | **+0.255 vs Run 1** |
+| **0-1000m** | **125** | **70** | **-0.3** | **8.2** | **0.365** | **1479 / 12** | **peak R² — dual-slope breakpoint effect** |
+| 0-1250m | 148 | 71 | -0.2 | 9.9 | 0.183 | 999 / 8 | R² drops — deep NLOS beyond Rbp=458m |
 
 Full 0-1000m breakdown (N=125 ON / 70 OFF, avg ON rays=1479, OFF rays=12):
 
@@ -903,15 +905,45 @@ Full 0-1000m breakdown (N=125 ON / 70 OFF, avg ON rays=1479, OFF rays=12):
 | OFF coh | +24.0 | 37.1 | -22.899 |
 | ON best | +5.2 | 11.0 | -0.156 |
 
+Full 0-1250m breakdown (N=148 ON / 71 OFF, avg ON rays=999, OFF rays=8):
+
+| Method | Bias (dB) | RMSE (dB) | R² |
+|--------|-----------|-----------|-----|
+| ON incoh | -0.2 | 9.9 | **0.183** |
+| OFF incoh | +23.1 | 36.8 | -21.514 |
+| ON coh | +0.4 | 12.5 | -0.302 |
+| OFF coh | +23.3 | 37.0 | -21.730 |
+| ON best | +5.2 | 11.9 | -0.180 |
+
 **Key findings (partial — run still in progress):**
-- R² trajectory: -2.922 (0-300m) → -0.233 (0-750m) → 0.222 (0-900m) → **0.365 (0-1000m)** — strong upward trend
-- RMSE=7.8 dB at 0-750m and 0-900m — at the 3GPP UMa σ_SF=7.82 dB physics floor
+- R² trajectory: -2.922 (0-300m) → -0.233 (0-750m) → 0.222 (0-900m) → **0.365 (0-1000m)** → 0.183 (0-1250m)
+- **R² peaks at 0-1000m then drops at 0-1250m — dual-slope breakpoint at Rbp=458m confirmed** (TX_AGL=25m, RX_AGL=1.5m, f=915 MHz → Rbp=4×25×1.5×915e6/3e8=458m)
+- RMSE=7.8 dB at 0-750m/0-900m — at 3GPP UMa σ_SF=7.82 dB physics floor
 - ON=125 vs OFF=70 at 0-1000m — scatter generates valid paths for 55 receivers (44%) with no specular/LOS path
 - OFF total collapse at all ranges (RMSE=35-37 dB) — London urban canyons require scatter for coverage
-- avg_rays ON/OFF ratio = 128x at 0-1000m — scatter providing dominant propagation mechanism
-- **Run 4 already exceeds Run 1 peak R²=0.219 at 0-1000m (+0.146 improvement)**
-- Metals-locked + 5 free materials + tighter S caps: eliminated scatter flood that caused Run 1 overfit
-- Peak R² expected at 0-1250m to 0-2000m — awaiting further results
+- avg_rays ON/OFF ratio = 128x at 0-1000m — scatter dominant propagation mechanism
+- **Run 4 exceeds Run 1 peak R²=0.219 at 0-1000m (+0.146 improvement)**
+- Cal RMSE=6.888 dB below σ_SF=7.82 dB floor — mild overfitting from 1.75 km cal range spanning multiple physics regimes
+- ON N grew only +23 at 0-1250m (125→148) — scatter paths drying up in deep NLOS beyond 1 km
+- Full run still in progress — awaiting 0-1500m to 0-2000m results
+
+### London Run 5 — Planned (pending Run 4 completion)
+
+**Root cause of Run 4 R² drop beyond 1 km:** CAL_MAX_DIST_KM=1.75 km spans LOS (0-458m) + NLOS transition + deep NLOS. CMA material parameters average over conflicting physics regimes. Same problem as 2695 MHz Run 1 (R²=0.246) — fixed by restricting to CAL_MAX_DIST_KM=1.0 km (below Rbp=916m) → R²=0.574.
+
+**Constraint:** CAL_CMA_SAMPLES=15M maximum — 30M causes GPU OOM on London scene.
+
+| Parameter | Run 4 | Run 5 | Reason |
+|-----------|-------|-------|--------|
+| `CAL_MAX_DIST_KM` | 1.75 | **0.45** | calibrate below Rbp=458m (pure LOS regime) |
+| Free materials | 5 | **3** (brick, concrete, glass) | ~35 cal RX within 0.45 km — reduce params to prevent overfit |
+| `N_SCALAR_BINS` | 10 | **15** | finer resolution around 458m LOS/NLOS transition |
+| `CAL_CMA_SAMPLES` | 15M | 15M | GPU OOM at 30M — keep |
+| `LOS_NLOS_ZONE_SPLIT` | True | True | keep — eval-time LOS/NLOS mean split |
+| Lock additionally | — | concrete_barrier, itu_wet_ground | primarily NLOS-zone materials; unreliable on LOS-only cal data |
+
+**Risk:** if Phase 0 prints fewer than 30 cal RX → raise CAL_MAX_DIST_KM to 0.60 km.
+**Expected result:** R² 0.40-0.50 at 0-1000m (same mechanism as 2695 MHz Rbp fix: R² 0.246→0.574).
 
 ### London CELL 8e Run 1 Results (100M samples, ON incoh best method)
 
