@@ -837,11 +837,11 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 |------|--------|-------|
 | CELL 0-2 | Done | Config + DTM download |
 | CELL 2vom_poly | **DONE** | 54,257 polygons; nDSM p5/p50/p95=1.9/17.8/19.8 m; VOM dm auto-detected ✓ |
-| CELL 2h | **Next** | |
-| CELL 3 | Pending | |
-| CELL 3b | Pending | |
-| CELL 4 | Pending | |
-| CELL B3 | Pending | |
+| CELL 2h | **DONE** | VEG_HEIGHT_CAP_M=35.0 m; CITY_MAX_HEIGHT_M=20.0 m (nDSM p95) |
+| CELL 3 | **DONE** | terrain.ply 1M verts; origin=138.7 m ASL; terrain_veg.ply 1,063,071 faces |
+| CELL 3b | **DONE** | 184 overrides; 100% itu_brick (Stevenage post-war New Town) |
+| CELL 4 | **DONE** | 23,156 buildings (92% nDSM heights); 16,273 trees (15,000 LiDAR); 49,009 nDSM extra discs |
+| CELL B3 | **DONE** | 20 shapes, 16 materials — scene_with_full.xml written ✓ |
 
 ### nDSM Anomaly — VOM Diagnostic History
 
