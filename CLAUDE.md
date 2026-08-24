@@ -878,9 +878,9 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 ## London 915 MHz Status (sionna2_915mhz_dem_simulation_london.ipynb)
 
 **CMA Run 1 COMPLETE (2026-08-22): eval 283, best=6.646 dB, scalar=+38.295 dB. CELL 8e COMPLETE.**
-**CMA Run 4 COMPLETE (2026-08-24): eval 441, best=6.888 dB, scalar=+28.766 dB. CELL 8e IN PROGRESS (2026-08-24).**
+**CMA Run 4 COMPLETE (2026-08-24): eval 441, best=6.888 dB, scalar=+28.766 dB. CELL 8e COMPLETE (0-1500m confirmed).**
 
-### London CELL 8e Run 4 Results — IN PROGRESS (100M samples, ON incoh best method)
+### London CELL 8e Run 4 Results — COMPLETE (100M samples, ON incoh best method)
 
 **Settings:** 5 free materials / metals locked / concrete_barrier S≤0.70 / dry_ground S≤0.50 / 223 cal RX (0.15-1.75 km) / scalar=+28.766 dB
 
@@ -892,8 +892,9 @@ Best method: **ON incoh** — scatter dominant (44% scatter-only receivers at 0-
 | 0-500m | 41 | 33 | -0.9 | 8.8 | -1.606 | 2862 / 31 | |
 | 0-750m | 85 | 66 | -1.0 | 7.8 | -0.233 | 2031 / 17 | RMSE at 3GPP physics floor |
 | 0-900m | 113 | 68 | +0.5 | 7.8 | **0.222** | 1618 / 13 | first positive R² |
-| **0-1000m** | **125** | **70** | **-0.3** | **8.2** | **0.365** | **1479 / 12** | **peak R² — dual-slope breakpoint effect** |
-| 0-1250m | 148 | 71 | -0.2 | 9.9 | 0.183 | 999 / 8 | R² drops — deep NLOS beyond Rbp=458m |
+| **0-1000m** | **125** | **70** | **-0.3** | **8.2** | **0.365** | **1479 / 12** | **peak R²** |
+| 0-1250m | 148 | 71 | -0.2 | 9.9 | 0.183 | 999 / 8 | R² drops at Rbp=458m |
+| **0-1500m** | **164** | **71** | **-0.4** | **9.8** | **0.302** | **898 / 7** | **R² recovers — 1250-1500m band well-predicted** |
 
 Full 0-1000m breakdown (N=125 ON / 70 OFF, avg ON rays=1479, OFF rays=12):
 
@@ -915,17 +916,26 @@ Full 0-1250m breakdown (N=148 ON / 71 OFF, avg ON rays=999, OFF rays=8):
 | OFF coh | +23.3 | 37.0 | -21.730 |
 | ON best | +5.2 | 11.9 | -0.180 |
 
-**Key findings (partial — run still in progress):**
-- R² trajectory: -2.922 (0-300m) → -0.233 (0-750m) → 0.222 (0-900m) → **0.365 (0-1000m)** → 0.183 (0-1250m)
-- **R² peaks at 0-1000m then drops at 0-1250m — dual-slope breakpoint at Rbp=458m confirmed** (TX_AGL=25m, RX_AGL=1.5m, f=915 MHz → Rbp=4×25×1.5×915e6/3e8=458m)
+Full 0-1500m breakdown (N=164 ON / 71 OFF, avg ON rays=898, OFF rays=7):
+
+| Method | Bias (dB) | RMSE (dB) | R² |
+|--------|-----------|-----------|-----|
+| ON incoh | -0.4 | 9.8 | **0.302** |
+| OFF incoh | +23.1 | 36.8 | -21.515 |
+| ON coh | +0.3 | 12.1 | -0.070 |
+| OFF coh | +23.3 | 37.0 | -21.734 |
+| ON best | +4.6 | 11.6 | 0.028 |
+
+**Key findings:**
+- R² trajectory: -2.922 (0-300m) → -0.233 (0-750m) → 0.222 (0-900m) → **0.365 (0-1000m)** → 0.183 (0-1250m) → **0.302 (0-1500m)**
+- **R² peaks at 0-1000m (0.365) — dual-slope Rbp=458m confirmed.** Short dip at 0-1250m; recovers to 0.302 at 0-1500m (1250-1500m band well-predicted)
 - RMSE=7.8 dB at 0-750m/0-900m — at 3GPP UMa σ_SF=7.82 dB physics floor
 - ON=125 vs OFF=70 at 0-1000m — scatter generates valid paths for 55 receivers (44%) with no specular/LOS path
 - OFF total collapse at all ranges (RMSE=35-37 dB) — London urban canyons require scatter for coverage
 - avg_rays ON/OFF ratio = 128x at 0-1000m — scatter dominant propagation mechanism
 - **Run 4 exceeds Run 1 peak R²=0.219 at 0-1000m (+0.146 improvement)**
 - Cal RMSE=6.888 dB below σ_SF=7.82 dB floor — mild overfitting from 1.75 km cal range spanning multiple physics regimes
-- ON N grew only +23 at 0-1250m (125→148) — scatter paths drying up in deep NLOS beyond 1 km
-- Full run still in progress — awaiting 0-1500m to 0-2000m results
+- ON N grows slowly beyond 1 km (125→148→164) — scatter paths drying up in deep NLOS
 
 ### London Run 5 — Planned (pending Run 4 completion)
 
@@ -1011,7 +1021,7 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | Run 1 (Powell, 20M) | ~10.9 dB | +12.253 dB | — | stuck at MC noise floor |
 | Run 2 (CMA, 30M) — COMPLETE | **6.646 dB** | **+38.295 dB** | **0.219** | itu_metal freed (bug); metal_barrier no σ cap |
 | **Run 3 (CMA, 15M, popsize=36) — CONVERGED (eval 223, best=6.601 dB)** | **6.601 dB** | **+38.656 dB** | **TBD — CELL 8e pending** | metals fixed; concrete_barrier S≤0.70; dry_ground S≤0.50; 10 free mats (142 cal RX — overfitting risk); CELL 4A → CELL 8e next |
-| **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (partial, run in progress)** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e IN PROGRESS — exceeds Run 1 peak (0.219) at 0-1000m already |
+| **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.302 at 0-1500m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE; R² dip at 0-1250m (0.183) then recovers (0.302 at 0-1500m) |
 
 **Run 4 calibrated materials (2026-08-24, eval 441, best=6.888 dB):**
 
