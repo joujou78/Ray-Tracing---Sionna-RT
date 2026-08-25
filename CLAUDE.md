@@ -911,7 +911,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 **CMA Run 1 COMPLETE (2026-08-22): eval 283, best=6.646 dB, scalar=+38.295 dB. CELL 8e COMPLETE.**
 **CMA Run 4 COMPLETE (2026-08-24): eval 441, best=6.888 dB, scalar=+28.766 dB. CELL 8e COMPLETE. FINAL — R²=0.365 at 0-1000m (peak), R²=0.335 at 0-2000m.**
 **CMA Run 5 FAILED (2026-08-25): degenerate LOS-only calibration — 26 cal RX overfitted; +31 dB scalar cancelled by -30 dB bin corrections; CELL 8e RMSE=21.7 dB at 0-500m (vs Run 4: 8.8 dB).**
-**CMA Run 6 IN PROGRESS (2026-08-25): CAL_MAX_DIST_KM=0.65 km (just above Rbp=458m), 4 free mats, ~50-70 cal RX. Expected R²=0.40-0.50.**
+**CMA Run 6 IN PROGRESS (2026-08-25): CAL_MAX_DIST_KM=0.65 km, 62 cal RX, 4 free mats. Phase 0 RMSE=7.99 dB (scalar=+32.791 dB). Eval 14 best=7.330 dB — already below NLOS physics floor at gen 1.**
 
 ### London CELL 8e Run 4 Results — COMPLETE (100M samples, ON incoh best method)
 
@@ -1060,7 +1060,7 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | **Run 3 (CMA, 15M, popsize=36) — CONVERGED (eval 223, best=6.601 dB)** | **6.601 dB** | **+38.656 dB** | **TBD — CELL 8e pending** | metals fixed; concrete_barrier S≤0.70; dry_ground S≤0.50; 10 free mats (142 cal RX — overfitting risk); CELL 4A → CELL 8e next |
 | **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.335 at 0-2000m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE through 0-2000m |
 | **Run 5 (CMA, 15M, popsize=36) — FAILED (2026-08-25)** | **2.779 dB** (overfit) | **+31.035 dB** | **R²=-14.944 at 0-500m** | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); cal RMSE=2.779 dB (1.2 dB below LOS floor — degenerate); CELL 8e RMSE=21.7 dB at 0-500m vs Run 4's 8.8 dB; +31 dB scalar cancelled by -30 dB bin corrections — physically meaningless |
-| **Run 6 (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-25)** | TBD | TBD | TBD | 4 free mats: brick/concrete/glass/wet_ground (CAL_MAX_DIST_KM=0.65 km — just above Rbp=458m, ~50-70 cal RX); concrete_barrier locked; 15 bins; expected R²=0.40-0.50 |
+| **Run 6 (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-25)** | eval 14: **7.330 dB** | +32.791 dB (Phase 0) | TBD — CELL 8e pending | 4 free mats: brick/concrete/glass/wet_ground (62 cal RX, 0.15-0.65 km — just above Rbp=458m); concrete_barrier+water_rt locked; 15 bins; Phase 0 RMSE=7.99 dB; eval 14 best=7.330 dB (below NLOS floor at gen 1) |
 
 **Run 5 CMA descent (popsize=36, LOS-only cal, 26 RX, 0.15-0.45 km) — documented for reference:**
 
@@ -1118,6 +1118,11 @@ _S_MAX_PER_MAT['itu_medium_dry_ground'] = 0.50
 ```
 
 **Check Phase 0:** confirm cal RX ≥ 40 before leaving to run. If < 40, raise CAL_MAX_DIST_KM to 0.75 km.
+
+**Run 6 Phase 0 result (2026-08-25):**
+- Cal RX: 62 (0.15-0.65 km) — valid=61/62
+- Phase 0 scalar=+32.791 dB, RMSE=7.99 dB (already near physics floor from scalar alone)
+- Eval 14: best=7.330 dB (below NLOS σ_SF=7.82 dB at gen 1) — very fast descent
 
 **Run 4 calibrated materials (2026-08-24, eval 441, best=6.888 dB):**
 
