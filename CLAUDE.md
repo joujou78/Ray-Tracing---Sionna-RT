@@ -909,7 +909,8 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 **CMA Run 1 COMPLETE (2026-08-22): eval 283, best=6.646 dB, scalar=+38.295 dB. CELL 8e COMPLETE.**
 **CMA Run 4 COMPLETE (2026-08-24): eval 441, best=6.888 dB, scalar=+28.766 dB. CELL 8e COMPLETE. FINAL — R²=0.365 at 0-1000m (peak), R²=0.335 at 0-2000m.**
-**CMA Run 5 FAILED (2026-08-25): degenerate LOS-only calibration — 26 cal RX overfitted; +31 dB scalar cancelled by -30 dB bin corrections; CELL 8e RMSE=21.7 dB at 0-500m (vs Run 4: 8.8 dB). NO FURTHER RETRIES.**
+**CMA Run 5 FAILED (2026-08-25): degenerate LOS-only calibration — 26 cal RX overfitted; +31 dB scalar cancelled by -30 dB bin corrections; CELL 8e RMSE=21.7 dB at 0-500m (vs Run 4: 8.8 dB).**
+**CMA Run 6 IN PROGRESS (2026-08-25): CAL_MAX_DIST_KM=0.65 km (just above Rbp=458m), 4 free mats, ~50-70 cal RX. Expected R²=0.40-0.50.**
 
 ### London CELL 8e Run 4 Results — COMPLETE (100M samples, ON incoh best method)
 
@@ -1058,6 +1059,7 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | **Run 3 (CMA, 15M, popsize=36) — CONVERGED (eval 223, best=6.601 dB)** | **6.601 dB** | **+38.656 dB** | **TBD — CELL 8e pending** | metals fixed; concrete_barrier S≤0.70; dry_ground S≤0.50; 10 free mats (142 cal RX — overfitting risk); CELL 4A → CELL 8e next |
 | **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.335 at 0-2000m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE through 0-2000m |
 | **Run 5 (CMA, 15M, popsize=36) — FAILED (2026-08-25)** | **2.779 dB** (overfit) | **+31.035 dB** | **R²=-14.944 at 0-500m** | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); cal RMSE=2.779 dB (1.2 dB below LOS floor — degenerate); CELL 8e RMSE=21.7 dB at 0-500m vs Run 4's 8.8 dB; +31 dB scalar cancelled by -30 dB bin corrections — physically meaningless |
+| **Run 6 (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-25)** | TBD | TBD | TBD | 4 free mats: brick/concrete/glass/wet_ground (CAL_MAX_DIST_KM=0.65 km — just above Rbp=458m, ~50-70 cal RX); concrete_barrier locked; 15 bins; expected R²=0.40-0.50 |
 
 **Run 5 CMA descent (popsize=36, LOS-only cal, 26 RX, 0.15-0.45 km) — documented for reference:**
 
@@ -1077,7 +1079,44 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 - Cal RMSE=2.779 dB at eval 601 — physically impossible (below LOS floor 4.0 dB) → degenerate
 - CELL 8e (partial, Run 5 materials): RMSE=21.7 dB at 0-500m (vs Run 4: 8.8 dB) → confirmed failure
 - Bin scalars: d≈0.26km: -29.39 dB; d≈0.28km: -32.55 dB; d≈0.36km: -30.00 dB — cancels global scalar
-- **Run 4 (R²=0.365) is FINAL. No further London 915 MHz retries.**
+
+### London Run 6 — IN PROGRESS (2026-08-25)
+
+**Fix:** CAL_MAX_DIST_KM=0.65 km (just above Rbp=458m) — captures LOS + early NLOS, avoids deep NLOS mixing. Same mechanism as 2695 MHz Rbp fix (R² 0.246→0.574).
+
+| Parameter | Run 4 | Run 5 | **Run 6** | Reason |
+|-----------|-------|-------|-----------|--------|
+| `CAL_MAX_DIST_KM` | 1.75 | 0.45 | **0.65** | just above Rbp — LOS + early NLOS only |
+| Free mats | 5 | 3 | **4** (brick, concrete, glass, wet_ground) | ~50-70 cal RX → sufficient for 12 params |
+| Locked additionally | — | concrete_barrier, wet_ground | **concrete_barrier, medium_dry_ground** | primarily NLOS-zone materials |
+| `N_SCALAR_BINS` | 10 | 15 | **15** | finer transition resolution |
+| `CAL_CMA_SAMPLES` | 15M | 15M | **15M** | GPU OOM at 30M |
+| `CAL_CMA_POPSIZE` | 36 | 36 | **36** | |
+| `LOS_NLOS_ZONE_SPLIT` | True | True | **True** | |
+
+**Expected cal RX:** ~50-70 (vs 26 in Run 5 — overfitting; vs 223 in Run 4 — regime mixing)
+**Expected R²:** 0.40-0.50 at 0-1000m
+
+**CELL CAL-CMA config:**
+```python
+# CELL 1:
+CAL_MAX_DIST_KM     = 0.65
+CAL_CMA_SAMPLES     = 15_000_000
+CAL_CMA_POPSIZE     = 36
+CAL_CMA_TOLFUN      = 0.10
+N_SCALAR_BINS       = 15
+LOS_NLOS_ZONE_SPLIT = True
+
+# CELL CAL-CMA free materials:
+_MAT_FREE   = ['itu_brick', 'itu_concrete', 'itu_glass', 'itu_wet_ground']
+_MAT_LOCKED = ['itu_metal', 'metal_barrier', 'itu_asphalt',
+               'concrete_barrier', 'itu_medium_dry_ground',
+               'canopy_itu_vegetation', 'trunk_itu_wood']
+_S_MAX_PER_MAT['concrete_barrier']      = 0.70
+_S_MAX_PER_MAT['itu_medium_dry_ground'] = 0.50
+```
+
+**Check Phase 0:** confirm cal RX ≥ 40 before leaving to run. If < 40, raise CAL_MAX_DIST_KM to 0.75 km.
 
 **Run 4 calibrated materials (2026-08-24, eval 441, best=6.888 dB):**
 
