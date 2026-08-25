@@ -908,7 +908,8 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 ## London 915 MHz Status (sionna2_915mhz_dem_simulation_london.ipynb)
 
 **CMA Run 1 COMPLETE (2026-08-22): eval 283, best=6.646 dB, scalar=+38.295 dB. CELL 8e COMPLETE.**
-**CMA Run 4 COMPLETE (2026-08-24): eval 441, best=6.888 dB, scalar=+28.766 dB. CELL 8e COMPLETE (0-1500m confirmed).**
+**CMA Run 4 COMPLETE (2026-08-24): eval 441, best=6.888 dB, scalar=+28.766 dB. CELL 8e COMPLETE. FINAL — R²=0.365 at 0-1000m (peak), R²=0.335 at 0-2000m.**
+**CMA Run 5 FAILED (2026-08-25): degenerate LOS-only calibration — 26 cal RX overfitted; +31 dB scalar cancelled by -30 dB bin corrections; CELL 8e RMSE=21.7 dB at 0-500m (vs Run 4: 8.8 dB). NO FURTHER RETRIES.**
 
 ### London CELL 8e Run 4 Results — COMPLETE (100M samples, ON incoh best method)
 
@@ -975,23 +976,19 @@ Full 0-1750m breakdown (N=171 ON / 71 OFF):
 - Cal RMSE=6.888 dB below σ_SF=7.82 dB floor — mild overfitting from 1.75 km cal range spanning multiple physics regimes
 - ON N grows slowly beyond 1 km (125→148→164) — scatter paths drying up in deep NLOS
 
-### London Run 5 — Planned (pending Run 4 completion)
+### London Run 5 — FAILED (degenerate LOS-only calibration)
 
-**Root cause of Run 4 R² drop beyond 1 km:** CAL_MAX_DIST_KM=1.75 km spans LOS (0-458m) + NLOS transition + deep NLOS. CMA material parameters average over conflicting physics regimes. Same problem as 2695 MHz Run 1 (R²=0.246) — fixed by restricting to CAL_MAX_DIST_KM=1.0 km (below Rbp=916m) → R²=0.574.
+**Root cause of Run 4 R² drop beyond 1 km:** CAL_MAX_DIST_KM=1.75 km spans LOS (0-458m) + NLOS transition + deep NLOS. CMA material parameters average over conflicting physics regimes.
 
-**Constraint:** CAL_CMA_SAMPLES=15M maximum — 30M causes GPU OOM on London scene.
+**Run 5 attempted fix:** CAL_MAX_DIST_KM=0.45 km (below Rbp=458m, pure LOS), 3 free materials, 26 cal RX.
 
-| Parameter | Run 4 | Run 5 | Reason |
-|-----------|-------|-------|--------|
-| `CAL_MAX_DIST_KM` | 1.75 | **0.45** | calibrate below Rbp=458m (pure LOS regime) |
-| Free materials | 5 | **3** (brick, concrete, glass) | ~35 cal RX within 0.45 km — reduce params to prevent overfit |
-| `N_SCALAR_BINS` | 10 | **15** | finer resolution around 458m LOS/NLOS transition |
-| `CAL_CMA_SAMPLES` | 15M | 15M | GPU OOM at 30M — keep |
-| `LOS_NLOS_ZONE_SPLIT` | True | True | keep — eval-time LOS/NLOS mean split |
-| Lock additionally | — | concrete_barrier, itu_wet_ground | primarily NLOS-zone materials; unreliable on LOS-only cal data |
+**Why it failed — degenerate calibration:**
+- 9 CMA params on 26 LOS-only receivers → extreme overfitting
+- Cal RMSE=2.779 dB (1.2 dB BELOW LOS σ_SF=4.0 dB physics floor) — not real, just overfit
+- Degenerate solution: global scalar=+31 dB cancelled by bin scalars of -29 to -33 dB per bin
+- CELL 8e confirmed: RMSE=21.7 dB at 0-500m vs Run 4's 8.8 dB — catastrophic failure
 
-**Risk:** if Phase 0 prints fewer than 30 cal RX → raise CAL_MAX_DIST_KM to 0.60 km.
-**Expected result:** R² 0.40-0.50 at 0-1000m (same mechanism as 2695 MHz Rbp fix: R² 0.246→0.574).
+**DECISION: Run 4 (R²=0.365) accepted as FINAL. No further London 915 MHz retries.**
 
 ### London CELL 8e Run 1 Results (100M samples, ON incoh best method)
 
@@ -1060,27 +1057,27 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | Run 2 (CMA, 30M) — COMPLETE | **6.646 dB** | **+38.295 dB** | **0.219** | itu_metal freed (bug); metal_barrier no σ cap |
 | **Run 3 (CMA, 15M, popsize=36) — CONVERGED (eval 223, best=6.601 dB)** | **6.601 dB** | **+38.656 dB** | **TBD — CELL 8e pending** | metals fixed; concrete_barrier S≤0.70; dry_ground S≤0.50; 10 free mats (142 cal RX — overfitting risk); CELL 4A → CELL 8e next |
 | **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.335 at 0-2000m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE through 0-2000m |
-| **Run 5 (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-25)** | TBD | +31.035 dB (Phase 0) | TBD — CELL 8e pending | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); Phase 0 RMSE=12.78 dB; eval 601 best=**2.779 dB** (1.2 dB BELOW LOS σ_SF=4.0 dB — still descending) |
+| **Run 5 (CMA, 15M, popsize=36) — FAILED (2026-08-25)** | **2.779 dB** (overfit) | **+31.035 dB** | **R²=-14.944 at 0-500m** | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); cal RMSE=2.779 dB (1.2 dB below LOS floor — degenerate); CELL 8e RMSE=21.7 dB at 0-500m vs Run 4's 8.8 dB; +31 dB scalar cancelled by -30 dB bin corrections — physically meaningless |
 
-**Run 5 CMA descent (popsize=36, LOS-only cal, 26 RX, 0.15-0.45 km):**
+**Run 5 CMA descent (popsize=36, LOS-only cal, 26 RX, 0.15-0.45 km) — documented for reference:**
 
 | Generation | Evals | Best RMSE | Notes |
 |-----------|-------|-----------|-------|
 | Phase 0 | — | 12.78 dB | scalar=+31.035 dB |
 | 1 | 1-36 | **4.409 dB** | at LOS σ_SF=4.0 dB floor; wide exploration (4.4-14.2 dB range) |
-| 2 | 37-72 | **3.495 dB** (eval 39) | **BELOW** LOS σ_SF=4.0 dB floor — outstanding |
+| 2 | 37-72 | **3.495 dB** (eval 39) | BELOW LOS σ_SF=4.0 dB floor — overfitting signal |
 | 3-7 | 73-252 | **3.495 dB** | CMA covariance rotating; plateau |
 | 8 | 253-288 | **3.480 dB** (eval 276) | slow descent resumes |
-| 9 | 289-324 | **3.187 dB** (eval 308) | new minimum; via 3.343 (eval 291) |
+| 9 | 289-324 | **3.187 dB** (eval 308) | new minimum |
 | 10-12 | 325-432 | **3.187 dB** | holding |
 | 13 | 433-468 | **2.831 dB** (eval 451) | sharp breakthrough |
 | 14-16 | 469-576 | **2.831 dB** | holding |
-| 17 (partial) | 577-605 | **2.779 dB** (eval 601) | still descending |
+| 17 (partial) | 577-601 | **2.779 dB** (eval 601) | kernel frozen — JSON saved |
 
-- Best 2.779 dB at eval 601 — 1.2 dB BELOW LOS physics floor (σ_SF=4.0 dB)
-- Only 3 free materials (brick, concrete, glass); 26 cal RX — 9 params on 26 points; mild overfitting risk
-- Improvement rate slowing (gen 16→17: Δ=0.052 dB) — tolfun=0.1 convergence imminent
-- Next: wait for FTOL → CELL 4A → CELL 8e (target R²=0.40-0.55 at 0-1000m; overfitting risk means actual gain uncertain)
+- Cal RMSE=2.779 dB at eval 601 — physically impossible (below LOS floor 4.0 dB) → degenerate
+- CELL 8e (partial, Run 5 materials): RMSE=21.7 dB at 0-500m (vs Run 4: 8.8 dB) → confirmed failure
+- Bin scalars: d≈0.26km: -29.39 dB; d≈0.28km: -32.55 dB; d≈0.36km: -30.00 dB — cancels global scalar
+- **Run 4 (R²=0.365) is FINAL. No further London 915 MHz retries.**
 
 **Run 4 calibrated materials (2026-08-24, eval 441, best=6.888 dB):**
 
