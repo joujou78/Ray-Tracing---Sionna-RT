@@ -877,7 +877,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 ## London 1802 MHz Status (sionna2_1802mhz_dem_simulation_london.ipynb)
 
-**CMA Run 1 IN PROGRESS (2026-08-25). Phase 0 complete. eval 596 best=12.477 dB (eval 592) — plateau broken, new minimum. 5 free mats, 109 cal RX (0.15-0.9 km).**
+**CMA Run 1 IN PROGRESS (2026-08-25). Phase 0 complete. eval 605 best=12.477 dB (eval 589) — plateau broken, still descending. 5 free mats, 109 cal RX (0.15-0.9 km).**
 
 ### London 1802 MHz CMA Run 1 — Calibration Progress
 
@@ -894,7 +894,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 | Phase 1 eval 302 | **12.733 dB** | — | new best; gen ~8 |
 | Phase 1 eval 407 | **12.642 dB** | — | new best; gen ~11 |
 | Phase 1 eval 554 | **12.642 dB** | — | holding 147 evals (~4 gens plateau) |
-| Phase 1 eval 592 | **12.477 dB** | — | new best — plateau broken; gen ~16 |
+| Phase 1 eval 589 | **12.477 dB** | — | new best — plateau broken after 182 evals; gen ~16 |
 
 **Configuration:**
 | Parameter | Value | Notes |
@@ -1063,7 +1063,7 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | **Run 3 (CMA, 15M, popsize=36) — CONVERGED (eval 223, best=6.601 dB)** | **6.601 dB** | **+38.656 dB** | **TBD — CELL 8e pending** | metals fixed; concrete_barrier S≤0.70; dry_ground S≤0.50; 10 free mats (142 cal RX — overfitting risk); CELL 4A → CELL 8e next |
 | **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.335 at 0-2000m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE through 0-2000m |
 | **Run 5 (CMA, 15M, popsize=36) — FAILED (2026-08-25)** | **2.779 dB** (overfit) | **+31.035 dB** | **R²=-14.944 at 0-500m** | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); cal RMSE=2.779 dB (1.2 dB below LOS floor — degenerate); CELL 8e RMSE=21.7 dB at 0-500m vs Run 4's 8.8 dB; +31 dB scalar cancelled by -30 dB bin corrections — physically meaningless |
-| **Run 6 (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-25)** | latest: **5.290 dB** (eval 119) | +32.791 dB (Phase 0) | TBD — CELL 8e pending | 4 free mats: brick/concrete/glass/wet_ground (62 cal RX, 0.15-0.65 km); concrete_barrier+water_rt locked; 15 bins; Phase 0 RMSE=7.99 dB; gen 1 best=6.132 dB; gen 2 best=5.746 dB (eval 56); gen 3 best=5.290 dB (eval 119) — below mixed LOS/NLOS physics floor |
+| **Run 6 (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-25)** | eval 309 latest: **4.957 dB** (eval 290) | +32.791 dB (Phase 0) | TBD — CELL 8e pending | 4 free mats: brick/concrete/glass/wet_ground (62 cal RX, 0.15-0.65 km); concrete_barrier+water_rt locked; 15 bins; Phase 0 RMSE=7.99 dB; gen 1 best=6.132 dB; gen 2 best=5.746 dB (eval 56); gen 3 best=5.507 dB (eval 80); gen 4 best=5.290 dB (eval 119); gen 5-8 holding 170 evals; gen 9 best=4.957 dB (eval 290) — below LOS floor 5.0 dB |
 
 **Run 5 CMA descent (popsize=36, LOS-only cal, 26 RX, 0.15-0.45 km) — documented for reference:**
 
@@ -1129,9 +1129,11 @@ _S_MAX_PER_MAT['itu_medium_dry_ground'] = 0.50
 - Eval 19: best=6.471 dB — new minimum
 - Eval 23: best=**6.203 dB** — beats Run 4 final (6.888 dB), still gen 1
 - Eval 35: best=**6.132 dB** — end of gen 1; gen 2 started
-- Eval 56: best=**5.746 dB** — new minimum; gen 2 in progress
-- Eval 56: best=**5.507 dB** — gen 2 continuing
-- Eval 119: best=**5.290 dB** — new minimum; gen 3; below mixed LOS/NLOS physics floor (~5-6 dB)
+- Eval 56: best=**5.746 dB** — gen 2 breakthrough
+- Eval 80: best=**5.507 dB** — gen 3 breakthrough
+- Eval 119: best=**5.290 dB** — gen 4 breakthrough; below mixed LOS/NLOS physics floor
+- Gen 5-8 (evals 145-288): holding 5.290 dB for 170 evals — CMA covariance rotating
+- Eval 290: best=**4.957 dB** — gen 9 breakthrough; below 5.0 dB; FTOL imminent
 
 **Run 4 calibrated materials (2026-08-24, eval 441, best=6.888 dB):**
 
