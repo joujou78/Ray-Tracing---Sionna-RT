@@ -890,7 +890,8 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 | Phase 1 eval 47 | **13.312 dB** | — | new best; gen 2 |
 | Phase 1 eval 68 | **13.226 dB** | — | new best |
 | Phase 1 eval 145 | **12.919 dB** | — | new best; gen 5 breakthrough |
-| Phase 1 eval 207 | **12.756 dB** | — | new best; gen 6 — still descending |
+| Phase 1 eval 207 | **12.756 dB** | — | new best; gen 6 |
+| Phase 1 eval ~444 | **12.642 dB** | — | new best; gen ~12 — still descending slowly |
 
 **Configuration:**
 | Parameter | Value | Notes |
