@@ -877,7 +877,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 ## London 1802 MHz Status (sionna2_1802mhz_dem_simulation_london.ipynb)
 
-**CMA Run 1 IN PROGRESS (2026-08-25). Phase 0 complete. Best so far: 12.756 dB at eval 207 (eval 271 — still holding).**
+**CMA Run 1 IN PROGRESS (2026-08-25). Phase 0 complete. eval 554 best=12.642 dB (eval 407) — 4-gen plateau, convergence imminent. 5 free mats, 109 cal RX (0.15-0.9 km).**
 
 ### London 1802 MHz CMA Run 1 — Calibration Progress
 
@@ -891,7 +891,9 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 | Phase 1 eval 68 | **13.226 dB** | — | new best |
 | Phase 1 eval 145 | **12.919 dB** | — | new best; gen 5 breakthrough |
 | Phase 1 eval 207 | **12.756 dB** | — | new best; gen 6 |
-| Phase 1 eval ~444 | **12.642 dB** | — | new best; gen ~12 — still descending slowly |
+| Phase 1 eval 302 | **12.733 dB** | — | new best; gen ~8 |
+| Phase 1 eval 407 | **12.642 dB** | — | new best; gen ~11 |
+| Phase 1 eval 554 | **12.642 dB** | — | holding 147 evals (~4 gens plateau) — convergence imminent |
 
 **Configuration:**
 | Parameter | Value | Notes |
@@ -911,7 +913,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 **CMA Run 1 COMPLETE (2026-08-22): eval 283, best=6.646 dB, scalar=+38.295 dB. CELL 8e COMPLETE.**
 **CMA Run 4 COMPLETE (2026-08-24): eval 441, best=6.888 dB, scalar=+28.766 dB. CELL 8e COMPLETE. FINAL — R²=0.365 at 0-1000m (peak), R²=0.335 at 0-2000m.**
 **CMA Run 5 FAILED (2026-08-25): degenerate LOS-only calibration — 26 cal RX overfitted; +31 dB scalar cancelled by -30 dB bin corrections; CELL 8e RMSE=21.7 dB at 0-500m (vs Run 4: 8.8 dB).**
-**CMA Run 6 IN PROGRESS (2026-08-25): CAL_MAX_DIST_KM=0.65 km, 62 cal RX, 4 free mats. Phase 0 RMSE=7.99 dB (scalar=+32.791 dB). Eval 23 best=6.203 dB — beats Run 4 final (6.888 dB) in gen 1.**
+**CMA Run 6 IN PROGRESS (2026-08-25): CAL_MAX_DIST_KM=0.65 km, 62 cal RX, 4 free mats. Phase 0 RMSE=7.99 dB (scalar=+32.791 dB). Eval 35 gen 1 best=6.132 dB — beats Run 4 final (6.888 dB); gen 2 in progress.**
 
 ### London CELL 8e Run 4 Results — COMPLETE (100M samples, ON incoh best method)
 
