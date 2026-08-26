@@ -396,7 +396,7 @@ Full distance breakdown (ON incoh — best method):
 - Runs 3-9 all failed: transparent discs (Runs 3-8) → building scatter flood; HF discs (Run 9) → vegetation scatter flood
 - Root cause: Run 2 used ceiling_board er=17 ACTIVE during calibration (DISABLE_VEG_DISCS=False at cal time), giving different scatter budget (scalar=-2.305 dB). All subsequent runs use transparent or HF discs — optimizer compensates by saturating building/disc S, causing scatter flood.
 - Run 6 CELL 8e evidence: ON incoh bias=+5.5 dB at 0-900m, avg_rays ON/OFF=178x, R²=0.019 at 0-1250m — scalar≈+9.9 dB with brick/concrete S→cap → scatter flood from buildings.
-- Run 9 CELL 8e evidence: ON incoh bias=+7.6 dB at 0-750m, +5.7 dB at 0-900m, avg_rays ON/OFF=354x/341x, R²=-1.495/-1.202 — scatter flood does NOT recover with distance (HF 3-layer discs uniformly flood; old scene single-layer discs did not).
+- Run 9 CELL 8e evidence: ON incoh bias=+7.6 dB at 0-750m, +5.7 dB at 0-900m/0-1000m, avg_rays ON/OFF=354x/341x/337x, R²=-1.495/-1.202/-0.652 — scatter flood does NOT recover with distance (HF 3-layer discs uniformly flood; old scene single-layer discs did not). Run 2 had R²=0.321/0.408/0.515 at those same ranges.
 - **Run 2 JSON files overwritten** by a later partial run (Phase 0 checkpoint: scalar=+4.725 dB, water_rt S=0.613 — scatter flood trigger). Do NOT load for CELL 8e.
 - R²=0.574 result is fully documented in CLAUDE.md tables above — this is the thesis result.
 - To reproduce: DISABLE_VEG_DISCS=False, CAL_SAMPLES_PS=10M, CELL CAL (Powell) → ~15-20 hr run.
