@@ -105,6 +105,9 @@ project note) versus provided directly by the student.
 [30] E. Uuemaa, S. Ahi, B. Montibeller, M. Muru, and A. Kmoch, "Vertical Accuracy of Freely Available Global Digital Elevation Models (ASTER, AW3D30, MERIT, TanDEM-X, SRTM, and NASADEM)," *Remote Sens.*, vol. 12, no. 21, art. 3482, 2020. doi: 10.3390/rs12213482.
 — Verified via search (DOI, MDPI listing, multiple citation-index confirmations), 2026-08-19. Used to support the terrain-resolution/accuracy comparison between SRTM (Scar Hill) and LiDAR (Nottingham/London) in Section 2.1.4.
 
+[31] N. Hansen and A. Ostermeier, "Completely Derandomized Self-Adaptation in Evolution Strategies," *Evolutionary Computation*, vol. 9, no. 2, pp. 159–195, 2001. doi: 10.1162/106365601750190398.
+— Verified via search (DOI, MIT Press Evolutionary Computation listing), 2026-08-26. The canonical CMA-ES (Covariance Matrix Adaptation Evolution Strategy) reference; introduced in Chapter 4 as the optimiser adopted for the final material-calibration passes (`cma` Python package), replacing Powell's method [28] for the joint parameter search once verified in the project's own committed notebooks (`sionna2_1802mhz_dem_simulation.ipynb`, `CELL CAL-CMA`) as a real, implemented alternative back-end with documented rationale for the switch.
+
 ---
 
 ## Not used — could not verify, do not cite
