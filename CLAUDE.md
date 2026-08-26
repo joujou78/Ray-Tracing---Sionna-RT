@@ -883,7 +883,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 **CMA Run 1 FAILED (2026-08-26): eval 605, best=12.477 dB — kernel hung at eval 605. CELL 8e: scatter flood (392x ON/OFF ratio), -30 dB bias, R² negative at all ranges. Root cause: CAL_MAX_DIST_KM=0.90 ≈ Rbp=0.901 (regime mixing) + S caps too loose (brick S=0.449 at cap).**
 **CMA Run 2 STALLED (2026-08-26): eval 286, best=15.584 dB — S caps 0.35 too tight; only 0.168 dB improvement over 200 evals (gens 3-8). Interrupted.**
-**CMA Run 3 PLANNED: CAL_MAX_DIST_KM=0.75, S caps brick/concrete ≤0.40, 5 free mats, 86 cal RX.**
+**CMA Run 3 IN PROGRESS: CAL_MAX_DIST_KM=0.75, S caps brick/concrete ≤0.40, 5 free mats, 86 cal RX. eval 195 best=14.912 dB — descending past Run 2 plateau (15.584 dB).**
 
 ### London 1802 MHz CMA Run 1 — Calibration Progress
 
