@@ -922,7 +922,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 | Run 1 (CMA, 15M) | 5 free, CAL_MAX=0.90, S caps brick/concrete 0.45 | 109 | +30.030 dB | 12.477 dB (eval 605) | **FAILED** | kernel hung eval 605; CELL 8e scatter flood 392x ON/OFF; R² negative all ranges; root cause: CAL_MAX≈Rbp (regime mixing) + concrete_barrier/metal_barrier uncapped |
 | Run 2 (CMA, 15M) | 5 free, CAL_MAX=0.75, S caps 0.35 | 86 | — | 15.584 dB (eval 286) | **STALLED** | S=0.35 too tight; only 0.168 dB improvement over 200 evals |
 | Run 3 (CMA, 15M) | 5 free, CAL_MAX=0.75, S caps brick/concrete 0.40 | 86 | +30.696 dB | 14.891 dB (eval 348) | **STALLED** | brick S=0.400 at cap exactly — CMA trapped against bound |
-| **Run 4 (CMA, 15M) — IN PROGRESS** | 5 free, CAL_MAX=0.75, S caps brick/concrete **0.45**, metals locked | 86 | +30.696 dB | **14.680 dB** (eval 115, gen 3) | **RUNNING** | broke past Run 3 plateau (14.891 dB) at eval 115; gen 3 descending |
+| **Run 4 (CMA, 15M) — IN PROGRESS** | 5 free, CAL_MAX=0.75, S caps brick/concrete **0.45**, metals locked | 86 | +30.696 dB | **14.428 dB** (eval 136, gen 3) | **RUNNING** | gen 3 descending (14.891→14.680→14.428 dB) |
 
 ---
 
