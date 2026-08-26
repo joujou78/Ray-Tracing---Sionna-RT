@@ -400,6 +400,7 @@ Full distance breakdown (ON incoh — best method):
 - **Run 2 JSON files overwritten** by a later partial run (Phase 0 checkpoint: scalar=+4.725 dB, water_rt S=0.613 — scatter flood trigger). Do NOT load for CELL 8e.
 - R²=0.574 result is fully documented in CLAUDE.md tables above — this is the thesis result.
 - To reproduce: DISABLE_VEG_DISCS=False, CAL_SAMPLES_PS=10M, CELL CAL (Powell) → ~15-20 hr run.
+- **Reproduction IN PROGRESS (2026-08-26):** CELL 4A fixed (`470ab4a`, `2959d6b`) to explicitly set ceiling_board er=17, sigma=0.15, S=0.50 when DISABLE_VEG_DISCS=False. CELL CAL (Powell) running — Phase 0 scalar=+6.200 dB (was +9.669 dB before fix; -2.305 dB requires CAL_MAX_DIST_KM=1.5 for 618 cal RX). Powell descending from 14.40 dB. SCENE_BASE_DIR confirmed = 1802 MHz DEM (old scene). Await FTOL → CELL 4A → CELL 8e.
 - **No further calibration attempts planned for 2695 MHz.**
 
 ### 2695 MHz Calibration History
@@ -883,7 +884,8 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 **CMA Run 1 FAILED (2026-08-26): eval 605, best=12.477 dB — kernel hung at eval 605. CELL 8e: scatter flood (392x ON/OFF ratio), -30 dB bias, R² negative at all ranges. Root cause: CAL_MAX_DIST_KM=0.90 ≈ Rbp=0.901 (regime mixing) + S caps too loose (brick S=0.449 at cap).**
 **CMA Run 2 STALLED (2026-08-26): eval 286, best=15.584 dB — S caps 0.35 too tight; only 0.168 dB improvement over 200 evals (gens 3-8). Interrupted.**
-**CMA Run 3 IN PROGRESS: CAL_MAX_DIST_KM=0.75, S caps brick/concrete ≤0.40, 5 free mats, 86 cal RX. eval 297 best=14.891 dB — slow descent past Run 2 plateau (15.584 dB).**
+**CMA Run 3 STALLED (2026-08-26): eval 348, best=14.891 dB — brick S=0.400 at cap (exact), CMA trapped. Interrupted. Root cause: S cap 0.40 too tight; brick optimizer wants S > 0.40.**
+**CMA Run 4 IN PROGRESS (2026-08-26): S caps brick/concrete raised to 0.45, scalar=+30.696 dB, 86 cal RX (0.15-0.75 km). eval 18 best=15.592 dB — gen 1 descending (eval 7: 15.777 dB, eval 6: 16.693 dB).**
 
 ### London 1802 MHz CMA Run 1 — Calibration Progress
 
@@ -913,6 +915,15 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 | itu_ceiling_board | er=17.0, sigma=0.10, S=0.35 | locked — ITU-R P.833 at 1.8 GHz |
 | Frequency | 1802.5 MHz | Rbp=901m |
 
+### London 1802 MHz Calibration History
+
+| Run | Settings | Cal RX | Scalar | Best RMSE | Status | Notes |
+|-----|----------|--------|--------|-----------|--------|-------|
+| Run 1 (CMA, 15M) | 5 free, CAL_MAX=0.90, S caps brick/concrete 0.45 | 109 | +30.030 dB | 12.477 dB (eval 605) | **FAILED** | kernel hung eval 605; CELL 8e scatter flood 392x ON/OFF; R² negative all ranges; root cause: CAL_MAX≈Rbp (regime mixing) + concrete_barrier/metal_barrier uncapped |
+| Run 2 (CMA, 15M) | 5 free, CAL_MAX=0.75, S caps 0.35 | 86 | — | 15.584 dB (eval 286) | **STALLED** | S=0.35 too tight; only 0.168 dB improvement over 200 evals |
+| Run 3 (CMA, 15M) | 5 free, CAL_MAX=0.75, S caps brick/concrete 0.40 | 86 | +30.696 dB | 14.891 dB (eval 348) | **STALLED** | brick S=0.400 at cap exactly — CMA trapped against bound |
+| **Run 4 (CMA, 15M) — IN PROGRESS** | 5 free, CAL_MAX=0.75, S caps brick/concrete **0.45**, metals locked | 86 | +30.696 dB | **15.592 dB** (eval 18, gen 1) | **RUNNING** | gen 1 descending (15.777→15.592 dB); expect to break past 14.891 dB within gen 1-2 |
+
 ---
 
 ## London 915 MHz Status (sionna2_915mhz_dem_simulation_london.ipynb)
@@ -921,7 +932,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 **CMA Run 4 COMPLETE (2026-08-24): eval 441, best=6.888 dB, scalar=+28.766 dB. CELL 8e COMPLETE. FINAL — R²=0.365 at 0-1000m (peak), R²=0.335 at 0-2000m.**
 **CMA Run 5 FAILED (2026-08-25): degenerate LOS-only calibration — 26 cal RX overfitted; +31 dB scalar cancelled by -30 dB bin corrections; CELL 8e RMSE=21.7 dB at 0-500m (vs Run 4: 8.8 dB).**
 **CMA Run 6 FAILED (2026-08-26): CAL_MAX_DIST_KM=0.65 km, 62 cal RX — overfitted; bin scalars -37 to -55 dB; R²=-0.639 at 0-1000m, negative at ALL ranges. Run 4 (R²=0.365) accepted as FINAL.**
-**CMA Run 4 REPRODUCTION IN PROGRESS (2026-08-26): restoring Run 4 settings — CAL_MAX_DIST_KM=1.75, 223 cal RX, 5 free mats (brick/concrete/glass/wet_ground/concrete_barrier), water_rt locked. Phase 0: +38.831 dB scalar, 11.56 dB RMSE (143/223 valid). Gen 2 (eval 48): best=**7.597 dB** — tracking Run 4 trajectory (final 6.888 dB). Await FTOL → CELL 4A → CELL 8e.**
+**CMA Run 4 REPRODUCTION IN PROGRESS (2026-08-26): restoring Run 4 settings — CAL_MAX_DIST_KM=1.75, 223 cal RX, 5 free mats (brick/concrete/glass/wet_ground/concrete_barrier), water_rt locked. Phase 0: +38.831 dB scalar, 11.56 dB RMSE (143/223 valid). Gen 3 (eval 86): best=**7.048 dB** — tracking Run 4 trajectory (final 6.888 dB). Await FTOL → CELL 4A → CELL 8e.**
 
 ### London CELL 8e Run 4 Results — COMPLETE (100M samples, ON incoh best method)
 
@@ -1511,6 +1522,8 @@ Solid slabs rejected: Sionna has no path-integral absorption — a box just adds
 | `b15eb12` | 2695/3602 MHz CELL 8e | Double vegetation fix: `_apply_weissberger` skips if PER_PATH_VEG=True — per-receiver was applied after bin scalar (fit without Weissberger) → inconsistent pipeline |
 | `b15eb12` | 2695/3602 MHz CELL 8e | Height filter: per-path skips segments where min(z0,z1) > 30m scene-local — paths above canopy level were incorrectly counted as traversing vegetation |
 | `b15eb12` | 3602 MHz CELL 1 | N_SCALAR_BINS 5 → 10: finer binning better resolves sharp 700m NLOS transition |
+| `470ab4a` | 2695 MHz CELL 4A | Missing `else` branch: when DISABLE_VEG_DISCS=False, ceiling_board was never explicitly set to er=17 — Sionna default (er~1) persisted → Phase 0 scalar +9.669 dB instead of -2.305 dB (Run 2 target) |
+| `2959d6b` | 2695 MHz CELL 4A | Also set S=VEG_SCATTERING_COEFF=0.50 in the else branch — S=0.10 default caused cal/eval scatter budget mismatch; S=0.50 gives consistent scatter budget between CELL CAL and CELL 8e |
 
 ---
 
