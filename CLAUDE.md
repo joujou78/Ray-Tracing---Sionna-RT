@@ -266,6 +266,7 @@ Simulation:    CELL 0 → CELL 1 → TX AGL scan → CELL CAL → CELL 4A → CE
 ## Nottingham 2695 MHz Status (sionna2_2695mhz_dem_simulation.ipynb)
 
 **Run 2 CELL 8e complete (2026-08-09). Best result: R²=0.574 at 0-1250m (ON incoh) — beats 1802 MHz at same range (R²=0.509).**
+**Run 9 (HF scene) CELL 8e FAILED (2026-08-26): scatter flood from 3-layer HF discs — R²=-1.495 at 0-750m, avg_rays ON/OFF=354x, bias=+7.6 dB. Run 2 (R²=0.574) confirmed as 2695 MHz FINAL. HF scene unusable for 2695 MHz.**
 
 ### Site parameters (from nottingham2695.csv header)
 | Parameter | Value |
@@ -410,7 +411,7 @@ Full distance breakdown (ON incoh — best method):
 | **Run 6 — CMA-ES (30M, popsize=12, tolfun=0.03) — STOPPED** | 30M samples, old popsize/tolfun; Phase 0 scalar=+9.900 dB, RMSE=15.02 dB | 373/373 valid | +9.900 dB | eval 440 best: **11.768 dB** (eval 456 latest) | Stopped — same transparent-disc problem as all runs after Run 2 |
 | **Run 7 — CMA-ES (30M, popsize=36, tolfun=0.10) — FAILED** | Same + water_rt uncapped; stuck at 12.654 dB from eval 175→370 | 373/373 valid | — | **12.654 dB** | water_rt σ→0.0000, S=0.665 → River Trent 57,420 scatter paths at <300m → bias +26 dB at 0-300m (scatter flood); stopped |
 | **Run 8 — CMA-ES (30M, popsize=36) — NOT RUN** | Run 7 + `_SIG_MIN_PER_MAT['water_rt']=0.50`, `_S_MAX_PER_MAT['water_rt']=0.10` (commit `1c86669`) | — | — | — | water_rt caps added but CELL CAL-CMA never executed — not recommended; analysis predicts optimizer compensates by saturating brick/concrete S→cap, shifting scatter flood to buildings (same as Runs 3-7) |
-| **Run 9 — CMA-ES HF scene (30M CMA, popsize=36) — IN PROGRESS (2026-08-25, restarted)** | Two bugs fixed (commit `61376a1`): ceiling_board er=17.0 active; CELL 4A S=0 override removed. HF scene. Phase 0: scalar=+11.981 dB, RMSE=15.54 dB. 373 cal RX. 6 free mats (water_rt, glass, concrete, brick, very_dry_ground, wet_ground). eval 462 latest: best=**13.013 dB** (via 14.924→14.182→13.971→13.744→13.503→13.475→13.121→**13.013**). Still descending. | 373 (0 NF) | +11.981 dB | eval 462: **13.013 dB** (gen 11-12 — increments shrinking, approaching floor) | Restarted after GPU kill — exceeded previous best (13.744 dB) at eval 168 |
+| **Run 9 — CMA-ES HF scene (30M CMA, popsize=36) — FAILED (2026-08-26, CELL 8e scatter flood)** | Two bugs fixed (commit `61376a1`): ceiling_board er=17.0 active; CELL 4A S=0 override removed. HF scene. Phase 0: scalar=+11.981 dB, RMSE=15.54 dB. 373 cal RX. 6 free mats (water_rt, glass, concrete, brick, very_dry_ground, wet_ground). Cal converged: eval 462 best=**13.013 dB**. CELL 8e 0-750m: ON incoh bias=+7.6 dB, RMSE=15.9 dB, R²=**-1.495**, avg_rays ON/OFF=354x — scatter flood from HF 3-layer discs. Run 2 had R²=0.321 there. Root cause: HF scene has 3x more disc layers at 4x density (10m vs 20m spacing) — scatter budget during calibration inconsistent with CELL 8e evaluation. **Run 2 (R²=0.574) remains FINAL for 2695 MHz.** | 373 (0 NF) | +11.981 dB | CELL 8e FAILED: R²=-1.495 at 0-750m | HF scene unusable for 2695 MHz — 3-layer discs flood scatter; old scene (Run 2) is the physics ceiling |
 
 **Run 3 calibration notes:**
 - 211 evals / 996.5 min — Powell converged (FTOL)
@@ -916,7 +917,8 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 **CMA Run 1 COMPLETE (2026-08-22): eval 283, best=6.646 dB, scalar=+38.295 dB. CELL 8e COMPLETE.**
 **CMA Run 4 COMPLETE (2026-08-24): eval 441, best=6.888 dB, scalar=+28.766 dB. CELL 8e COMPLETE. FINAL — R²=0.365 at 0-1000m (peak), R²=0.335 at 0-2000m.**
 **CMA Run 5 FAILED (2026-08-25): degenerate LOS-only calibration — 26 cal RX overfitted; +31 dB scalar cancelled by -30 dB bin corrections; CELL 8e RMSE=21.7 dB at 0-500m (vs Run 4: 8.8 dB).**
-**CMA Run 6 IN PROGRESS (2026-08-25): CAL_MAX_DIST_KM=0.65 km, 62 cal RX, 4 free mats. Phase 0 RMSE=7.99 dB (scalar=+32.791 dB). Eval 35 gen 1 best=6.132 dB — beats Run 4 final (6.888 dB); gen 2 in progress.**
+**CMA Run 6 FAILED (2026-08-26): CAL_MAX_DIST_KM=0.65 km, 62 cal RX — overfitted; bin scalars -37 to -55 dB; R²=-0.639 at 0-1000m, negative at ALL ranges. Run 4 (R²=0.365) accepted as FINAL.**
+**CMA Run 4 REPRODUCTION IN PROGRESS (2026-08-26): restoring Run 4 settings — CAL_MAX_DIST_KM=1.75, 223 cal RX, 5 free mats (brick/concrete/glass/wet_ground/concrete_barrier), water_rt locked. Phase 0: +38.831 dB scalar, 11.56 dB RMSE (143/223 valid). Eval 5 best=9.378 dB — gen 1 still running; strong start (already below Phase 0 RMSE). Await FTOL → CELL 4A → CELL 8e.**
 
 ### London CELL 8e Run 4 Results — COMPLETE (100M samples, ON incoh best method)
 
@@ -1067,6 +1069,7 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.335 at 0-2000m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE through 0-2000m |
 | **Run 5 (CMA, 15M, popsize=36) — FAILED (2026-08-25)** | **2.779 dB** (overfit) | **+31.035 dB** | **R²=-14.944 at 0-500m** | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); cal RMSE=2.779 dB (1.2 dB below LOS floor — degenerate); CELL 8e RMSE=21.7 dB at 0-500m vs Run 4's 8.8 dB; +31 dB scalar cancelled by -30 dB bin corrections — physically meaningless |
 | **Run 6 (CMA, 15M, popsize=36) — FAILED (2026-08-26)** | **4.957 dB** (eval 290, 557 total) | +32.791 dB | **R²=-0.639 at 0-1000m; negative at ALL ranges** | 4 free mats: brick/concrete/glass/wet_ground (62 cal RX, 0.15-0.65 km); cal RMSE below physics floor (overfitting); bin scalars -37 to -55 dB (18 dB spread) → materials don't generalise; bias flips sign at ~400m (-3.9 dB @ 0-300m → +5.6 dB @ 0-1000m); WORSE than Run 4 at all ranges |
+| **Run 4 repro (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-26)** | — | +38.831 dB | eval 5 best=9.378 dB (gen 1) | 5 free mats (223 cal RX, 0.15-1.75 km); water_rt locked; concrete_barrier free; S caps brick/concrete 0.45, concrete_barrier 0.70; reproducing Run 4 settings exactly |
 
 **Run 5 CMA descent (popsize=36, LOS-only cal, 26 RX, 0.15-0.45 km) — documented for reference:**
 
@@ -1087,7 +1090,7 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 - CELL 8e (partial, Run 5 materials): RMSE=21.7 dB at 0-500m (vs Run 4: 8.8 dB) → confirmed failure
 - Bin scalars: d≈0.26km: -29.39 dB; d≈0.28km: -32.55 dB; d≈0.36km: -30.00 dB — cancels global scalar
 
-### London Run 6 — IN PROGRESS (2026-08-25)
+### London Run 6 — FAILED (2026-08-26)
 
 **Fix:** CAL_MAX_DIST_KM=0.65 km (just above Rbp=458m) — captures LOS + early NLOS, avoids deep NLOS mixing. Same mechanism as 2695 MHz Rbp fix (R² 0.246→0.574).
 
