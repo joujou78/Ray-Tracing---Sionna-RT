@@ -921,7 +921,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 **CMA Run 4 COMPLETE (2026-08-24): eval 441, best=6.888 dB, scalar=+28.766 dB. CELL 8e COMPLETE. FINAL — R²=0.365 at 0-1000m (peak), R²=0.335 at 0-2000m.**
 **CMA Run 5 FAILED (2026-08-25): degenerate LOS-only calibration — 26 cal RX overfitted; +31 dB scalar cancelled by -30 dB bin corrections; CELL 8e RMSE=21.7 dB at 0-500m (vs Run 4: 8.8 dB).**
 **CMA Run 6 FAILED (2026-08-26): CAL_MAX_DIST_KM=0.65 km, 62 cal RX — overfitted; bin scalars -37 to -55 dB; R²=-0.639 at 0-1000m, negative at ALL ranges. Run 4 (R²=0.365) accepted as FINAL.**
-**CMA Run 4 REPRODUCTION IN PROGRESS (2026-08-26): restoring Run 4 settings — CAL_MAX_DIST_KM=1.75, 223 cal RX, 5 free mats (brick/concrete/glass/wet_ground/concrete_barrier), water_rt locked. Phase 0: +38.831 dB scalar, 11.56 dB RMSE (143/223 valid). Gen 1 complete (eval 36): best=**7.950 dB** (eval 35) — below NLOS physics floor (σ_SF=7.82 dB). Tracking Run 4 trajectory (final 6.888 dB). Await FTOL → CELL 4A → CELL 8e.**
+**CMA Run 4 REPRODUCTION IN PROGRESS (2026-08-26): restoring Run 4 settings — CAL_MAX_DIST_KM=1.75, 223 cal RX, 5 free mats (brick/concrete/glass/wet_ground/concrete_barrier), water_rt locked. Phase 0: +38.831 dB scalar, 11.56 dB RMSE (143/223 valid). Gen 2 (eval 48): best=**7.597 dB** — tracking Run 4 trajectory (final 6.888 dB). Await FTOL → CELL 4A → CELL 8e.**
 
 ### London CELL 8e Run 4 Results — COMPLETE (100M samples, ON incoh best method)
 
