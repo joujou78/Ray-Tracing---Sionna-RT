@@ -41,7 +41,35 @@ Within the simulation notebook, each methodological step of Section 3.4 correspo
 
 ## 4.2 Experimental / Simulation Setup
 
-The compute platform and pinned software environment are documented in Sections 2.5.2–2.5.3 and are not repeated here. This section documents the concrete simulation-architecture parameters — the actual configuration values loaded by `CELL 0`/`CELL 1` — that instantiate the general ray-tracing theory of Section 2.1.2 for this specific implementation.
+**Compute platform.** Simulations in this thesis are GPU-accelerated. `sionna019_calibration.ipynb` documents the compute configuration directly: an NVIDIA Tesla V100-SXM2-16GB GPU, using Mitsuba's `cuda_ad_rgb` variant with `FORCE_CPU_RT=False` (i.e. GPU ray tracing, not a CPU fallback). This was independently confirmed via a live `nvidia-smi` query on the training VM (hostname `sti-virtual-machine`):
+
+| Parameter | Value |
+|---|---|
+| GPU | NVIDIA Tesla V100-SXM2-16GB |
+| GPU memory | 16,384 MiB (16 GB) |
+| Driver version | 580.126.20 |
+| CUDA version | 13.0 |
+| CPU | Intel(R) Xeon(R) Platinum 8176 @ 2.10 GHz, 12 vCPUs (12 sockets × 1 core × 1 thread) |
+| System RAM | 62 GiB total (~43 GiB available at time of query) |
+| Virtualisation | VMware hypervisor, full virtualisation (host `sti-virtual-machine`) |
+
+At the time of the query, GPU utilisation was at 100% across four concurrent Python processes (two `sionna_gpu`/`sionna_gpu_final` conda environments plus two unlabelled `python` processes), consistent with multiple calibration runs (2695 MHz, 3602 MHz, London 915 MHz) executing in parallel on this machine. The 12-vCPU Xeon Platinum 8176 configuration is consistent with a cloud/virtualised compute allocation rather than a bare-metal workstation, matching the `sti-virtual-machine` hostname and VMware hypervisor reported above.
+
+**Software environment.** The exact, pinned software environment is documented in the project's `requirements_sionna019.txt`:
+
+```
+Core framework:    sionna==0.19.2, tensorflow==2.15.0, keras==2.15.0
+RT backend:        mitsuba==3.5.2, drjit==0.4.6
+Numerics:          numpy==1.26.4, scipy==1.15.3
+Global optimiser:  cma (CMA-ES [31], installed on demand by the calibration notebook)
+Geospatial/OSM:    osmnx==2.0.7, geopandas==1.1.3, shapely==2.1.2,
+                   pyproj==3.7.1, rasterio==1.4.4
+Visualisation:     matplotlib==3.10.8, pyvista==0.47.3, open3d==0.19.0, plotly==6.7.0
+```
+
+Installation follows the standard Python packaging workflow: create an isolated environment (`conda create -n sionna019 python=3.10`), activate it, and install the pinned dependency set with `pip install -r requirements_sionna019.txt`. The project also maintains a separate, Sionna 2.0-targeted notebook set (`sionna2_*`) using a newer Sionna/Mitsuba/Dr.Jit combination, kept in an independent environment to avoid version conflicts — consistent with the scene-format distinction between the legacy Sionna 0.19 XML and the Sionna 2.0 XML written by `CELL B3` (Section 4.3).
+
+**Simulation architecture.** This section documents the concrete simulation-architecture parameters — the actual configuration values loaded by `CELL 0`/`CELL 1` — that instantiate the general ray-tracing theory of Section 2.1.2 for this specific implementation.
 
 **Table 4.2 — Ray-tracing and calibration configuration by site and frequency.** All frequencies share EPSG:27700 (British National Grid, `always_xy=True`), MAX_DEPTH=8, diffraction and edge diffraction enabled, and TERRAIN_PAD_M=3000. RX AGL=1.5 m throughout.
 

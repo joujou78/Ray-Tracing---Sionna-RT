@@ -194,38 +194,9 @@ Sionna RT, developed by NVIDIA, is the open-source Python library used throughou
 
 Sionna RT's Python API exposes four components relevant to this thesis: a scene-description format (Mitsuba-compatible XML, importing arbitrary PLY geometry), a `RadioMaterial` abstraction for the electromagnetic surface properties of Section 2.1.3, a `PathSolver` implementing the ray-tracing mechanisms of Section 2.1.2, and a `RadioMapSolver` for generating spatially continuous coverage predictions rather than only per-receiver path loss. Together these components make it possible to construct a scene from independently sourced geometry (terrain, buildings, vegetation), assign and later calibrate material parameters against measurement data, and evaluate the resulting model at the receiver locations of an arbitrary measurement campaign — precisely the capability profile the gap identified in Section 2.4 requires. The specific procedure by which this project uses these components — the scene-construction pipeline, calibration algorithm, and evaluation protocol — is the subject of Chapter 3 and is not repeated here.
 
-### 2.5.2 Hardware and Computational Configuration
+### 2.5.2 Hardware and Software Environment
 
-Simulations in this thesis are GPU-accelerated. `sionna019_calibration.ipynb` documents the compute configuration directly: an NVIDIA Tesla V100-SXM2-16GB GPU, using Mitsuba's `cuda_ad_rgb` variant with `FORCE_CPU_RT=False` (i.e., GPU ray tracing, not a CPU fallback). This was independently confirmed via a live `nvidia-smi` query on the training VM (hostname `sti-virtual-machine`), which reports:
-
-| Parameter | Value |
-|---|---|
-| GPU | NVIDIA Tesla V100-SXM2-16GB |
-| GPU memory | 16,384 MiB (16 GB) |
-| Driver version | 580.126.20 |
-| CUDA version | 13.0 |
-| CPU | Intel(R) Xeon(R) Platinum 8176 @ 2.10 GHz, 12 vCPUs (12 sockets × 1 core × 1 thread) |
-| System RAM | 62 GiB total (~43 GiB available at time of query) |
-| Virtualisation | VMware hypervisor, full virtualisation (host `sti-virtual-machine`) |
-
-At the time of the query, GPU utilisation was at 100% across four concurrent Python processes (two `sionna_gpu`/`sionna_gpu_final` conda environments plus two unlabelled `python` processes), consistent with CLAUDE.md's record of multiple calibration runs (2695 MHz, 3602 MHz, London 915 MHz) executing in parallel on this machine. This CPU configuration (12 vCPUs, Xeon Platinum 8176) is consistent with a cloud/virtualised compute allocation rather than a bare-metal workstation, matching the `sti-virtual-machine` hostname and VMware hypervisor reported above.
-
-### 2.5.3 Installation and Software Environment
-
-The exact, pinned software environment is documented in the project's `requirements_sionna019.txt` and is reproduced here for completeness:
-
-```
-Core framework:   sionna==0.19.2, tensorflow==2.15.0, keras==2.15.0
-RT backend:       mitsuba==3.5.2, drjit==0.4.6
-Numerics:         numpy==1.26.4, scipy==1.15.3
-Geospatial/OSM:    osmnx==2.0.7, geopandas==1.1.3, shapely==2.1.2,
-                   pyproj==3.7.1, rasterio==1.4.4
-Visualisation:     matplotlib==3.10.8, pyvista==0.47.3, open3d==0.19.0, plotly==6.7.0
-```
-
-Installation follows the standard Python packaging workflow: create an isolated environment (e.g., `conda create -n sionna019 python=3.10`), activate it, and install the pinned dependency set with `pip install -r requirements_sionna019.txt`. Note that this project also contains a separate, Sionna 2.0-targeted notebook set (`sionna2_*`) using a newer Sionna/Mitsuba/Dr.Jit combination; the two environments are kept independent to avoid version conflicts, consistent with the scene-format distinction between the legacy Sionna 0.19 XML and the Sionna 2.0 XML written by CELL B3.
-
-As open-source software, Sionna RT supports academic rigour, reproducibility, and flexibility relative to proprietary ray-tracing tools, which is part of why it was selected for this project [3].
+The GPU-accelerated compute platform and the pinned software environment (Sionna, Mitsuba, Dr.Jit, and supporting library versions) are documented in full in Chapter 4, Section 4.2, alongside the simulation-architecture configuration values they support — placing the setup detail there keeps it next to the experimental parameters it underpins, rather than separated from them by two chapters. As open-source software, Sionna RT supports academic rigour, reproducibility, and flexibility relative to proprietary ray-tracing tools, which is part of why it was selected for this project [3].
 
 ## 2.6 Related Research and Relevance
 
