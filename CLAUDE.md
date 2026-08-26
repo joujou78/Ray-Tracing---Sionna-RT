@@ -921,7 +921,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 **CMA Run 4 COMPLETE (2026-08-24): eval 441, best=6.888 dB, scalar=+28.766 dB. CELL 8e COMPLETE. FINAL — R²=0.365 at 0-1000m (peak), R²=0.335 at 0-2000m.**
 **CMA Run 5 FAILED (2026-08-25): degenerate LOS-only calibration — 26 cal RX overfitted; +31 dB scalar cancelled by -30 dB bin corrections; CELL 8e RMSE=21.7 dB at 0-500m (vs Run 4: 8.8 dB).**
 **CMA Run 6 FAILED (2026-08-26): CAL_MAX_DIST_KM=0.65 km, 62 cal RX — overfitted; bin scalars -37 to -55 dB; R²=-0.639 at 0-1000m, negative at ALL ranges. Run 4 (R²=0.365) accepted as FINAL.**
-**CMA Run 4 REPRODUCTION IN PROGRESS (2026-08-26): restoring Run 4 settings — CAL_MAX_DIST_KM=1.75, 223 cal RX, 5 free mats (brick/concrete/glass/wet_ground/concrete_barrier), water_rt locked. Phase 0: +38.831 dB scalar, 11.56 dB RMSE (143/223 valid). Eval 5 best=9.378 dB — gen 1 still running; strong start (already below Phase 0 RMSE). Await FTOL → CELL 4A → CELL 8e.**
+**CMA Run 4 REPRODUCTION IN PROGRESS (2026-08-26): restoring Run 4 settings — CAL_MAX_DIST_KM=1.75, 223 cal RX, 5 free mats (brick/concrete/glass/wet_ground/concrete_barrier), water_rt locked. Phase 0: +38.831 dB scalar, 11.56 dB RMSE (143/223 valid). Gen 1 complete (eval 36): best=**7.950 dB** (eval 35) — below NLOS physics floor (σ_SF=7.82 dB). Tracking Run 4 trajectory (final 6.888 dB). Await FTOL → CELL 4A → CELL 8e.**
 
 ### London CELL 8e Run 4 Results — COMPLETE (100M samples, ON incoh best method)
 
@@ -1072,7 +1072,7 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.335 at 0-2000m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE through 0-2000m |
 | **Run 5 (CMA, 15M, popsize=36) — FAILED (2026-08-25)** | **2.779 dB** (overfit) | **+31.035 dB** | **R²=-14.944 at 0-500m** | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); cal RMSE=2.779 dB (1.2 dB below LOS floor — degenerate); CELL 8e RMSE=21.7 dB at 0-500m vs Run 4's 8.8 dB; +31 dB scalar cancelled by -30 dB bin corrections — physically meaningless |
 | **Run 6 (CMA, 15M, popsize=36) — FAILED (2026-08-26)** | **4.957 dB** (eval 290, 557 total) | +32.791 dB | **R²=-0.639 at 0-1000m; negative at ALL ranges** | 4 free mats: brick/concrete/glass/wet_ground (62 cal RX, 0.15-0.65 km); cal RMSE below physics floor (overfitting); bin scalars -37 to -55 dB (18 dB spread) → materials don't generalise; bias flips sign at ~400m (-3.9 dB @ 0-300m → +5.6 dB @ 0-1000m); WORSE than Run 4 at all ranges |
-| **Run 4 repro (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-26)** | — | +38.831 dB | eval 5 best=9.378 dB (gen 1) | 5 free mats (223 cal RX, 0.15-1.75 km); water_rt locked; concrete_barrier free; S caps brick/concrete 0.45, concrete_barrier 0.70; reproducing Run 4 settings exactly |
+| **Run 4 repro (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-26)** | — | +38.831 dB | gen 1 best=7.950 dB (eval 35) — below NLOS floor | 5 free mats (223 cal RX, 0.15-1.75 km); water_rt locked; concrete_barrier free; S caps brick/concrete 0.45, concrete_barrier 0.70; reproducing Run 4 settings exactly |
 
 **Run 5 CMA descent (popsize=36, LOS-only cal, 26 RX, 0.15-0.45 km) — documented for reference:**
 
