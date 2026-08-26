@@ -994,6 +994,7 @@ Full 0-1750m breakdown (N=171 ON / 71 OFF):
 - CELL 8e confirmed: RMSE=21.7 dB at 0-500m vs Run 4's 8.8 dB — catastrophic failure
 
 **DECISION: Run 4 (R²=0.365) accepted as FINAL. No further London 915 MHz retries.**
+Run 6 confirmed FAILED (2026-08-26): shorter cal range (0.65 km) overfitted 62 RX — bin scalars -37 to -55 dB, R²=-0.639 at 0-1000m. Run 4 (1.75 km, 223 RX) remains best.
 
 ### London CELL 8e Run 1 Results (100M samples, ON incoh best method)
 
@@ -1063,7 +1064,7 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | **Run 3 (CMA, 15M, popsize=36) — CONVERGED (eval 223, best=6.601 dB)** | **6.601 dB** | **+38.656 dB** | **TBD — CELL 8e pending** | metals fixed; concrete_barrier S≤0.70; dry_ground S≤0.50; 10 free mats (142 cal RX — overfitting risk); CELL 4A → CELL 8e next |
 | **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.335 at 0-2000m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE through 0-2000m |
 | **Run 5 (CMA, 15M, popsize=36) — FAILED (2026-08-25)** | **2.779 dB** (overfit) | **+31.035 dB** | **R²=-14.944 at 0-500m** | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); cal RMSE=2.779 dB (1.2 dB below LOS floor — degenerate); CELL 8e RMSE=21.7 dB at 0-500m vs Run 4's 8.8 dB; +31 dB scalar cancelled by -30 dB bin corrections — physically meaningless |
-| **Run 6 (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-25)** | eval 391 latest: **4.957 dB** (eval 290) | +32.791 dB (Phase 0) | TBD — CELL 8e pending | 4 free mats: brick/concrete/glass/wet_ground (62 cal RX, 0.15-0.65 km); concrete_barrier+water_rt locked; 15 bins; Phase 0 RMSE=7.99 dB; gen 1 best=6.132 dB; gen 2 best=5.746 dB (eval 56); gen 3 best=5.507 dB (eval 80); gen 4 best=5.290 dB (eval 119); gen 5-8 holding 170 evals; gen 9 best=4.957 dB (eval 290) — below LOS floor 5.0 dB; gens 10-12 holding (~100 evals) — FTOL imminent |
+| **Run 6 (CMA, 15M, popsize=36) — FAILED (2026-08-26)** | **4.957 dB** (eval 290, 557 total) | +32.791 dB | **R²=-0.639 at 0-1000m; negative at ALL ranges** | 4 free mats: brick/concrete/glass/wet_ground (62 cal RX, 0.15-0.65 km); cal RMSE below physics floor (overfitting); bin scalars -37 to -55 dB (18 dB spread) → materials don't generalise; bias flips sign at ~400m (-3.9 dB @ 0-300m → +5.6 dB @ 0-1000m); WORSE than Run 4 at all ranges |
 
 **Run 5 CMA descent (popsize=36, LOS-only cal, 26 RX, 0.15-0.45 km) — documented for reference:**
 
