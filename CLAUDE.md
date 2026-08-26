@@ -883,7 +883,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 **CMA Run 1 FAILED (2026-08-26): eval 605, best=12.477 dB — kernel hung at eval 605. CELL 8e: scatter flood (392x ON/OFF ratio), -30 dB bias, R² negative at all ranges. Root cause: CAL_MAX_DIST_KM=0.90 ≈ Rbp=0.901 (regime mixing) + S caps too loose (brick S=0.449 at cap).**
 **CMA Run 2 STALLED (2026-08-26): eval 286, best=15.584 dB — S caps 0.35 too tight; only 0.168 dB improvement over 200 evals (gens 3-8). Interrupted.**
-**CMA Run 3 IN PROGRESS: CAL_MAX_DIST_KM=0.75, S caps brick/concrete ≤0.40, 5 free mats, 86 cal RX. eval 195 best=14.912 dB — descending past Run 2 plateau (15.584 dB).**
+**CMA Run 3 IN PROGRESS: CAL_MAX_DIST_KM=0.75, S caps brick/concrete ≤0.40, 5 free mats, 86 cal RX. eval 297 best=14.891 dB — slow descent past Run 2 plateau (15.584 dB).**
 
 ### London 1802 MHz CMA Run 1 — Calibration Progress
 
@@ -1072,7 +1072,7 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.335 at 0-2000m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE through 0-2000m |
 | **Run 5 (CMA, 15M, popsize=36) — FAILED (2026-08-25)** | **2.779 dB** (overfit) | **+31.035 dB** | **R²=-14.944 at 0-500m** | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); cal RMSE=2.779 dB (1.2 dB below LOS floor — degenerate); CELL 8e RMSE=21.7 dB at 0-500m vs Run 4's 8.8 dB; +31 dB scalar cancelled by -30 dB bin corrections — physically meaningless |
 | **Run 6 (CMA, 15M, popsize=36) — FAILED (2026-08-26)** | **4.957 dB** (eval 290, 557 total) | +32.791 dB | **R²=-0.639 at 0-1000m; negative at ALL ranges** | 4 free mats: brick/concrete/glass/wet_ground (62 cal RX, 0.15-0.65 km); cal RMSE below physics floor (overfitting); bin scalars -37 to -55 dB (18 dB spread) → materials don't generalise; bias flips sign at ~400m (-3.9 dB @ 0-300m → +5.6 dB @ 0-1000m); WORSE than Run 4 at all ranges |
-| **Run 4 repro (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-26)** | — | +38.831 dB | gen 1 best=7.950 dB (eval 35) — below NLOS floor | 5 free mats (223 cal RX, 0.15-1.75 km); water_rt locked; concrete_barrier free; S caps brick/concrete 0.45, concrete_barrier 0.70; reproducing Run 4 settings exactly |
+| **Run 4 repro (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-26)** | — | +38.831 dB | gen 1 best=7.950 dB (eval 35); gen 3 best=**7.048 dB** (eval 86) — tracking toward Run 4 final (6.888 dB) | 5 free mats (223 cal RX, 0.15-1.75 km); water_rt locked; concrete_barrier free; S caps brick/concrete 0.45, concrete_barrier 0.70; reproducing Run 4 settings exactly |
 
 **Run 5 CMA descent (popsize=36, LOS-only cal, 26 RX, 0.15-0.45 km) — documented for reference:**
 
