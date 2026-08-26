@@ -410,7 +410,7 @@ Full distance breakdown (ON incoh — best method):
 | **Run 6 — CMA-ES (30M, popsize=12, tolfun=0.03) — STOPPED** | 30M samples, old popsize/tolfun; Phase 0 scalar=+9.900 dB, RMSE=15.02 dB | 373/373 valid | +9.900 dB | eval 440 best: **11.768 dB** (eval 456 latest) | Stopped — same transparent-disc problem as all runs after Run 2 |
 | **Run 7 — CMA-ES (30M, popsize=36, tolfun=0.10) — FAILED** | Same + water_rt uncapped; stuck at 12.654 dB from eval 175→370 | 373/373 valid | — | **12.654 dB** | water_rt σ→0.0000, S=0.665 → River Trent 57,420 scatter paths at <300m → bias +26 dB at 0-300m (scatter flood); stopped |
 | **Run 8 — CMA-ES (30M, popsize=36) — NOT RUN** | Run 7 + `_SIG_MIN_PER_MAT['water_rt']=0.50`, `_S_MAX_PER_MAT['water_rt']=0.10` (commit `1c86669`) | — | — | — | water_rt caps added but CELL CAL-CMA never executed — not recommended; analysis predicts optimizer compensates by saturating brick/concrete S→cap, shifting scatter flood to buildings (same as Runs 3-7) |
-| **Run 9 — CMA-ES HF scene (30M CMA, popsize=36) — IN PROGRESS (2026-08-25, restarted)** | Two bugs fixed (commit `61376a1`): ceiling_board er=17.0 active; CELL 4A S=0 override removed. HF scene. Phase 0: scalar=+11.981 dB, RMSE=15.54 dB. 373 cal RX. 6 free mats (water_rt, glass, concrete, brick, very_dry_ground, wet_ground). eval 374 latest: best=**13.121 dB** (via 14.924→14.182→13.971→13.744→13.503→13.475→**13.121**). Gen 9-10 breakthrough. | 373 (0 NF) | +11.981 dB | eval 374: **13.121 dB** (gen 9-10 breakthrough — still descending) | Restarted after GPU kill — exceeded previous best (13.744 dB) at eval 168 |
+| **Run 9 — CMA-ES HF scene (30M CMA, popsize=36) — IN PROGRESS (2026-08-25, restarted)** | Two bugs fixed (commit `61376a1`): ceiling_board er=17.0 active; CELL 4A S=0 override removed. HF scene. Phase 0: scalar=+11.981 dB, RMSE=15.54 dB. 373 cal RX. 6 free mats (water_rt, glass, concrete, brick, very_dry_ground, wet_ground). eval 462 latest: best=**13.013 dB** (via 14.924→14.182→13.971→13.744→13.503→13.475→13.121→**13.013**). Still descending. | 373 (0 NF) | +11.981 dB | eval 462: **13.013 dB** (gen 11-12 — increments shrinking, approaching floor) | Restarted after GPU kill — exceeded previous best (13.744 dB) at eval 168 |
 
 **Run 3 calibration notes:**
 - 211 evals / 996.5 min — Powell converged (FTOL)
@@ -877,7 +877,9 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 ## London 1802 MHz Status (sionna2_1802mhz_dem_simulation_london.ipynb)
 
-**CMA Run 1 IN PROGRESS (2026-08-25). Phase 0 complete. eval 605 best=12.477 dB (eval 589) — plateau broken, still descending. 5 free mats, 109 cal RX (0.15-0.9 km).**
+**CMA Run 1 FAILED (2026-08-26): eval 605, best=12.477 dB — kernel hung at eval 605. CELL 8e: scatter flood (392x ON/OFF ratio), -30 dB bias, R² negative at all ranges. Root cause: CAL_MAX_DIST_KM=0.90 ≈ Rbp=0.901 (regime mixing) + S caps too loose (brick S=0.449 at cap).**
+**CMA Run 2 STALLED (2026-08-26): eval 286, best=15.584 dB — S caps 0.35 too tight; only 0.168 dB improvement over 200 evals (gens 3-8). Interrupted.**
+**CMA Run 3 PLANNED: CAL_MAX_DIST_KM=0.75, S caps brick/concrete ≤0.40, 5 free mats, 86 cal RX.**
 
 ### London 1802 MHz CMA Run 1 — Calibration Progress
 
