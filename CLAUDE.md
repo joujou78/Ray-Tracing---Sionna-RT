@@ -884,7 +884,8 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 **CMA Run 1 FAILED (2026-08-26): eval 605, best=12.477 dB — kernel hung at eval 605. CELL 8e: scatter flood (392x ON/OFF ratio), -30 dB bias, R² negative at all ranges. Root cause: CAL_MAX_DIST_KM=0.90 ≈ Rbp=0.901 (regime mixing) + S caps too loose (brick S=0.449 at cap).**
 **CMA Run 2 STALLED (2026-08-26): eval 286, best=15.584 dB — S caps 0.35 too tight; only 0.168 dB improvement over 200 evals (gens 3-8). Interrupted.**
 **CMA Run 3 STALLED (2026-08-26): eval 348, best=14.891 dB — brick S=0.400 at cap (exact), CMA trapped. Interrupted. Root cause: S cap 0.40 too tight; brick optimizer wants S > 0.40.**
-**CMA Run 4 IN PROGRESS (2026-08-26): S caps brick/concrete raised to 0.45, scalar=+30.696 dB, 86 cal RX (0.15-0.75 km). eval 18 best=15.592 dB — gen 1 descending (eval 7: 15.777 dB, eval 6: 16.693 dB).**
+**CMA Run 4 KERNEL HUNG at eval 605 (2026-08-27): best=13.829 dB — same GPU VRAM accumulation as Run 1 (deterministic at ~605 evals × 15M samples). JSON saved at eval 574. CELL 8e degenerate: itu_concrete εᵣ=1.85 (unphysical), scalar=+30.696 dB → bias=-28.3 dB at 0-200m, R²=-1.330. Root cause: 86 cal RX (CAL_MAX=0.75 km) insufficient for 15 free params → CMA found degenerate solution. Fix: raise CAL_MAX_DIST_KM to 1.5 km (more cal RX) + implement GPU memory cleanup in CMA objective to prevent eval-605 hang.**
+**CMA Run 5 IN PROGRESS (2026-08-27): fresh restart with physical starting materials (itu_concrete εᵣ=5.310 confirmed). scalar=+30.696 dB, 86 cal RX (0.15-0.75 km). Gen 2 eval 42 best=15.196 dB — normal gen 2 exploration (wide RMSE spread 15.3–18.5 dB expected). GPU memory fix (del paths + torch.cuda.empty_cache()) must be applied before eval ~590 (~14 hrs away at 90s/eval). Await FTOL → CELL 4A → CELL 8e.**
 
 ### London 1802 MHz CMA Run 1 — Calibration Progress
 
