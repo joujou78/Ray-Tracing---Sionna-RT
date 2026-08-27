@@ -400,7 +400,7 @@ Full distance breakdown (ON incoh — best method):
 - **Run 2 JSON files overwritten** by a later partial run (Phase 0 checkpoint: scalar=+4.725 dB, water_rt S=0.613 — scatter flood trigger). Do NOT load for CELL 8e.
 - R²=0.574 result is fully documented in CLAUDE.md tables above — this is the thesis result.
 - To reproduce: DISABLE_VEG_DISCS=False, CAL_SAMPLES_PS=10M, CELL CAL (Powell) → ~15-20 hr run.
-- **Reproduction IN PROGRESS (2026-08-26):** CELL 4A fixed (`470ab4a`, `2959d6b`) to explicitly set ceiling_board er=17, sigma=0.15, S=0.50 when DISABLE_VEG_DISCS=False. CELL CAL (Powell) running — Phase 0 scalar=+6.200 dB (was +9.669 dB before fix; -2.305 dB requires CAL_MAX_DIST_KM=1.5 for 618 cal RX). Powell at MC noise floor: eval 114-128 oscillating 13.515-13.520 dB (±0.005 dB range = pure MC noise at 10M samples). FTOL convergence imminent. Await FTOL → CELL 4A → CELL 8e.
+- **Reproduction CELL CAL COMPLETE (2026-08-27):** 210 evals / 327.5 min / FTOL converged. Phase 0 scalar=+6.200 dB → Phase 2 Powell scalar=+8.157 dB → Phase 3 re-scalar=+0.847 dB. Final RMSE=13.28 dB. Cal R² preview (10M, cal RX only): 0-1km N=373 R²=-0.403 (negative expected — near-field noise; CELL 8e 100M is the real test). Scalar=+0.847 dB vs Run 2's -2.305 dB: 3.15 dB gap confirms 373-vs-618 cal RX problem (no scatter-only receivers within 1.0 km range). CELL 4A → CELL 8e pending.
 - **No further calibration attempts planned for 2695 MHz.**
 
 ### 2695 MHz Calibration History
@@ -922,7 +922,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 | Run 1 (CMA, 15M) | 5 free, CAL_MAX=0.90, S caps brick/concrete 0.45 | 109 | +30.030 dB | 12.477 dB (eval 605) | **FAILED** | kernel hung eval 605; CELL 8e scatter flood 392x ON/OFF; R² negative all ranges; root cause: CAL_MAX≈Rbp (regime mixing) + concrete_barrier/metal_barrier uncapped |
 | Run 2 (CMA, 15M) | 5 free, CAL_MAX=0.75, S caps 0.35 | 86 | — | 15.584 dB (eval 286) | **STALLED** | S=0.35 too tight; only 0.168 dB improvement over 200 evals |
 | Run 3 (CMA, 15M) | 5 free, CAL_MAX=0.75, S caps brick/concrete 0.40 | 86 | +30.696 dB | 14.891 dB (eval 348) | **STALLED** | brick S=0.400 at cap exactly — CMA trapped against bound |
-| **Run 4 (CMA, 15M) — IN PROGRESS** | 5 free, CAL_MAX=0.75, S caps brick/concrete **0.45**, metals locked | 86 | +30.696 dB | **14.428 dB** (eval 136, gen 3) | **RUNNING** | gen 3 descending (14.891→14.680→14.428 dB) |
+| **Run 4 (CMA, 15M) — IN PROGRESS** | 5 free, CAL_MAX=0.75, S caps brick/concrete **0.45**, metals locked | 86 | +30.696 dB | **13.829 dB** (eval 574, gen ~16) | **RUNNING** | descent: 14.891→14.680→14.428→13.829 dB; no plateau observed |
 
 ---
 
@@ -1083,7 +1083,7 @@ rm ~/sionna_rt/london_ofcom_915mhz_dem/scalar_offset_london_915mhz.json
 | **Run 4 (CMA, 15M, popsize=36) — COMPLETE (eval 441, best=6.888 dB)** | **6.888 dB** | **+28.766 dB** | **R²=0.365 at 0-1000m (peak); 0.335 at 0-2000m** | 5 free mats (223 cal RX, 0.15-1.75 km); metals locked; concrete_barrier S≤0.70; dry_ground S≤0.50; CELL 8e COMPLETE through 0-2000m |
 | **Run 5 (CMA, 15M, popsize=36) — FAILED (2026-08-25)** | **2.779 dB** (overfit) | **+31.035 dB** | **R²=-14.944 at 0-500m** | 3 free mats: brick/concrete/glass (26 cal RX, 0.15-0.45 km — below Rbp=458m); cal RMSE=2.779 dB (1.2 dB below LOS floor — degenerate); CELL 8e RMSE=21.7 dB at 0-500m vs Run 4's 8.8 dB; +31 dB scalar cancelled by -30 dB bin corrections — physically meaningless |
 | **Run 6 (CMA, 15M, popsize=36) — FAILED (2026-08-26)** | **4.957 dB** (eval 290, 557 total) | +32.791 dB | **R²=-0.639 at 0-1000m; negative at ALL ranges** | 4 free mats: brick/concrete/glass/wet_ground (62 cal RX, 0.15-0.65 km); cal RMSE below physics floor (overfitting); bin scalars -37 to -55 dB (18 dB spread) → materials don't generalise; bias flips sign at ~400m (-3.9 dB @ 0-300m → +5.6 dB @ 0-1000m); WORSE than Run 4 at all ranges |
-| **Run 4 repro (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-26)** | — | +38.831 dB | gen 1 best=7.950 dB (eval 35); gen 3 best=**7.048 dB** (eval 86); gen 4-5 holding at 7.048 dB (eval 145) — FTOL approaching | 5 free mats (223 cal RX, 0.15-1.75 km); water_rt locked; concrete_barrier free; S caps brick/concrete 0.45, concrete_barrier 0.70; reproducing Run 4 settings exactly |
+| **Run 4 repro (CMA, 15M, popsize=36) — IN PROGRESS (2026-08-26)** | — | +38.831 dB | gen 1: 7.950 dB; gen 3: 7.048 dB; gen ~8: **6.959 dB** (eval 300) — converging to Run 4 final (6.888 dB) | 5 free mats (223 cal RX, 0.15-1.75 km); water_rt locked; concrete_barrier free; S caps brick/concrete 0.45, concrete_barrier 0.70; reproducing Run 4 settings exactly |
 
 **Run 5 CMA descent (popsize=36, LOS-only cal, 26 RX, 0.15-0.45 km) — documented for reference:**
 
