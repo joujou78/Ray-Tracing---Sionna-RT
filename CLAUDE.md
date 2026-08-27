@@ -400,7 +400,7 @@ Full distance breakdown (ON incoh — best method):
 - **Run 2 JSON files overwritten** by a later partial run (Phase 0 checkpoint: scalar=+4.725 dB, water_rt S=0.613 — scatter flood trigger). Do NOT load for CELL 8e.
 - R²=0.574 result is fully documented in CLAUDE.md tables above — this is the thesis result.
 - To reproduce: DISABLE_VEG_DISCS=False, CAL_SAMPLES_PS=10M, CELL CAL (Powell) → ~15-20 hr run.
-- **Reproduction CELL CAL COMPLETE (2026-08-27):** 210 evals / 327.5 min / FTOL converged. Phase 0 scalar=+6.200 dB → Phase 2 Powell scalar=+8.157 dB → Phase 3 re-scalar=+0.847 dB. Final RMSE=13.28 dB. Cal R² preview (10M, cal RX only): 0-1km N=373 R²=-0.403 (negative expected — near-field noise; CELL 8e 100M is the real test). Scalar=+0.847 dB vs Run 2's -2.305 dB: 3.15 dB gap confirms 373-vs-618 cal RX problem (no scatter-only receivers within 1.0 km range). CELL 4A → CELL 8e pending.
+- **Reproduction CELL CAL COMPLETE, CELL 8e FAILED (2026-08-27):** 210 evals / 327.5 min / FTOL converged. Phase 0 scalar=+6.200 dB → Phase 2 Powell scalar=+8.157 dB → Phase 3 re-scalar=+0.847 dB. Final RMSE=13.28 dB. CELL 8e scatter flood: 0-750m ON incoh R²=-1.640, bias=+7.1 dB, avg_rays ON/OFF=15002/74 (204x). Same root cause as Runs 3-9: 373 cal RX (no scatter-only receivers within 1.0 km) → optimizer pushes S too high → scalar=+0.847 dB vs Run 2's -2.305 dB (3.15 dB gap). Run 2 (R²=0.574) is the only valid result and requires CAL_MAX_DIST_KM=1.5 (618 cal RX incl. scatter-only receivers). **Run 2 R²=0.574 confirmed FINAL — no further reproduction planned.**
 - **No further calibration attempts planned for 2695 MHz.**
 
 ### 2695 MHz Calibration History
@@ -922,7 +922,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 | Run 1 (CMA, 15M) | 5 free, CAL_MAX=0.90, S caps brick/concrete 0.45 | 109 | +30.030 dB | 12.477 dB (eval 605) | **FAILED** | kernel hung eval 605; CELL 8e scatter flood 392x ON/OFF; R² negative all ranges; root cause: CAL_MAX≈Rbp (regime mixing) + concrete_barrier/metal_barrier uncapped |
 | Run 2 (CMA, 15M) | 5 free, CAL_MAX=0.75, S caps 0.35 | 86 | — | 15.584 dB (eval 286) | **STALLED** | S=0.35 too tight; only 0.168 dB improvement over 200 evals |
 | Run 3 (CMA, 15M) | 5 free, CAL_MAX=0.75, S caps brick/concrete 0.40 | 86 | +30.696 dB | 14.891 dB (eval 348) | **STALLED** | brick S=0.400 at cap exactly — CMA trapped against bound |
-| **Run 4 (CMA, 15M) — IN PROGRESS** | 5 free, CAL_MAX=0.75, S caps brick/concrete **0.45**, metals locked | 86 | +30.696 dB | **13.829 dB** (eval 574, gen ~16) | **RUNNING** | descent: 14.891→14.680→14.428→13.829 dB; no plateau observed |
+| **Run 4 (CMA, 15M) — IN PROGRESS** | 5 free, CAL_MAX=0.75, S caps brick/concrete **0.45**, metals locked | 86 | +30.696 dB | **13.829 dB** (eval 574, gen ~16) | **KERNEL HUNG at eval 605** | same GPU mem hang as Run 1; descent: 14.891→14.680→14.428→13.829 dB; check if JSON saved at eval 574 → CELL 4A → CELL 8e |
 
 ---
 
