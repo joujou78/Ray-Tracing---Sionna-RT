@@ -1367,6 +1367,8 @@ Best method across all runs: **ON incoh** (scattering ON, incoherent sum).
 - `sionna2_915mhz_dem_simulation.ipynb` — 915 MHz Nottingham simulation, FROZEN
 - `sionna019_scene_builder.ipynb` — 915 MHz scene builder, FROZEN
 - `sionna019_1802mhz_scene_builder.ipynb` — 1802 MHz scene builder, FROZEN
+- `sionna2_2695mhz_dem_simulation.ipynb` — 2695 MHz Nottingham simulation, FROZEN (R²=0.574 FINAL 2026-08-24; all reproduction attempts 3-9 + current failed with scatter flood; Run 2 JSON files lost; do not attempt re-calibration without explicit decision to run 15-20 hr CELL CAL with CAL_SAMPLES_PS=10M, DISABLE_VEG_DISCS=False, CAL_MAX_DIST_KM=1.5)
+- `sionna2_2695mhz_hf_dem_simulation.ipynb` — 2695 MHz HF scene simulation, FROZEN (Run 9 FAILED: scatter flood R²=-1.495; HF scene unusable for 2695 MHz)
 
 These files must never be opened for writing by Claude. Any task that would patch "all notebooks" must explicitly exclude these three files.
 
