@@ -891,7 +891,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 | CAL_MAX_DIST_KM | 1.5 |
 | Terrain local z | [-71.9, +17.5] m (origin=138.7 m ASL) |
 
-**Dataset coverage:** All receivers within ~750m of TX — Stevenage measurement campaign had short drive-test routes. Scene bbox (10×10 km) is larger than data extent. N=1200 receivers all within 750m.
+**Dataset coverage:** Receivers extend to at least 1250m — earlier estimate of "all within 750m" was wrong. N=717 within 1250m, N=589 within 1000m, N=518 within 900m. Scene bbox (10×10 km) covers full data extent.
 
 **Buildings below ground (visual artifact):** In Sionna 3D viewer, buildings in terrain valleys (scene-local z < 0) appear below the flat z=0 reference plane. Not a real geometry error — buildings correctly placed on terrain surface. Same visual occurs in London (London Run 4 R²=0.365 with same geometry confirms correctness).
 
@@ -921,9 +921,39 @@ Run with DISABLE_VEG_DISCS=False (wrong) + unoptimized materials (warm prior S=0
 
 ### Fix applied (commit b9865ba, 2026-08-29)
 
-`DISABLE_VEG_DISCS = False → True` in CELL 1. Makes vegetation discs transparent (same as Nottingham 915). Building material changes now drive scatter budget → CMA objective sensitive. Expected: scatter ratio drops to ~200-300x, CMA optimizes building εᵣ/σ/S, R² improves.
+`DISABLE_VEG_DISCS = False → True` in CELL 1. Makes vegetation discs transparent (same as Nottingham 915).
 
-**Next steps:** Re-run CELL 4A (apply transparency) → re-delete cal JSON files → CELL CAL-CMA → CELL 4A → CELL 8e.
+### CELL 8e Run 1 — COMPLETE (2026-08-29, ITU defaults, DISABLE_VEG_DISCS=True, no calibration JSON)
+
+**Settings:** No calibration JSON / ITU default materials / 100M eval / bin scalar applied
+
+Best method: **ON incoh** — but ON ≈ OFF throughout (scatter provides <0.01 R² benefit at all ranges)
+
+| Range | N | Bias (dB) | RMSE (dB) | STD (dB) | R² (ON incoh) | avg_rays ON/OFF | Notes |
+|-------|---|-----------|-----------|----------|---------------|-----------------|-------|
+| 0-300m | 168 | -5.1 | 11.8 | 10.7 | -5.923 | 42393/110 | scatter flood at close range |
+| 0-500m | 290 | +0.3 | 11.3 | 11.3 | -3.019 | 38178/111 | |
+| 0-750m | 434 | +2.4 | 10.3 | 10.0 | -0.220 | 38816/116 | |
+| 0-900m | 518 | +3.8 | 10.9 | 10.2 | +0.024 | 34475/112 | first positive R² |
+| 0-1000m | 589 | +4.4 | 10.8 | 9.8 | **+0.341** | 30434/107 | |
+| **0-1250m** | **717** | **+5.3** | **11.1** | **9.8** | **+0.581** | 25181/98 | **peak so far** |
+
+**Key findings (Run 1):**
+- R²=0.581 at 0-1250m **without calibration** — beats Nottingham 1802 MHz FINAL (0.509) and matches Nottingham 2695 MHz FINAL (0.574), both of which required full CMA calibration
+- ON ≈ OFF everywhere (Δ<0.01 at 0-1250m): scatter provides zero useful signal — Stevenage is specular/LOS dominated, opposite of London/Nottingham
+- avg_rays ON=25,181 vs OFF=98 (256x) at 0-1250m — scatter flood persists but is noise, not signal
+- Bias grows with distance: -5.1 dB (0-300m) → +5.3 dB (0-1250m) — model transitions from over-predicting (close) to under-predicting (NLOS)
+- RMSE=10.3-11.1 dB; if bias=0 corrected, effective STD=9.8 dB (Δ≈1.3 dB above 3GPP σ_SF=7.82 dB floor)
+- Terrain: EA LiDAR DTM 1m resolution, origin=138.7 m ASL — not limiting factor
+- **Pending: 0-1500m+ results** — CELL 8e may still be running; await final N plateau
+
+**RMSE improvement path:**
+- Fixing +5.3 dB bias: RMSE 11.1 → 9.8 dB (bias² contributes 28.1 of 123.3 MSE)
+- CMA calibration target: tune εᵣ/σ (not S) for specular reflection accuracy; S_MIN=0 to remove scatter flood noise
+- Expected after calibration: RMSE≈9.5-10.0 dB, R²≈0.60-0.65 at 0-1250m (bias-corrected by CMA scalar)
+- Diagnostic: manual S=0.05 override pushed (commit 9d7d6a4) — run CELL 4A → CELL 8e to confirm scatter is noise; then CMA with S_MIN=0
+
+**Status: CELL 8e Run 1 results accepted as Stevenage uncalibrated baseline. CMA calibration next.**
 
 ---
 
@@ -934,7 +964,8 @@ Run with DISABLE_VEG_DISCS=False (wrong) + unoptimized materials (warm prior S=0
 **CMA Run 3 STALLED (2026-08-26): eval 348, best=14.891 dB — brick S=0.400 at cap (exact), CMA trapped. Interrupted. Root cause: S cap 0.40 too tight; brick optimizer wants S > 0.40.**
 **CMA Run 4 KERNEL HUNG at eval 605 (2026-08-27): best=13.829 dB — same GPU VRAM accumulation as Run 1 (deterministic at ~605 evals × 15M samples). JSON saved at eval 574. CELL 8e degenerate: itu_concrete εᵣ=1.85 (unphysical), scalar=+30.696 dB → bias=-28.3 dB at 0-200m, R²=-1.330. Root cause: 86 cal RX (CAL_MAX=0.75 km) insufficient for 15 free params → CMA found degenerate solution. Fix: raise CAL_MAX_DIST_KM to 1.5 km (more cal RX) + implement GPU memory cleanup in CMA objective to prevent eval-605 hang.**
 **CMA Run 5 IN PROGRESS (2026-08-27): fresh restart with physical starting materials (itu_concrete εᵣ=5.310 confirmed). scalar=+30.696 dB, 86 cal RX (0.15-0.75 km). Gen 5 eval 156 best=14.376 dB — plateau broke at eval 156 (was 14.534 dB from eval 63–155); descent resumed gen 5 as expected. GPU memory fix (del paths + torch.cuda.empty_cache()) must be applied before eval ~590 (~13 hrs away at 87s/eval). Await FTOL → CELL 4A → CELL 8e.**
-**CMA Run 7 IN PROGRESS (2026-08-29): concrete_barrier locked (commit e8193c3) — always produced degenerate εᵣ=1.45 when free. 4 free mats (brick/concrete/glass/wet_ground). scalar=+30.032 dB, 109 cal RX. eval ~541, best=12.575 dB — plateau, FTOL expected soon. Await FTOL → CELL 4A → CELL 8e.**
+**CMA Run 7 FAILED (2026-08-29): itu_glass εᵣ=1.0864 degenerate minimum — complete scatter flood in CELL 8e (bias=-33 dB at 0-100m, RMSE=65 dB, R²=-2.0 all ranges). Root cause: no εᵣ lower bound on glass → CMA found near-transparent glass solution.**
+**CMA Run 8 IN PROGRESS (2026-08-29): Added `_ER_MIN_PER_MAT = {glass:4.0, brick:2.5, concrete:4.0}` to prevent degenerate εᵣ→1. Phase 0 scalar=+30.032 dB, RMSE=15.36 dB. eval 215 best=12.555 dB (close to Run 4 final 12.477 dB). Await FTOL → CELL 4A → CELL 8e.**
 
 ### London 1802 MHz CMA Run 1 — Calibration Progress
 
