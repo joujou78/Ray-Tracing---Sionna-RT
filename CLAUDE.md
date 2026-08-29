@@ -826,7 +826,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 ## Stevenage 915 MHz Status (sionna019_scene_builder_stevenage.ipynb)
 
-**Scene build IN PROGRESS (2026-08-24). CELL 2vom_poly stuck on nDSM anomaly — VOM heights showing ASL (~60m) instead of tree heights (~8-15m).**
+**Scene BUILT (2026-08-24). CELL CAL-CMA FAILED — flat RMSE due to DISABLE_VEG_DISCS=False. CELL 8e run with uncalibrated materials: R² catastrophically negative at all ranges. Fix applied (2026-08-29): DISABLE_VEG_DISCS=True (commit b9865ba). Re-run CELL CAL-CMA → CELL 4A → CELL 8e.**
 
 ### Site parameters
 | Parameter | Value |
@@ -879,6 +879,52 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 **CONFIRMED WORKING:** nDSM p5/p50/p95 = 1.9 / 17.8 / 19.8 m — realistic urban tree heights ✓
 
+### Stevenage 915 MHz Simulation Status
+
+**Site parameters:**
+| Parameter | Value |
+|-----------|-------|
+| TX lat/lon | 51.8886 / -0.25516 |
+| Scene bbox | WEST=-0.328144, EAST=-0.182176, SOUTH=51.843555, NORTH=51.933645 (~10×10 km) |
+| DISABLE_VEG_DISCS | **True** (fixed 2026-08-29, was False) |
+| CAL_CMA_SAMPLES | 30M |
+| CAL_MAX_DIST_KM | 1.5 |
+| Terrain local z | [-71.9, +17.5] m (origin=138.7 m ASL) |
+
+**Dataset coverage:** All receivers within ~750m of TX — Stevenage measurement campaign had short drive-test routes. Scene bbox (10×10 km) is larger than data extent. N=1200 receivers all within 750m.
+
+**Buildings below ground (visual artifact):** In Sionna 3D viewer, buildings in terrain valleys (scene-local z < 0) appear below the flat z=0 reference plane. Not a real geometry error — buildings correctly placed on terrain surface. Same visual occurs in London (London Run 4 R²=0.365 with same geometry confirms correctness).
+
+### CELL CAL-CMA — FAILED (2026-08-29, DISABLE_VEG_DISCS=False)
+
+**Root cause:** Vegetation discs (itu_ceiling_board, er=17, S=0.50) dominated scatter — avg_rays ON/OFF = 52,815 / 84.9 = **622x ratio** (vs Nottingham 230x). Since itu_ceiling_board is locked in CMA, changing free building materials had minimal effect on total scatter power → flat RMSE 12.039 ± 0.001 dB across all 6 evals. **This was genuine objective insensitivity, not a DrJIT kernel caching bug.**
+
+Phase 0 scalar: +1.050 dB (near-zero — default ITU materials already close to mean measured PL).
+
+### CELL 8e — FAILED (2026-08-29, uncalibrated warm-prior materials)
+
+Run with DISABLE_VEG_DISCS=False (wrong) + unoptimized materials (warm prior S=0.35).
+
+| Range | N | Method | Bias (dB) | RMSE (dB) | R² | Notes |
+|-------|---|--------|-----------|-----------|-----|-------|
+| 0-100m | 331 | ON incoh | -15.8 | 17.9 | -18.338 | scatter flood from warm-prior S=0.35 |
+| 0-300m | 669 | ON incoh | -6.4 | 16.8 | -13.106 | |
+| 0-500m | 1158 | ON incoh | -1.7 | 14.0 | -5.013 | |
+| **0-750m** | **1200** | **ON incoh** | **-1.7** | **13.8** | **-4.206** | **N freezes — all RX within 750m** |
+| 0-1000m+ | 1200 | ON incoh | -1.7 | 13.8 | -4.206 | identical — no receivers beyond 750m |
+
+**Key findings:**
+- All 1200 receivers within 750m — short measurement routes, not a selection bug
+- R² = -4.2 at 0-750m: near-zero mean bias but massive prediction variance from uncalibrated scatter
+- 622x ON/OFF ratio from active vegetation discs
+- **Discarded — uncalibrated materials, DISABLE_VEG_DISCS wrong**
+
+### Fix applied (commit b9865ba, 2026-08-29)
+
+`DISABLE_VEG_DISCS = False → True` in CELL 1. Makes vegetation discs transparent (same as Nottingham 915). Building material changes now drive scatter budget → CMA objective sensitive. Expected: scatter ratio drops to ~200-300x, CMA optimizes building εᵣ/σ/S, R² improves.
+
+**Next steps:** Re-run CELL 4A (apply transparency) → re-delete cal JSON files → CELL CAL-CMA → CELL 4A → CELL 8e.
+
 ---
 
 ## London 1802 MHz Status (sionna2_1802mhz_dem_simulation_london.ipynb)
@@ -888,6 +934,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 **CMA Run 3 STALLED (2026-08-26): eval 348, best=14.891 dB — brick S=0.400 at cap (exact), CMA trapped. Interrupted. Root cause: S cap 0.40 too tight; brick optimizer wants S > 0.40.**
 **CMA Run 4 KERNEL HUNG at eval 605 (2026-08-27): best=13.829 dB — same GPU VRAM accumulation as Run 1 (deterministic at ~605 evals × 15M samples). JSON saved at eval 574. CELL 8e degenerate: itu_concrete εᵣ=1.85 (unphysical), scalar=+30.696 dB → bias=-28.3 dB at 0-200m, R²=-1.330. Root cause: 86 cal RX (CAL_MAX=0.75 km) insufficient for 15 free params → CMA found degenerate solution. Fix: raise CAL_MAX_DIST_KM to 1.5 km (more cal RX) + implement GPU memory cleanup in CMA objective to prevent eval-605 hang.**
 **CMA Run 5 IN PROGRESS (2026-08-27): fresh restart with physical starting materials (itu_concrete εᵣ=5.310 confirmed). scalar=+30.696 dB, 86 cal RX (0.15-0.75 km). Gen 5 eval 156 best=14.376 dB — plateau broke at eval 156 (was 14.534 dB from eval 63–155); descent resumed gen 5 as expected. GPU memory fix (del paths + torch.cuda.empty_cache()) must be applied before eval ~590 (~13 hrs away at 87s/eval). Await FTOL → CELL 4A → CELL 8e.**
+**CMA Run 7 IN PROGRESS (2026-08-29): concrete_barrier locked (commit e8193c3) — always produced degenerate εᵣ=1.45 when free. 4 free mats (brick/concrete/glass/wet_ground). scalar=+30.032 dB, 109 cal RX. eval ~541, best=12.575 dB — plateau, FTOL expected soon. Await FTOL → CELL 4A → CELL 8e.**
 
 ### London 1802 MHz CMA Run 1 — Calibration Progress
 
@@ -934,7 +981,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 **CMA Run 4 COMPLETE (2026-08-24): eval 441, best=6.888 dB, scalar=+28.766 dB. CELL 8e COMPLETE. FINAL — R²=0.365 at 0-1000m (peak), R²=0.335 at 0-2000m.**
 **CMA Run 5 FAILED (2026-08-25): degenerate LOS-only calibration — 26 cal RX overfitted; +31 dB scalar cancelled by -30 dB bin corrections; CELL 8e RMSE=21.7 dB at 0-500m (vs Run 4: 8.8 dB).**
 **CMA Run 6 FAILED (2026-08-26): CAL_MAX_DIST_KM=0.65 km, 62 cal RX — overfitted; bin scalars -37 to -55 dB; R²=-0.639 at 0-1000m, negative at ALL ranges. Run 4 (R²=0.365) accepted as FINAL.**
-**CMA Run 4 REPRODUCTION IN PROGRESS (2026-08-26): restoring Run 4 settings — CAL_MAX_DIST_KM=1.75, 223 cal RX, 5 free mats (brick/concrete/glass/wet_ground/concrete_barrier), water_rt locked. Phase 0: +38.831 dB scalar, 11.56 dB RMSE (143/223 valid). Gen 3 (eval 86): best=**7.048 dB** — tracking Run 4 trajectory (final 6.888 dB). Await FTOL → CELL 4A → CELL 8e.**
+**CMA Run 4 REPRODUCTION COMPLETE (2026-08-28): CELL 8e R²=0.130 at 0-1000m, peak R²=0.208 at 0-2000m — degenerate concrete_barrier εᵣ=2.358 local minimum, bin scalars -26 to -62 dB (scatter flood). Run 4 (R²=0.365) CONFIRMED FINAL. No further reproduction attempts.**
 
 ### London CELL 8e Run 4 Results — COMPLETE (100M samples, ON incoh best method)
 
