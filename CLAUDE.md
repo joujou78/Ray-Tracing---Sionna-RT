@@ -975,6 +975,66 @@ Run with DISABLE_VEG_DISCS=False (wrong) + unoptimized materials (warm prior S=0
 
 ---
 
+## London 2695 MHz Status (sionna2_2695mhz_dem_simulation_london.ipynb)
+
+**Notebook created (2026-08-29, commit 49635fc). Scene: reuses london_ofcom_915mhz_dem. CSV: london2695.csv → copy to ~/sionna_rt/london_ofcom_2695mhz_dem/. CELL CAL-CMA not yet run.**
+
+### Site parameters (from london2695.csv header)
+| Parameter | Value |
+|-----------|-------|
+| Site name | London |
+| TX lat/lon | 51.5305 / -0.13399 (same mast as London 915 / 1802 MHz) |
+| Frequency | 2695 MHz |
+| TX AGL | 25 m |
+| TX amplifier power | 49.3 dBm |
+| TX cable loss | 2.2 dB |
+| TX antenna gain | 2.2 dBi |
+| TX EIRP | 56.1 dBm (TX_CONDUCTED_DBM=53.9 + 2.2 dBi) |
+| RX AGL | 1.5 m |
+| RX chain | -9.3 dB (ant -1.0 + cable -0.3 + splitter -6.3 + BPF -1.7) |
+| Noise floor | -120 dBm |
+| Records | 109,708 |
+
+### Scene and simulation configuration
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| SCENE_BASE_DIR | london_ofcom_915mhz_dem | reuse existing London scene — no rebuild |
+| BASE_DIR | london_ofcom_2695mhz_dem | all outputs go here |
+| FREQUENCY_HZ | 2695e6 | |
+| VEG_CONDUCTIVITY | 0.15 S/m | ITU-R P.833 at 2.7 GHz |
+| VEG_SCATTERING_COEFF | 0.50 | higher scatter at 2.7 GHz |
+| DISABLE_VEG_DISCS | False | disc PLYs active — consistent with London 1802 |
+| CAL_MAX_DIST_KM | 1.0 | below Rbp=1348m (4×25×1.5×2695e6/3e8) — pure LOS |
+| CAL_MIN_DIST_KM | 0.15 | |
+| EVAL_MIN_DIST_KM | 0.25 | |
+| CAL_SCALAR_BOUNDS | (-60.0, 60.0) | wide bounds for urban scene |
+| CAL_CMA_SAMPLES | 15M | GPU OOM at 30M |
+| CAL_CMA_POPSIZE | 36 | |
+| CAL_CMA_TOLFUN | 0.10 | |
+| NOISE_FLOOR_DBM | -120.0 | |
+| Rbp | 1348 m | 4×25×1.5×2695e6/3e8 |
+| concrete_barrier | locked | always degenerate εᵣ=1.45 when free (London 1802 lesson) |
+
+### Dual-slope breakpoint (London 2695 MHz)
+Rbp = 4 × hBS × hUT × f/c = 4 × 25 × 1.5 × 2695e6/3e8 = **1348 m**
+
+CAL_MAX_DIST_KM=1.0 calibrates below Rbp — avoids LOS/NLOS sign-flip (same fix as Nottingham 2695 R²: 0.246→0.574).
+
+### Pre-run setup (on your machine)
+```bash
+mkdir -p ~/sionna_rt/london_ofcom_2695mhz_dem/results
+cp london2695.csv ~/sionna_rt/london_ofcom_2695mhz_dem/
+```
+
+### Run sequence
+```
+NO scene builder needed — reuses London 915/1802 MHz scene directly.
+CELL 1 → TX AGL scan (skip — TX_AGL_SCAN_M=None, use 25m fixed)
+→ CELL CAL-CMA → CELL 4A → CELL 8e
+```
+
+---
+
 ## London 915 MHz Status (sionna2_915mhz_dem_simulation_london.ipynb)
 
 **CMA Run 1 COMPLETE (2026-08-22): eval 283, best=6.646 dB, scalar=+38.295 dB. CELL 8e COMPLETE.**
