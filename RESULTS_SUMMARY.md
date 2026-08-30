@@ -72,6 +72,27 @@
 
 ---
 
+## TABLE 6 — Presentation Slide Mapping
+
+| Slide | Title | Key content | Avoid repeating |
+|-------|-------|-------------|-----------------|
+| 2 | Presentation Outline | 6-step roadmap · R²=0.84/0.74 headline | — |
+| 3 | Introduction | Problem statement · empirical models fail · Sionna RT + Ofcom · R²=0.84 | — |
+| 4 | Research Objectives | 4 goals: scenes · vegetation · calibration · evaluation | Pipeline detail |
+| 5 | Ray-Tracing Pipeline | Steps 1–5: data→scene→RT→CMA-ES→eval | Re-explain goals |
+| 6 | State of the Art — Methods | Empirical · Hybrid · Deterministic RT · open gap | R²=0.84 |
+| 7 | State of the Art — Open Gaps | Vegetation · material uncertainty · diffraction · reproducibility | Methods |
+| 8 | Dataset & 3D Scenes | 4 sites · 4 frequencies · 500k+ records · scene construction | Pipeline steps |
+| 9 | Sionna RT Setup | Tracer config · depth=8 · 100M rays · ITU-R priors · outputs | Scene build |
+| 10 | Vegetation Modelling | Surface-based limitation · Weissberger/P.833 · per-path strategy | RT config |
+| 11 | Calibration Methodology | Scalar → CMA-ES → LOS regime → held-out eval | Vegetation detail |
+| 12 | Results — Nottingham | TABLE 1 rows 1–4 · scene ablation (TABLE 3) · scatter ON/OFF | Calibration steps |
+| 13 | Results — Multi-Site | TABLE 1 rows 5–7 · scatter ON/OFF (TABLE 2) | Nottingham detail |
+| 14 | Cross-Site Summary | TABLE 4 + TABLE 5 · physics floor · best R²=0.835 | Per-site detail |
+| 15 | Conclusions | Achievements · limitations · future work | Results re-list |
+
+---
+
 ## TABLE 5 — Physics Floor Reference
 
 | Metric | Value | Source |
