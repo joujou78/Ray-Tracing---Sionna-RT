@@ -11,7 +11,7 @@
 | Nottingham | 2695 | 0–1250m | 324 | ON incoh | +4.8 | 12.7 | **0.574** | FINAL |
 | Nottingham | 3602 | 0–1250m | 681 | ON incoh | +0.3 | 9.4 | **0.515** | FINAL |
 | London | 915 | 0–1000m | 125 | ON incoh | -0.3 | 8.2 | **0.365** | FINAL |
-| London | 1802 | 0–1000m | 125 | ON incoh | — | — | **0.365** | FINAL |
+| London | 1802 | 0–1000m | 125 | ON incoh | -0.3 | 8.2 | **0.365** | FINAL (Run 4) |
 | Stevenage | 915 | 0–2250m | 1200 | ON incoh | +4.0 | 11.3 | **0.744** | Uncalibrated |
 | Scar Hill | 915 | 0–1250m | 179 | ON incoh | +0.9 | 15.1 | **0.083** | FINAL |
 
@@ -54,6 +54,21 @@
 | London | 915 | — | **0.365** | CMA-ES |
 | Stevenage | 915 | **0.744** | TBD (CMA pending) | CMA-ES |
 | Scar Hill | 915 | — | **0.083** | Powell |
+
+---
+
+## TABLE 5A — London 1802 MHz Calibration History
+
+| Run | Cal RMSE | Scalar | CELL 8e R² | Outcome |
+|-----|----------|--------|------------|---------|
+| Run 1 (CMA, 15M) | 12.477 dB | +30.030 dB | FAILED | Kernel hung eval 605; scatter flood 392x |
+| Run 2 (CMA, 15M) | 15.584 dB | — | FAILED | S caps 0.35 too tight; stalled |
+| Run 3 (CMA, 15M) | 14.891 dB | +30.696 dB | FAILED | Brick S at cap — CMA trapped |
+| **Run 4 (CMA, 15M)** | **13.829 dB** | **+30.696 dB** | **R²=0.365 FINAL** | **Best result — accepted as physics floor** |
+| Run 5 (CMA, 15M) | 2.779 dB | +31.035 dB | FAILED | 26 cal RX — degenerate overfit |
+| Run 6 (CMA, 15M) | 4.957 dB | +32.791 dB | FAILED | Bin scalars -37 to -55 dB |
+| Run 7 (CMA, 15M) | ~12.575 dB | +30.032 dB | FAILED | Glass εᵣ=1.086 degenerate |
+| Run 8 (CMA, 15M) | 12.368 dB | +32.721 dB | FAILED | Scatter flood 365x; bias=-31.5 dB at 0-100m |
 
 ---
 
