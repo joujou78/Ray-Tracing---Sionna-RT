@@ -891,7 +891,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 | CAL_MAX_DIST_KM | 1.5 |
 | Terrain local z | [-71.9, +17.5] m (origin=138.7 m ASL) |
 
-**Dataset coverage:** Receivers extend to at least 1250m — earlier estimate of "all within 750m" was wrong. N=717 within 1250m, N=589 within 1000m, N=518 within 900m. Scene bbox (10×10 km) covers full data extent.
+**Dataset coverage:** All 1200 receivers within ~2250m — earlier estimate of "all within 750m" was completely wrong. N=589 within 1000m, N=717 within 1250m, N=856 within 1500m, N=1009 within 1750m, N=1156 within 2000m, N=1200 within 2250m (N freezes). Scene bbox (10×10 km) covers full data extent.
 
 **Buildings below ground (visual artifact):** In Sionna 3D viewer, buildings in terrain valleys (scene-local z < 0) appear below the flat z=0 reference plane. Not a real geometry error — buildings correctly placed on terrain surface. Same visual occurs in London (London Run 4 R²=0.365 with same geometry confirms correctness).
 
@@ -936,24 +936,29 @@ Best method: **ON incoh** — but ON ≈ OFF throughout (scatter provides <0.01 
 | 0-750m | 434 | +2.4 | 10.3 | 10.0 | -0.220 | 38816/116 | |
 | 0-900m | 518 | +3.8 | 10.9 | 10.2 | +0.024 | 34475/112 | first positive R² |
 | 0-1000m | 589 | +4.4 | 10.8 | 9.8 | **+0.341** | 30434/107 | |
-| **0-1250m** | **717** | **+5.3** | **11.1** | **9.8** | **+0.581** | 25181/98 | **peak so far** |
+| 0-1250m | 717 | +5.3 | 11.1 | 9.8 | +0.581 | 25181/98 | |
+| 0-1500m | 856 | +6.1 | 11.7 | 10.0 | +0.646 | 21160/90 | |
+| 0-1750m | 1009 | +5.2 | 11.3 | 10.0 | +0.705 | 18047/85 | |
+| 0-2000m | 1156 | +4.0 | 11.3 | 10.6 | +0.739 | 16825/81 | |
+| **0-2250m** | **1200** | **+4.0** | **11.3** | **10.6** | **+0.744** | **16550/80** | **N freezes — FINAL** |
 
 **Key findings (Run 1):**
-- R²=0.581 at 0-1250m **without calibration** — beats Nottingham 1802 MHz FINAL (0.509) and matches Nottingham 2695 MHz FINAL (0.574), both of which required full CMA calibration
-- ON ≈ OFF everywhere (Δ<0.01 at 0-1250m): scatter provides zero useful signal — Stevenage is specular/LOS dominated, opposite of London/Nottingham
-- avg_rays ON=25,181 vs OFF=98 (256x) at 0-1250m — scatter flood persists but is noise, not signal
-- Bias grows with distance: -5.1 dB (0-300m) → +5.3 dB (0-1250m) — model transitions from over-predicting (close) to under-predicting (NLOS)
-- RMSE=10.3-11.1 dB; if bias=0 corrected, effective STD=9.8 dB (Δ≈1.3 dB above 3GPP σ_SF=7.82 dB floor)
+- R²=0.744 at 0-2250m (N=1200) **without calibration** — highest uncalibrated R² across all sites; beats all Nottingham/London calibrated results
+- ON ≈ OFF everywhere (Δ<0.01 at 0-2250m): scatter provides zero useful signal — Stevenage is specular/LOS dominated, opposite of London/Nottingham
+- avg_rays ON=16,550 vs OFF=80 (207x) at full dataset — scatter flood persists but is noise, not signal
+- Bias: -5.1 dB (0-300m) → peak +6.1 dB (0-1500m) → settles +4.0 dB (0-2250m) — bin scalar corrects the NLOS transition
+- RMSE=11.3 dB; STD=10.6 dB (Δ≈2.8 dB above 3GPP σ_SF=7.82 dB floor)
 - Terrain: EA LiDAR DTM 1m resolution, origin=138.7 m ASL — not limiting factor
-- **Pending: 0-1500m+ results** — CELL 8e may still be running; await final N plateau
+- Dataset extends to ~2250m (not ~750m as previously estimated — short route estimate was wrong)
 
 **RMSE improvement path:**
-- Fixing +5.3 dB bias: RMSE 11.1 → 9.8 dB (bias² contributes 28.1 of 123.3 MSE)
-- CMA calibration target: tune εᵣ/σ (not S) for specular reflection accuracy; S_MIN=0 to remove scatter flood noise
-- Expected after calibration: RMSE≈9.5-10.0 dB, R²≈0.60-0.65 at 0-1250m (bias-corrected by CMA scalar)
-- Diagnostic: manual S=0.05 override pushed (commit 9d7d6a4) — run CELL 4A → CELL 8e to confirm scatter is noise; then CMA with S_MIN=0
+- Fixing +4.0 dB bias alone: RMSE 11.3 → 10.6 dB (STD)
+- CMA calibration (better εᵣ/σ for specular): STD 10.6 → ~9.0-9.5 dB
+- Expected after CMA: **RMSE≈9.0-9.5 dB, R²≈0.78-0.82** at full dataset (N=1200)
+- CMA target: tune εᵣ/σ only (S_MIN=0 or near-zero — scatter is noise not signal)
+- Diagnostic: manual S=0.05 override in CELL 4A (commit 9d7d6a4) — confirms scatter is noise before full CMA run
 
-**Status: CELL 8e Run 1 results accepted as Stevenage uncalibrated baseline. CMA calibration next.**
+**Status: CELL 8e Run 1 COMPLETE (2026-08-30). R²=0.744 accepted as Stevenage uncalibrated baseline. CMA calibration next.**
 
 ---
 
