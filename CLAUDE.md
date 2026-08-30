@@ -970,7 +970,7 @@ Best method: **ON incoh** — but ON ≈ OFF throughout (scatter provides <0.01 
 **CMA Run 4 KERNEL HUNG at eval 605 (2026-08-27): best=13.829 dB — same GPU VRAM accumulation as Run 1 (deterministic at ~605 evals × 15M samples). JSON saved at eval 574. CELL 8e degenerate: itu_concrete εᵣ=1.85 (unphysical), scalar=+30.696 dB → bias=-28.3 dB at 0-200m, R²=-1.330. Root cause: 86 cal RX (CAL_MAX=0.75 km) insufficient for 15 free params → CMA found degenerate solution. Fix: raise CAL_MAX_DIST_KM to 1.5 km (more cal RX) + implement GPU memory cleanup in CMA objective to prevent eval-605 hang.**
 **CMA Run 5 IN PROGRESS (2026-08-27): fresh restart with physical starting materials (itu_concrete εᵣ=5.310 confirmed). scalar=+30.696 dB, 86 cal RX (0.15-0.75 km). Gen 5 eval 156 best=14.376 dB — plateau broke at eval 156 (was 14.534 dB from eval 63–155); descent resumed gen 5 as expected. GPU memory fix (del paths + torch.cuda.empty_cache()) must be applied before eval ~590 (~13 hrs away at 87s/eval). Await FTOL → CELL 4A → CELL 8e.**
 **CMA Run 7 FAILED (2026-08-29): itu_glass εᵣ=1.0864 degenerate minimum — complete scatter flood in CELL 8e (bias=-33 dB at 0-100m, RMSE=65 dB, R²=-2.0 all ranges). Root cause: no εᵣ lower bound on glass → CMA found near-transparent glass solution.**
-**CMA Run 8 IN PROGRESS (2026-08-29): Added `_ER_MIN_PER_MAT = {glass:4.0, brick:2.5, concrete:4.0}` to prevent degenerate εᵣ→1. Phase 0 scalar=+30.032 dB, RMSE=15.36 dB. eval 215 best=12.555 dB (close to Run 4 final 12.477 dB). Await FTOL → CELL 4A → CELL 8e.**
+**CMA Run 8 IN PROGRESS (2026-08-30): Added `_ER_MIN_PER_MAT = {glass:4.0, brick:2.5, concrete:4.0}` to prevent degenerate εᵣ→1. Phase 0 scalar=+30.032 dB, RMSE=15.36 dB. eval 511 best=12.368 dB (beats Run 4 FINAL 12.477 dB by 0.109 dB). Plateau since ~eval 400 — recommend interrupt at eval 511 and proceed to CELL 4A → CELL 8e. Expected R²≈0.36-0.40 at 0-1000m.**
 
 ### London 1802 MHz CMA Run 1 — Calibration Progress
 
@@ -1007,13 +1007,38 @@ Best method: **ON incoh** — but ON ≈ OFF throughout (scatter provides <0.01 
 | Run 1 (CMA, 15M) | 5 free, CAL_MAX=0.90, S caps brick/concrete 0.45 | 109 | +30.030 dB | 12.477 dB (eval 605) | **FAILED** | kernel hung eval 605; CELL 8e scatter flood 392x ON/OFF; R² negative all ranges; root cause: CAL_MAX≈Rbp (regime mixing) + concrete_barrier/metal_barrier uncapped |
 | Run 2 (CMA, 15M) | 5 free, CAL_MAX=0.75, S caps 0.35 | 86 | — | 15.584 dB (eval 286) | **STALLED** | S=0.35 too tight; only 0.168 dB improvement over 200 evals |
 | Run 3 (CMA, 15M) | 5 free, CAL_MAX=0.75, S caps brick/concrete 0.40 | 86 | +30.696 dB | 14.891 dB (eval 348) | **STALLED** | brick S=0.400 at cap exactly — CMA trapped against bound |
-| **Run 4 (CMA, 15M) — IN PROGRESS** | 5 free, CAL_MAX=0.75, S caps brick/concrete **0.45**, metals locked | 86 | +30.696 dB | **13.829 dB** (eval 574, gen ~16) | **KERNEL HUNG at eval 605** | same GPU mem hang as Run 1; descent: 14.891→14.680→14.428→13.829 dB; check if JSON saved at eval 574 → CELL 4A → CELL 8e |
+| Run 4 (CMA, 15M) | 5 free, CAL_MAX=0.75, S caps brick/concrete 0.45, metals locked | 86 | +30.696 dB | 13.829 dB (eval 574) | **KERNEL HUNG eval 605; CELL 8e R²=0.365 FINAL** | degenerate concrete εᵣ=1.85 in JSON; CELL 8e used separately loaded JSON; R²=0.365 at 0-1000m confirmed FINAL |
+| Run 5 (CMA, 15M) | 3 free (brick/concrete/glass), CAL_MAX=0.45, 26 cal RX | 26 | +31.035 dB | 2.779 dB (eval 601) | **FAILED** | cal RMSE below LOS physics floor — degenerate overfit; CELL 8e RMSE=21.7 dB |
+| Run 6 (CMA, 15M) | 4 free, CAL_MAX=0.65, 62 cal RX | 62 | +32.791 dB | 4.957 dB (eval 557) | **FAILED** | overfitted; bin scalars -37 to -55 dB; R²=-0.639 at 0-1000m |
+| Run 4 repro (CMA, 15M) | 5 free, 223 cal RX, concrete_barrier free | 223 | +33.597 dB | 6.959 dB (eval 521) | **COMPLETE; CELL 8e R²=0.208** | concrete_barrier εᵣ=2.358 degenerate; confirms Run 4 (R²=0.365) is FINAL |
+| Run 7 (CMA, 15M) | 4 free (no concrete_barrier), no εᵣ lower bounds | 109 | +30.032 dB | ~12.575 dB | **FAILED** | itu_glass εᵣ=1.0864 degenerate — scatter flood; CELL 8e bias=-33 dB, RMSE=65 dB, R²=-2.0 |
+| **Run 8 (CMA, 15M) — IN PROGRESS** | 4 free + `_ER_MIN_PER_MAT={glass:4.0, brick:2.5, concrete:4.0}` | 109 | +30.032 dB | **12.368 dB** (eval 511) | **PLATEAU — recommend interrupt** | beats Run 4 FINAL (12.477 dB) by 0.109 dB; plateau since ~eval 400; interrupt → CELL 4A → CELL 8e; expected R²≈0.36-0.40 |
 
 ---
 
 ## London 2695 MHz Status (sionna2_2695mhz_dem_simulation_london.ipynb)
 
-**Notebook created (2026-08-29, commit 49635fc). Scene: reuses london_ofcom_915mhz_dem. CSV: london2695.csv → copy to ~/sionna_rt/london_ofcom_2695mhz_dem/. CELL CAL-CMA not yet run.**
+**Notebook created (2026-08-29, commit 49635fc). Scene: reuses london_ofcom_915mhz_dem.**
+**CMA Run 1 INTERRUPTED at eval 114 (2026-08-30): best=13.493 dB. CELL 8e FAILED — GPU OOM hang at 100M samples after only 2 bins computed. Eval-15 JSON (scalar=+48.68 dB) unusable — too early in CMA.**
+**CMA Run 2 IN PROGRESS (2026-08-30): fresh restart. Phase 0 scalar=+44.418 dB, RMSE before scalar=48.48 dB → 19.42 dB after scalar. eval 172 best=14.722 dB (4.7 dB below Phase 0). tolfun=2.0 — FTOL expected within 1-2 more generations (~eval 200-250). Await FTOL → CELL 4A → CELL 8e.**
+
+### CMA Run 2 Calibration Progress (London 2695 MHz)
+
+| Phase | RMSE | Scalar | Notes |
+|-------|------|--------|-------|
+| Phase 0 (before scalar) | 48.48 dB | — | 4 free mats (brick/concrete/glass/wet_ground); 169/180 valid cal RX |
+| Phase 0 (after scalar) | 19.42 dB | **+44.418 dB** | large scalar — London complex geometry at 2695 MHz |
+| eval 4 | **16.907 dB** | — | gen 1 first breakthrough |
+| eval 14 | **15.938 dB** | — | gen 1 new best |
+| eval 172 | **14.722 dB** | — | plateau; gen 5 running |
+
+**Key findings (CMA Run 2 so far):**
+- Phase 0 scalar +44.418 dB vs London 915 Run 4 +28.766 dB — extra 15.7 dB gap reflects higher frequency path loss at 2695 MHz in London urban canyons
+- RMSE before scalar (48.48 dB) → after scalar (19.42 dB): scalar correction alone removes 29 dB of systematic offset
+- Best 14.722 dB at eval 172 — 4.7 dB below Phase 0; CMA improving σ/εᵣ for buildings
+- Free: itu_brick, itu_concrete, itu_glass, itu_wet_ground (4 mats, 12 params); concrete_barrier locked (degenerate εᵣ→1 risk from London 1802 lesson)
+- tolfun=2.0: FTOL triggers when across-generation improvement < 2.0 dB — fast convergence expected
+- After FTOL: scalar expected ~+35-40 dB (better than +44.4 dB Phase 0 as materials absorb more)
 
 ### Site parameters (from london2695.csv header)
 | Parameter | Value |
