@@ -73,24 +73,24 @@ Installation follows the standard Python packaging workflow: create an isolated 
 
 **Table 4.2 — Ray-tracing and calibration configuration by site and frequency.** All frequencies share EPSG:27700 (British National Grid, `always_xy=True`), MAX_DEPTH=8, diffraction and edge diffraction enabled, and TERRAIN_PAD_M=3000. RX AGL=1.5 m throughout.
 
-| Parameter | Nottm 915 MHz | Nottm 1802 MHz | Nottm 2695 MHz | Nottm 3602 MHz | London 915 MHz | Scar Hill 915 MHz |
-|---|---|---|---|---|---|---|
-| TX AGL | 17 m | 17 m | 17 m | 17 m | 45 m | 17 m |
-| TX EIRP | — | — | 56 dBm | 54 dBm | 49 dBm | 46.9 dBm |
-| Noise floor | −124 dBm | — | −120 dBm | −109 dBm | — | −124 dBm |
-| `CAL_SAMPLES_PS` | 2 M | 2 M | 10 M | 30 M | 15 M | 10 M |
-| `NUM_SAMPLES_PS` | 100 M | 100 M | 100 M | 100 M | 100 M | 10 M |
-| `CAL_MAX_DIST_KM` | 1.5 | 1.5 | 1.0 | 1.0 | 1.75 | 1.5 |
-| `CAL_MIN_DIST_KM` | 0.15 | 0.15 | 0.15 | 0.15 | 0.15 | 0.15 |
-| `CAL_SCALAR_BOUNDS` | (−20, 5) | (−20, 5) | (−30, 20) | (−60, 60) | (−60, 60) | (−30, 20) |
-| `DISABLE_VEG_DISCS` | False | True | False | False | False | False |
-| `DISABLE_CANOPY` | False | False | False | True | False | False |
-| Terrain source | EA LiDAR 1 m | EA LiDAR 1 m | EA LiDAR 1 m | EA LiDAR 1 m | EA LiDAR 1 m | SRTM 30 m |
-| Vegetation formula | Weissberger | Weissberger | ITU-R P.833-10 | ITU-R P.833-10 | Weissberger | Weissberger |
-| Dual-slope Rbp | 311 m | 613 m | 916 m | 1225 m | 458 m | 311 m |
-| **Best R² (ON incoh)** | **0.835 @ 0–750 m** | **0.509 @ 0–1250 m** | **0.574 @ 0–1250 m** | **0.515 @ 0–1250 m** | **0.365 @ 0–1000 m** | **0.083 @ 0–1250 m** |
+| Parameter | Nottm 915 MHz | Nottm 1802 MHz | Nottm 2695 MHz | Nottm 3602 MHz | London 915 MHz | Scar Hill 915 MHz | Stevenage 915 MHz |
+|---|---|---|---|---|---|---|---|
+| TX AGL | 17 m | 17 m | 17 m | 17 m | 45 m | 17 m | — |
+| TX EIRP | — | — | 56 dBm | 54 dBm | 49 dBm | 46.9 dBm | — |
+| Noise floor | −124 dBm | — | −120 dBm | −109 dBm | — | −124 dBm | — |
+| `CAL_SAMPLES_PS` | 2 M | 2 M | 10 M | 30 M | 15 M | 10 M | 30 M |
+| `NUM_SAMPLES_PS` | 100 M | 100 M | 100 M | 100 M | 100 M | 10 M | 100 M |
+| `CAL_MAX_DIST_KM` | 1.5 | 1.5 | 1.0 | 1.0 | 1.75 | 1.5 | 1.5 |
+| `CAL_MIN_DIST_KM` | 0.15 | 0.15 | 0.15 | 0.15 | 0.15 | 0.15 | 0.15 |
+| `CAL_SCALAR_BOUNDS` | (−20, 5) | (−20, 5) | (−30, 20) | (−60, 60) | (−60, 60) | (−30, 20) | (−30, 20) |
+| `DISABLE_VEG_DISCS` | False | True | False | False | False | False | True |
+| `DISABLE_CANOPY` | False | False | False | True | False | False | False |
+| Terrain source | EA LiDAR 1 m | EA LiDAR 1 m | EA LiDAR 1 m | EA LiDAR 1 m | EA LiDAR 1 m | SRTM 30 m | EA LiDAR 1 m |
+| Vegetation formula | Weissberger | Weissberger | ITU-R P.833-10 | ITU-R P.833-10 | Weissberger | Weissberger | Weissberger |
+| Dual-slope Rbp | 311 m | 613 m | 916 m | 1225 m | 458 m | 311 m | — |
+| **Best R² (ON incoh)** | **0.835 @ 0–750 m** | **0.509 @ 0–1250 m** | **0.574 @ 0–1250 m** | **0.515 @ 0–1250 m** | **0.365 @ 0–1000 m** | **0.083 @ 0–1250 m** | **0.744 @ 0–2250 m** |
 
-*Table 4.2 — Scar Hill uses 10 M evaluation samples (matching calibration) rather than 100 M, as the coarser SRTM terrain does not benefit from the additional MC precision. The dual-slope breakpoint Rbp = 4·hBS·hUT·f/c (ITU-R P.1411 [15]) is computed for each frequency at the transmitter and receiver heights above ground.*
+*Table 4.2 — Scar Hill uses 10 M evaluation samples (matching calibration) rather than 100 M, as the coarser SRTM terrain does not benefit from the additional MC precision. Stevenage TX AGL, EIRP, and noise floor are pending confirmation from notebook CELL 1; Dual-slope Rbp is shown as — until TX AGL is confirmed. Stevenage CAL_SAMPLES_PS = 30 M refers to the CMA-ES population evaluation budget; no material parameters were updated beyond the Phase 0 scalar offset (+1.05 dB) — CMA-ES found no improvement, consistent with a specular-dominated propagation environment. The dual-slope breakpoint Rbp = 4·hBS·hUT·f/c (ITU-R P.1411 [15]) is computed for each frequency at the transmitter and receiver heights above ground.*
 
 **Table 4.3 — CMA-ES calibration hyperparameters** (shared across all sites using the CMA-ES back-end).
 
@@ -118,7 +118,7 @@ Installation follows the standard Python packaging workflow: create an isolated 
 | London 915 MHz | CMA-ES | 223 | 5 | 6.888 dB | **0.365** | 0–1000 m | scalar=+28.766 dB; metals locked |
 | London 1802 MHz | CMA-ES | — | 5 | 13.829 dB | **0.365** | 0–1000 m | Run 4/8; scalar=+30.696 dB; accepted as physics floor after 7 failed prior runs (scatter flood, degenerate εr, stalled S caps) |
 | Scar Hill 915 MHz | Powell | 202 | — | 10.71 dB | **0.083** | 0–1250 m | SRTM 30 m terrain physics floor; R² limited by terrain resolution |
-| Stevenage 915 MHz | None (Phase 0 only) | 1,200 | 0 | — | **0.744** | 0–2250 m | ITU-R defaults + scalar offset (+1.609 dB); CMA-ES found no improvement beyond Phase 0 — specular-dominated site |
+| Stevenage 915 MHz | None (Phase 0 only) | 1,200 | 0 | — | **0.744** | 0–2250 m | ITU-R defaults + scalar offset (+1.05 dB); CMA-ES found no improvement beyond Phase 0 — specular-dominated site |
 
 *Table 4.4 — All R² values report ON incoh (scattering ON, incoherent summation), which consistently outperforms coherent and OFF-scatter modes across all sites. The 3GPP TR 38.901 [6] UMa NLOS shadow fading floor (σ_SF = 7.82 dB) sets the irreducible RMSE minimum for the urban sites. Stevenage is the exception to the calibration narrative elsewhere in this chapter: it is the only site where the CMA-ES joint material search converges to no improvement over the Phase 0 scalar offset alone, consistent with a specular-dominated propagation environment where the ITU-R default material parameters already fit the measured path loss.*
 
@@ -146,9 +146,10 @@ Three raw data sources feed the implementation, each requiring its own acquisiti
 | Nottingham | 3602 MHz | — | — | 601 (≤1.0 km) | −109 dBm | 54 dBm |
 | London | 915 MHz | — | ~179 (0–2.0 km) | 223 (≤1.75 km) | — | 49 dBm |
 | London | 1802 MHz | — | — | 86 (≤0.75 km) | — | — |
+| Stevenage | 915 MHz | — | 1,200 (0–2.25 km) | Phase 0 only (scalar +1.05 dB) | — | — |
 | Scar Hill | 915 MHz | 143,541 | — | 202 (≤1.5 km) | −124 dBm | 46.9 dBm |
 
-*Table 4.5 — Cal receivers are those passing all three filters (noise floor margin, distance bounds, per-bin valid-path coverage ≥65%) and represent the set used in the calibration objective function. The Nottingham 2695 MHz dataset illustrates the density reduction from raw to usable: 261,967 total → 36,351 in scene → 373 calibration receivers within 1.0 km.*
+*Table 4.5 — Cal receivers are those passing all three filters (noise floor margin, distance bounds, per-bin valid-path coverage ≥65%) and represent the set used in the calibration objective function. The Nottingham 2695 MHz dataset illustrates the density reduction from raw to usable: 261,967 total → 36,351 in scene → 373 calibration receivers within 1.0 km. Stevenage lists all 1,200 drive-test receivers as the calibration set because Phase 0 (scalar-only) uses the full dataset; no joint material search was performed.*
 
 Processing this file involves: reprojecting from WGS84 to the scene's local EPSG:27700-derived coordinate frame; filtering to receivers falling inside the scene bounding box (Section 3.4 documents a bug in an early implementation where the first *N* rows were taken before this filter, silently selecting receivers outside the scene for routes starting far from the transmitter — commit `9bb6be0`); and the sequence of geometric validity checks (DEM sanity, 2D/3D building-interior tests) detailed procedurally in Section 3.4, Step 3.
 
