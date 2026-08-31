@@ -116,11 +116,11 @@ Installation follows the standard Python packaging workflow: create an isolated 
 | Nottingham 2695 MHz | Powell | 373 | 6 | ~13.7 dB | **0.574** | 0–1250 m | CAL_MAX=1.0 km (below Rbp=916 m); DISABLE_VEG_DISCS=False |
 | Nottingham 3602 MHz | Powell | 601 | 6 | ~15.4 dB | **0.515** | 0–1250 m | DISABLE_CANOPY=True; per-path P.833-10; height filter z>30 m |
 | London 915 MHz | CMA-ES | 223 | 5 | 6.888 dB | **0.365** | 0–1000 m | scalar=+28.766 dB; metals locked |
-| London 1802 MHz | CMA-ES | 86 | 5 | in progress | TBD | 0–750 m | S caps brick/concrete ≤0.45; Run 4 in progress |
+| London 1802 MHz | CMA-ES | — | 5 | 13.829 dB | **0.365** | 0–1000 m | Run 4/8; scalar=+30.696 dB; accepted as physics floor after 7 failed prior runs (scatter flood, degenerate εr, stalled S caps) |
 | Scar Hill 915 MHz | Powell | 202 | — | 10.71 dB | **0.083** | 0–1250 m | SRTM 30 m terrain physics floor; R² limited by terrain resolution |
-| Stevenage 915 MHz | — | — | — | — | TBD | — | Scene built; calibration pending |
+| Stevenage 915 MHz | None (Phase 0 only) | 1,200 | 0 | — | **0.744** | 0–2250 m | ITU-R defaults + scalar offset (+1.609 dB); CMA-ES found no improvement beyond Phase 0 — specular-dominated site |
 
-*Table 4.4 — All R² values report ON incoh (scattering ON, incoherent summation), which consistently outperforms coherent and OFF-scatter modes across all sites. The 3GPP TR 38.901 [6] UMa NLOS shadow fading floor (σ_SF = 7.82 dB) sets the irreducible RMSE minimum for the urban sites.*
+*Table 4.4 — All R² values report ON incoh (scattering ON, incoherent summation), which consistently outperforms coherent and OFF-scatter modes across all sites. The 3GPP TR 38.901 [6] UMa NLOS shadow fading floor (σ_SF = 7.82 dB) sets the irreducible RMSE minimum for the urban sites. Stevenage is the exception to the calibration narrative elsewhere in this chapter: it is the only site where the CMA-ES joint material search converges to no improvement over the Phase 0 scalar offset alone, consistent with a specular-dominated propagation environment where the ITU-R default material parameters already fit the measured path loss.*
 
 For the Nottingham scenes specifically, the scene bounding box is fixed across builder and simulation notebooks — `SCENE_WEST = -1.267685`, `SCENE_EAST = -1.119832`, `SCENE_SOUTH = 52.943165`, `SCENE_NORTH = 53.003037` — because even a 0.025° mismatch produces an ~855 m coordinate offset between terrain and building geometry. This bounding box is treated as an implementation-level invariant, checked automatically (Section 4.4) rather than trusted to manual consistency.
 
