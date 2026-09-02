@@ -962,6 +962,74 @@ Best method: **ON incoh** — but ON ≈ OFF throughout (scatter provides <0.01 
 
 ---
 
+## Stevenage 1802 MHz Status (sionna2_1802mhz_dem_simulation_stevenage.ipynb)
+
+**CELL 8e COMPLETE (2026-09-02). Best result: R²=0.735 at 0-1750m (ON coh) — confirmed FINAL. Key finding: enabling vegetation discs (DISABLE_VEG_DISCS=False) with ON coh dramatically improved vs discs-OFF baseline (R²=0.544→0.735, RMSE=13.3→10.3 dB).**
+
+### Site parameters
+| Parameter | Value |
+|-----------|-------|
+| Site name | Stevenage |
+| TX lat/lon | 51.8886 / -0.25516 |
+| Frequency | 1802.5 MHz |
+| TX AGL | 17 m |
+| Scene bbox | WEST=-0.328144, EAST=-0.182176, SOUTH=51.843555, NORTH=51.933645 |
+| Rbp | 613 m (4×17×1.5×1802e6/3e8) |
+
+### Configuration (FINAL)
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| DISABLE_VEG_DISCS | **False** | discs active — geometric blocking centres bias |
+| VEG_SCATTERING_COEFF | 0.35 | S must stay at 0.35 — phase-cancellation mechanism requires scatter flood |
+| NUM_SAMPLES_PS | 10_000_000 | matches CAL_CMA_SAMPLES — avoids scatter mismatch at 100M |
+| CAL_CMA_SAMPLES | 10_000_000 | |
+| N_SCALAR_BINS | 20 | |
+| CAL_MAX_DIST_KM | 1.50 | |
+| LOS_NLOS_ZONE_SPLIT | True | |
+| CAL_MIN_DIST_KM | 0.15 | |
+| Scalar | -2.413 dB | Phase 0 only (CMA Phase 2 flat — DrJIT kernel caching) |
+| Building S override | 0.05 | all building/ground mats set to S=0.05 in CELL 4A |
+
+### CELL 8e FINAL Results (ON coh — best method)
+
+| Range | N | Bias (dB) | RMSE (dB) | STD (dB) | R² |
+|-------|---|-----------|-----------|----------|-----|
+| 0-1000m | 444 | +0.7 | 9.8 | 9.8 | 0.696 |
+| 0-1250m | 574 | +0.5 | 10.3 | 10.3 | 0.723 |
+| 0-1500m | 730 | +0.3 | 10.5 | 10.5 | 0.734 |
+| **0-1750m** | **873** | **+1.3** | **10.6** | **10.5** | **0.735** |
+| 0-2000m | 993 | +1.9 | 11.0 | 10.8 | 0.723 |
+| 0-2250m | 1134 | +2.3 | 11.1 | 10.8 | 0.727 |
+| 0-2500m+ | 1195 | +2.8 | 11.7 | 11.3 | 0.695 |
+
+N freezes at 1195 from 0-2500m (all receivers). No NLOS collapse to 4 km.
+
+### Discs-OFF vs Discs-ON comparison
+
+| Configuration | Best R² | Range | RMSE | Bias | Notes |
+|--------------|---------|-------|------|------|-------|
+| DISABLE_VEG_DISCS=True (OFF), ON incoh | 0.544 | 0-1750m | 13.3 dB | +7.5 dB | large positive bias — no geometric blocking |
+| **DISABLE_VEG_DISCS=False (ON), ON coh** | **0.735** | **0-1750m** | **10.6 dB** | **+1.3 dB** | **near-zero bias — scatter flood blocks excess power** |
+
+### Physics explanation — why ON coh + scatter flood works
+
+avg_rays ON=41,000-59,000 vs OFF=70-108 (~590x ratio) with discs ON.
+
+- **ON incoh fails**: scatter flood from S=0.35 discs adds massive power incoherently → excess received power → large positive bias (+15 dB at close range). Mismatch between 10M cal samples and 10M eval samples persists.
+- **ON coh succeeds**: random-phase scatter from vegetation discs cancels in coherent sum (random phases ~0 on average), leaving deterministic specular/LOS signal dominant. Discs provide geometric blocking (reducing excess predicted power), centring the bias. Coherent summation turns the scatter flood into a feature not a bug.
+- S=0.35 cannot be reduced (S=0.01 tested — eliminates phase-cancellation mechanism, both ON incoh and ON coh collapse). Scatter flood is required for ON coh to work.
+- Stevenage is specular-dominated (post-war New Town, uniform brick buildings, open suburban layout) — coherent combination preserves the deterministic specular signal correctly.
+- Physics floor: RMSE=10.3-10.6 dB is only 2.5-2.8 dB above 3GPP σ_SF=7.82 dB floor. R²=0.735 confirmed as Stevenage 1802 MHz ceiling.
+
+### Calibration History
+
+| Run | Settings | Scalar | Cal RMSE | CELL 8e R² | Notes |
+|-----|----------|--------|----------|-----------|-------|
+| DrJIT flat (DISABLE_VEG_DISCS=False) | CMA Phase 2 flat — kernel caching | — | 17.848 dB | — | FAILED: CMA objective insensitive; Phase 0 scalar only achievable |
+| **FINAL (discs ON, ON coh)** | DISABLE_VEG_DISCS=False, S=0.35, 10M | **-2.413 dB** | Phase 0 only | **0.735** | R²=0.735 confirmed physics floor |
+
+---
+
 ## London 1802 MHz Status (sionna2_1802mhz_dem_simulation_london.ipynb)
 
 **CMA Run 1 FAILED (2026-08-26): eval 605, best=12.477 dB — kernel hung at eval 605. CELL 8e: scatter flood (392x ON/OFF ratio), -30 dB bias, R² negative at all ranges. Root cause: CAL_MAX_DIST_KM=0.90 ≈ Rbp=0.901 (regime mixing) + S caps too loose (brick S=0.449 at cap).**
@@ -970,7 +1038,7 @@ Best method: **ON incoh** — but ON ≈ OFF throughout (scatter provides <0.01 
 **CMA Run 4 KERNEL HUNG at eval 605 (2026-08-27): best=13.829 dB — same GPU VRAM accumulation as Run 1 (deterministic at ~605 evals × 15M samples). JSON saved at eval 574. CELL 8e degenerate: itu_concrete εᵣ=1.85 (unphysical), scalar=+30.696 dB → bias=-28.3 dB at 0-200m, R²=-1.330. Root cause: 86 cal RX (CAL_MAX=0.75 km) insufficient for 15 free params → CMA found degenerate solution. Fix: raise CAL_MAX_DIST_KM to 1.5 km (more cal RX) + implement GPU memory cleanup in CMA objective to prevent eval-605 hang.**
 **CMA Run 5 IN PROGRESS (2026-08-27): fresh restart with physical starting materials (itu_concrete εᵣ=5.310 confirmed). scalar=+30.696 dB, 86 cal RX (0.15-0.75 km). Gen 5 eval 156 best=14.376 dB — plateau broke at eval 156 (was 14.534 dB from eval 63–155); descent resumed gen 5 as expected. GPU memory fix (del paths + torch.cuda.empty_cache()) must be applied before eval ~590 (~13 hrs away at 87s/eval). Await FTOL → CELL 4A → CELL 8e.**
 **CMA Run 7 FAILED (2026-08-29): itu_glass εᵣ=1.0864 degenerate minimum — complete scatter flood in CELL 8e (bias=-33 dB at 0-100m, RMSE=65 dB, R²=-2.0 all ranges). Root cause: no εᵣ lower bound on glass → CMA found near-transparent glass solution.**
-**CMA Run 8 IN PROGRESS (2026-08-30): Added `_ER_MIN_PER_MAT = {glass:4.0, brick:2.5, concrete:4.0}` to prevent degenerate εᵣ→1. Phase 0 scalar=+30.032 dB, RMSE=15.36 dB. eval 511 best=12.368 dB (beats Run 4 FINAL 12.477 dB by 0.109 dB). Plateau since ~eval 400 — recommend interrupt at eval 511 and proceed to CELL 4A → CELL 8e. Expected R²≈0.36-0.40 at 0-1000m.**
+**CMA Run 8 IN PROGRESS (2026-08-30): Added `_ER_MIN_PER_MAT = {glass:4.0, brick:2.5, concrete:4.0}` to prevent degenerate εᵣ→1. Phase 0 scalar=+30.032 dB, RMSE=15.36 dB. eval 359+ best=11.034 dB (beats Run 4 FINAL 12.477 dB by 1.443 dB). Eval times 148-160s (stable — no GPU hang risk). Plateau ~eval 300-359; await FTOL → CELL 4A → CELL 8e. Expected R²≈0.40-0.45 at 0-1000m.**
 
 ### London 1802 MHz CMA Run 1 — Calibration Progress
 
@@ -1012,7 +1080,7 @@ Best method: **ON incoh** — but ON ≈ OFF throughout (scatter provides <0.01 
 | Run 6 (CMA, 15M) | 4 free, CAL_MAX=0.65, 62 cal RX | 62 | +32.791 dB | 4.957 dB (eval 557) | **FAILED** | overfitted; bin scalars -37 to -55 dB; R²=-0.639 at 0-1000m |
 | Run 4 repro (CMA, 15M) | 5 free, 223 cal RX, concrete_barrier free | 223 | +33.597 dB | 6.959 dB (eval 521) | **COMPLETE; CELL 8e R²=0.208** | concrete_barrier εᵣ=2.358 degenerate; confirms Run 4 (R²=0.365) is FINAL |
 | Run 7 (CMA, 15M) | 4 free (no concrete_barrier), no εᵣ lower bounds | 109 | +30.032 dB | ~12.575 dB | **FAILED** | itu_glass εᵣ=1.0864 degenerate — scatter flood; CELL 8e bias=-33 dB, RMSE=65 dB, R²=-2.0 |
-| **Run 8 (CMA, 15M) — IN PROGRESS** | 4 free + `_ER_MIN_PER_MAT={glass:4.0, brick:2.5, concrete:4.0}` | 109 | +30.032 dB | **12.368 dB** (eval 511) | **PLATEAU — recommend interrupt** | beats Run 4 FINAL (12.477 dB) by 0.109 dB; plateau since ~eval 400; interrupt → CELL 4A → CELL 8e; expected R²≈0.36-0.40 |
+| **Run 8 (CMA, 15M) — IN PROGRESS** | 4 free + `_ER_MIN_PER_MAT={glass:4.0, brick:2.5, concrete:4.0}` | 109 | +30.032 dB | **11.034 dB** (eval 359+) | **RUNNING — plateau ~eval 300-359, descending** | beats Run 4 FINAL (12.477 dB) by 1.443 dB; eval times 148-160s (stable); await FTOL → CELL 4A → CELL 8e; expected R²≈0.40-0.45 at 0-1000m |
 
 ---
 
