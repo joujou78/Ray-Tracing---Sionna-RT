@@ -13,6 +13,7 @@
 | London | 915 | 0–1000m | 125 | ON incoh | -0.3 | 8.2 | **0.365** | FINAL |
 | London | 1802 | 0–1000m | 125 | ON incoh | -0.3 | 8.2 | **0.365** | FINAL (Run 4) |
 | Stevenage | 915 | 0–2250m | 1200 | ON incoh | +4.0 | 11.3 | **0.744** | Uncalibrated |
+| Stevenage | 1802 | 0–1750m | 873 | **ON coh** | +1.3 | 10.6 | **0.735** | FINAL |
 | Scar Hill | 915 | 0–1250m | 179 | ON incoh | +0.9 | 15.1 | **0.083** | FINAL |
 
 ---
@@ -27,6 +28,7 @@
 | Nottingham | 3602 | 0–1250m | **0.515** | -0.929 | 9.4 | 16.9 | **Critical** |
 | London | 915 | 0–1000m | **0.365** | -22.666 | 8.2 | 37.0 | **Without = fails** |
 | Stevenage | 915 | 0–2250m | 0.744 | 0.737 | 11.3 | 11.5 | Negligible |
+| Stevenage | 1802 | 0–1750m | **0.735** (ON coh) | 0.544 (discs OFF) | 10.6 | 13.3 | **+0.191 R²; ON coh wins via phase cancellation** |
 
 ---
 
@@ -53,6 +55,7 @@
 | Nottingham | 3602 | — | **0.515** | CMA-ES |
 | London | 915 | — | **0.365** | CMA-ES |
 | Stevenage | 915 | **0.744** | TBD (CMA pending) | CMA-ES |
+| Stevenage | 1802 | 0.544 (discs OFF) | **0.735** (ON coh, discs ON) | CMA-ES Phase 0 |
 | Scar Hill | 915 | — | **0.083** | Powell |
 
 ---
@@ -68,7 +71,7 @@
 | Run 5 (CMA, 15M) | 2.779 dB | +31.035 dB | FAILED | 26 cal RX — degenerate overfit |
 | Run 6 (CMA, 15M) | 4.957 dB | +32.791 dB | FAILED | Bin scalars -37 to -55 dB |
 | Run 7 (CMA, 15M) | ~12.575 dB | +30.032 dB | FAILED | Glass εᵣ=1.086 degenerate |
-| Run 8 (CMA, 15M) | 12.368 dB | +32.721 dB | FAILED | Scatter flood 365x; bias=-31.5 dB at 0-100m |
+| **Run 8 (CMA, 15M) — IN PROGRESS** | **11.034 dB** (eval 359+) | +30.032 dB | **TBD** | εᵣ lower bounds added; beats Run 4 by 1.443 dB; eval times 148-160s (stable); await FTOL → CELL 4A → CELL 8e |
 
 ---
 

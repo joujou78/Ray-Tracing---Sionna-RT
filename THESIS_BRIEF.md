@@ -25,9 +25,13 @@ The full technical reference is in `CLAUDE.md` in the same repository.
 |------|-----------|-------------|--------|
 | Nottingham | 915 MHz | Dense urban | COMPLETE — best R²=0.835 @ 0-750m |
 | Nottingham | 1802 MHz | Dense urban | COMPLETE — best R²=0.509 @ 0-1250m |
-| Nottingham | 2695 MHz | Dense urban | IN PROGRESS — Run 4 CELL CAL running |
-| Nottingham | 3602 MHz | Dense urban | IN PROGRESS — Run 5 CELL CAL running |
-| London | 915 MHz | Dense urban | IN PROGRESS — CELL CAL at 8.966 dB |
+| Nottingham | 2695 MHz | Dense urban | COMPLETE — best R²=0.574 @ 0-1250m (FINAL) |
+| Nottingham | 3602 MHz | Dense urban | COMPLETE — best R²=0.515 @ 0-1250m (FINAL) |
+| London | 915 MHz | Dense urban | COMPLETE — R²=0.365 @ 0-1000m (FINAL) |
+| London | 1802 MHz | Dense urban | CMA Run 8 IN PROGRESS — best=11.034 dB; CELL 8e pending |
+| London | 2695 MHz | Dense urban | CMA Run 2 IN PROGRESS |
+| Stevenage | 915 MHz | Suburban | COMPLETE uncal — R²=0.744 (CMA pending) |
+| Stevenage | 1802 MHz | Suburban | COMPLETE — R²=0.735 @ 0-1750m (ON coh, FINAL) |
 | Scar Hill | 915 MHz | Rural hilltop | COMPLETE — best R²=0.083 @ 0-1250m |
 
 ---
@@ -71,6 +75,16 @@ The full technical reference is in `CLAUDE.md` in the same repository.
 - TX fixed at 25m AGL (bug: scan was selecting 45m — above buildings, near-LOS artefact causing +49 dB bias)
 - Expected CELL 8e: R²~0.35-0.50 at 0-750m
 
+### Stevenage 1802 MHz (FINAL)
+- **R²=0.735, RMSE=10.6 dB** at 0-1750m — **best method: ON coh** (coherent, not incoherent)
+- DISABLE_VEG_DISCS=False: active vegetation discs (S=0.35) provide geometric blocking and phase-cancellation
+- Physics explanation: scatter flood from 590x ON/OFF ray ratio cancels in coherent sum → deterministic specular signal dominates
+- Discs-OFF baseline: R²=0.544, RMSE=13.3 dB, bias=+7.5 dB — discs are essential
+- Scalar=-2.413 dB (Phase 0 only; CMA Phase 2 flat due to DrJIT kernel caching)
+- NUM_SAMPLES_PS=10M must match CAL_CMA_SAMPLES=10M — 100M eval causes scatter mismatch
+- R² stable to 4 km: 0.723 (0-2250m), 0.695 (0-2500m) — no NLOS collapse
+- Physics floor: RMSE=10.6 dB is 2.8 dB above 3GPP σ_SF=7.82 dB floor
+
 ### Scar Hill 915 MHz (COMPLETE)
 - **R²=0.083** at 0-1250m — SRTM 30m terrain physics floor for rural hilltop site
 - Only meaningful improvement: Scottish LiDAR 1m DTM (not yet downloaded)
@@ -78,14 +92,26 @@ The full technical reference is in `CLAUDE.md` in the same repository.
 
 ---
 
-## Frequency Comparison (Nottingham, all FINAL or best-to-date)
+## Frequency Comparison (Nottingham, all FINAL)
 
 | Frequency | Best R² | Range | RMSE | Method | Key finding |
 |-----------|---------|-------|------|--------|-------------|
 | 915 MHz | **0.835** | 0-750m | 6.0 dB | ON incoh | Best result — short λ, good scatter |
 | 1802 MHz | 0.509 | 0-1250m | 10.6 dB | ON incoh | Coherent collapsed; physics floor |
 | 2695 MHz | 0.574 | 0-1250m | 12.7 dB | ON incoh | Beats 1802 MHz; dual-slope critical |
-| 3602 MHz | 0.515 (Run 6 pending) | 0-1250m | 9.4 dB | ON incoh | Canopy must be disabled; per-path P.833 |
+| 3602 MHz | 0.515 | 0-1250m | 9.4 dB | ON incoh | Canopy must be disabled; per-path P.833 |
+
+## Site Comparison (all frequencies, best result per site/frequency)
+
+| Site | Frequency | Best R² | Range | RMSE | Method | Key finding |
+|------|-----------|---------|-------|------|--------|-------------|
+| Nottingham | 915 MHz | **0.835** | 0-750m | 6.0 dB | ON incoh | Best overall result |
+| Nottingham | 1802 MHz | 0.509 | 0-1250m | 10.6 dB | ON incoh | Dense trees destroy coherent phase |
+| Nottingham | 2695 MHz | 0.574 | 0-1250m | 12.7 dB | ON incoh | Dual-slope calibration critical |
+| Nottingham | 3602 MHz | 0.515 | 0-1250m | 9.4 dB | ON incoh | Hybrid geometric + P.833 per-path |
+| London | 915 MHz | 0.365 | 0-1000m | 8.2 dB | ON incoh | Urban canyon scatter-only receivers |
+| **Stevenage** | **1802 MHz** | **0.735** | **0-1750m** | **10.6 dB** | **ON coh** | **Scatter flood + phase cancellation** |
+| Scar Hill | 915 MHz | 0.083 | 0-1250m | 15.1 dB | ON incoh | SRTM 30m terrain physics floor |
 
 ---
 
@@ -125,9 +151,11 @@ The full technical reference is in `CLAUDE.md` in the same repository.
 
 ### 1. Coherent vs incoherent summation
 - 915 MHz: both methods comparable
-- 1802 MHz: ON coh collapsed (R²=0.187) — 15,486 trees cause destructive coherent interference
+- 1802 MHz (Nottingham, 15,486 trees): ON coh collapsed (R²=0.187) — dense trees destroy coherent phase
+- 1802 MHz (Stevenage, suburban): ON coh **best method** (R²=0.735) — fewer trees, specular-dominated; scatter flood phases cancel in coherent sum, leaving deterministic specular signal
 - 2695 MHz: ON coh competitive (R²=0.436) — DISABLE_CANOPY=True reduces destructive interference
 - 3602 MHz: ON coh negative R² — per-path correction changes amplitude, coherent sum unstable
+- **Key insight**: coherent summation is optimal for specular-dominated suburban environments (Stevenage); incoherent is optimal for dense-tree urban (Nottingham 1802/3602)
 
 ### 2. Scattering is essential
 - Without scattering (OFF methods): R² collapses at all frequencies
