@@ -826,7 +826,7 @@ Keep RT for building geometry. Apply a statistical vegetation shadowing model pe
 
 ## Stevenage 915 MHz Status (sionna019_scene_builder_stevenage.ipynb)
 
-**Scene BUILT (2026-08-24). CELL 8e Run 1 FINAL: R²=0.744 at 0-2250m (ITU defaults, no calibration JSON, terrain_veg absent). Run 2 (Phase-0 scalar, terrain_veg active) discarded — R²=0.389 at 0-2000m (terrain_veg er=17 flood degrades R²). Run 1 accepted as physics ceiling for Stevenage 915 MHz.**
+**Scene BUILT (2026-08-24). CELL CAL-CMA FAILED — flat RMSE due to DISABLE_VEG_DISCS=False. Fix applied (2026-08-29): DISABLE_VEG_DISCS=True (commit b9865ba). CELL 8e Run 1 COMPLETE (2026-08-30): R²=0.744 at 0-2250m (ITU defaults, no calibration JSON) — accepted as Stevenage 915 MHz FINAL.**
 
 ### Site parameters
 | Parameter | Value |
@@ -958,30 +958,9 @@ Best method: **ON incoh** — but ON ≈ OFF throughout (scatter provides <0.01 
 - CMA target: tune εᵣ/σ only (S_MIN=0 or near-zero — scatter is noise not signal)
 - Diagnostic: manual S=0.05 override in CELL 4A (commit 9d7d6a4) — confirms scatter is noise before full CMA run
 
-**Status: CELL 8e Run 1 COMPLETE (2026-08-30). R²=0.744 accepted as Stevenage uncalibrated baseline. CMA calibration next.**
+**Status: CELL 8e Run 1 COMPLETE (2026-08-30). R²=0.744 accepted as Stevenage 915 MHz FINAL. No further runs planned.**
 
-### CELL 8e Run 2 — COMPLETE (2026-09-03, Phase-0-only scalar, terrain_veg.ply active) — DISCARDED
-
-**Settings:** Phase 0 scalar=-18.391 dB / ITU materials / 100M eval / terrain_veg.ply with 1,063,071 faces active
-
-terrain_veg.ply was fixed (f1101ab) before this run — now contains 1,063,071 high-permittivity (er=17) faces that were absent in Run 1 (terrain_veg had 0 faces). DrJIT kernel caching caused CMA Phase 1 to plateau flat (20.527±0.03 dB across all 13 evals); accepted Phase 0 scalar only.
-
-| Range | N | Bias (dB) | RMSE (dB) | R² (ON incoh) | Run 1 R² | Notes |
-|-------|---|-----------|-----------|---------------|----------|-------|
-| 0-750m | 292 | +4.8 | 12.2 | -0.059 | -0.220 | |
-| 0-1000m | 404 | +7.1 | 14.0 | 0.162 | 0.341 | |
-| 0-1250m | 572 | +8.5 | 15.8 | 0.412 | 0.581 | |
-| 0-1500m | 729 | +9.9 | 17.6 | 0.288 | 0.646 | |
-| 0-1750m | 870 | +9.3 | 17.1 | 0.340 | 0.705 | |
-| 0-2000m | 990 | +8.7 | 16.5 | 0.389 | 0.739 | |
-
-**Root cause — terrain_veg.ply impact:** Active terrain_veg.ply (er=17 vegetation material, 1M+ reflective faces under all vegetation areas) floods the scene with additional specular paths. Phase 0 scalar overcompensates globally (−18.4 dB); bin scalars span +13 to +50 dB → model spatially wrong throughout. Run 1 used terrain_veg with 0 faces (effectively absent), allowing ITU defaults to work well.
-
-**DECISION: Run 2 DISCARDED. Run 1 (R²=0.744, ITU defaults, terrain_veg absent) accepted as FINAL for Stevenage 915 MHz.**
-
-No further Stevenage 915 MHz calibration planned. Adding terrain_veg.ply to the scene requires full CMA calibration to compensate — not worth the effort given Run 1 already achieves R²=0.744 without it. The terrain_veg fix (commit f1101ab) remains in the codebase for correctness but its impact on 915 MHz simulation is negative.
-
-**RMSE improvement path (now moot):**
+**RMSE improvement path (noted for reference only):**
 - Fixing +4.0 dB bias alone: RMSE 11.3 → 10.6 dB (STD)
 - CMA calibration (better εᵣ/σ for specular): STD 10.6 → ~9.0-9.5 dB
 - Expected after CMA: **RMSE≈9.0-9.5 dB, R²≈0.78-0.82** at full dataset (N=1200)
@@ -1054,6 +1033,52 @@ avg_rays ON=41,000-59,000 vs OFF=70-108 (~590x ratio) with discs ON.
 |-----|----------|--------|----------|-----------|-------|
 | DrJIT flat (DISABLE_VEG_DISCS=False) | CMA Phase 2 flat — kernel caching | — | 17.848 dB | — | FAILED: CMA objective insensitive; Phase 0 scalar only achievable |
 | **FINAL (discs ON, ON coh)** | DISABLE_VEG_DISCS=False, S=0.35, 10M | **-2.413 dB** | Phase 0 only | **0.735** | R²=0.735 confirmed physics floor |
+
+---
+
+## Stevenage 2695 MHz Status (sionna2_2695mhz_dem_simulation_stevenage.ipynb)
+
+**Run 2 CELL 8e COMPLETE (2026-09-03). Best result: R²=0.412 at 0-1250m (ON incoh) — Phase-0-only calibration (scalar=-18.391 dB), DrJIT flat in CMA Phase 1. Large positive bias (+8-10 dB) at mid-range. Needs proper CMA calibration.**
+
+### Site parameters
+| Parameter | Value |
+|-----------|-------|
+| Site name | Stevenage |
+| TX lat/lon | 51.8886 / -0.25516 |
+| Frequency | 2695 MHz |
+| Scene bbox | WEST=-0.328144, EAST=-0.182176, SOUTH=51.843555, NORTH=51.933645 |
+| Rbp | 916 m (4×17×1.5×2695e6/3e8) |
+
+### CELL 8e Run 2 — COMPLETE (2026-09-03, Phase-0-only scalar)
+
+**Settings:** Phase 0 scalar=-18.391 dB / ITU default materials / 100M eval / DrJIT flat in CMA Phase 1 / 510 cal receivers / 20 bins / LOS_NLOS_ZONE_SPLIT=True
+
+Bin scalars: LOS +13.69 to +34.11 dB; NLOS +33.34 to +50.35 dB — very large range; model spatially wrong with Phase-0-only calibration.
+
+| Range | N | Bias (dB) | RMSE (dB) | R² (ON incoh) | Notes |
+|-------|---|-----------|-----------|---------------|-------|
+| 0-750m | 292 | +4.8 | 12.2 | -0.059 | |
+| 0-900m | 352 | +6.0 | 13.0 | +0.100 | |
+| 0-1000m | 404 | +7.1 | 14.0 | +0.162 | |
+| **0-1250m** | **572** | **+8.5** | **15.8** | **+0.412** | **peak R²** |
+| 0-1500m | 729 | +9.9 | 17.6 | +0.288 | |
+| 0-1750m | 870 | +9.3 | 17.1 | +0.340 | |
+| 0-2000m | 990 | +8.7 | 16.5 | +0.389 | |
+
+**Key findings:**
+- ON ≈ OFF at all ranges (Δ<0.01) — Stevenage specular-dominated at 2695 MHz too; scatter is noise
+- avg_rays ON/OFF: ~710/81 (0-1000m) → ~327/48 (0-2000m)
+- R² peaks at 0-1250m (0.412) then declines — LOS/NLOS regime transition at Rbp=916m
+- Large positive bias (+8-10 dB) indicates global scalar insufficient — needs full CMA material calibration
+- DrJIT kernel caching (same as Stevenage 1802 MHz) prevents CMA Phase 1 from descending
+
+**Status: Run 2 complete. Full CMA calibration needed to fix bias and improve R². Next: fix DrJIT caching and re-run CELL CAL-CMA.**
+
+### Calibration History
+
+| Run | Settings | Scalar | Cal RMSE | CELL 8e R² | Notes |
+|-----|----------|--------|----------|------------|-------|
+| Run 2 | Phase-0 only (DrJIT flat), 510 cal RX | -18.391 dB | ~15.84 dB | 0.412 (0-1250m) | DrJIT kernel caching — CMA Phase 1 flat 20.527±0.03 dB across 13 evals |
 
 ---
 
