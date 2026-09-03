@@ -1090,7 +1090,7 @@ Bin scalars: LOS +13.69 to +34.11 dB; NLOS +33.34 to +50.35 dB — very large ra
 **CMA Run 4 KERNEL HUNG at eval 605 (2026-08-27): best=13.829 dB — same GPU VRAM accumulation as Run 1 (deterministic at ~605 evals × 15M samples). JSON saved at eval 574. CELL 8e degenerate: itu_concrete εᵣ=1.85 (unphysical), scalar=+30.696 dB → bias=-28.3 dB at 0-200m, R²=-1.330. Root cause: 86 cal RX (CAL_MAX=0.75 km) insufficient for 15 free params → CMA found degenerate solution. Fix: raise CAL_MAX_DIST_KM to 1.5 km (more cal RX) + implement GPU memory cleanup in CMA objective to prevent eval-605 hang.**
 **CMA Run 5 IN PROGRESS (2026-08-27): fresh restart with physical starting materials (itu_concrete εᵣ=5.310 confirmed). scalar=+30.696 dB, 86 cal RX (0.15-0.75 km). Gen 5 eval 156 best=14.376 dB — plateau broke at eval 156 (was 14.534 dB from eval 63–155); descent resumed gen 5 as expected. GPU memory fix (del paths + torch.cuda.empty_cache()) must be applied before eval ~590 (~13 hrs away at 87s/eval). Await FTOL → CELL 4A → CELL 8e.**
 **CMA Run 7 FAILED (2026-08-29): itu_glass εᵣ=1.0864 degenerate minimum — complete scatter flood in CELL 8e (bias=-33 dB at 0-100m, RMSE=65 dB, R²=-2.0 all ranges). Root cause: no εᵣ lower bound on glass → CMA found near-transparent glass solution.**
-**CMA Run 8 IN PROGRESS (2026-08-30): Added `_ER_MIN_PER_MAT = {glass:4.0, brick:2.5, concrete:4.0}` to prevent degenerate εᵣ→1. Phase 0 scalar=+30.032 dB, RMSE=15.36 dB. eval 359+ best=11.034 dB (beats Run 4 FINAL 12.477 dB by 1.443 dB). Eval times 148-160s (stable — no GPU hang risk). Plateau ~eval 300-359; await FTOL → CELL 4A → CELL 8e. Expected R²≈0.40-0.45 at 0-1000m.**
+**CMA Run 8 FAILED (2026-09-03): CELL 8e scatter flood — avg_rays ON/OFF=26,175/202=130x, bin scalar span=54 dB (LOS +14 dB → NLOS -40 dB), LOS zone offset=+33.67 dB, RMSE=58 dB, R²=-1.4 at 0-100m. εᵣ lower bounds prevented degenerate permittivity but S caps saturated → scatter flood. London 1802 MHz FINAL remains R²=0.365 (Run 4). No further runs.**
 
 ### London 1802 MHz CMA Run 1 — Calibration Progress
 
@@ -1132,7 +1132,7 @@ Bin scalars: LOS +13.69 to +34.11 dB; NLOS +33.34 to +50.35 dB — very large ra
 | Run 6 (CMA, 15M) | 4 free, CAL_MAX=0.65, 62 cal RX | 62 | +32.791 dB | 4.957 dB (eval 557) | **FAILED** | overfitted; bin scalars -37 to -55 dB; R²=-0.639 at 0-1000m |
 | Run 4 repro (CMA, 15M) | 5 free, 223 cal RX, concrete_barrier free | 223 | +33.597 dB | 6.959 dB (eval 521) | **COMPLETE; CELL 8e R²=0.208** | concrete_barrier εᵣ=2.358 degenerate; confirms Run 4 (R²=0.365) is FINAL |
 | Run 7 (CMA, 15M) | 4 free (no concrete_barrier), no εᵣ lower bounds | 109 | +30.032 dB | ~12.575 dB | **FAILED** | itu_glass εᵣ=1.0864 degenerate — scatter flood; CELL 8e bias=-33 dB, RMSE=65 dB, R²=-2.0 |
-| **Run 8 (CMA, 15M) — IN PROGRESS** | 4 free + `_ER_MIN_PER_MAT={glass:4.0, brick:2.5, concrete:4.0}` | 109 | +30.032 dB | **11.034 dB** (eval 359+) | **RUNNING — plateau ~eval 300-359, descending** | beats Run 4 FINAL (12.477 dB) by 1.443 dB; eval times 148-160s (stable); await FTOL → CELL 4A → CELL 8e; expected R²≈0.40-0.45 at 0-1000m |
+| **Run 8 (CMA, 15M) — FAILED (2026-09-03, CELL 8e scatter flood)** | 4 free + `_ER_MIN_PER_MAT={glass:4.0, brick:2.5, concrete:4.0}` | 109 | +30.032 dB | **11.034 dB** (converged) | **CELL 8e FAILED: R²=-1.4 at 0-100m, RMSE=58 dB, bin scalar span=54 dB** | εᵣ bounds prevented degenerate permittivity but S caps saturated → scatter flood; 130x ON/OFF; London 1802 MHz FINAL = Run 4 (R²=0.365) |
 
 ---
 
