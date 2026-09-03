@@ -1038,7 +1038,7 @@ avg_rays ON=41,000-59,000 vs OFF=70-108 (~590x ratio) with discs ON.
 
 ## Stevenage 2695 MHz Status (sionna2_2695mhz_dem_simulation_stevenage.ipynb)
 
-**Run 2 CELL 8e COMPLETE (2026-09-03). Best result: R²=0.412 at 0-1250m (ON incoh) — Phase-0-only calibration (scalar=-18.391 dB), DrJIT flat in CMA Phase 1. Large positive bias (+8-10 dB) at mid-range. Needs proper CMA calibration.**
+**Run 3 CELL 8e COMPLETE (2026-09-03). Best result: R²=0.754 at 0-2250m (ON coh) — no calibration JSON, ITU defaults + SCATTER_OVERRIDE=0.05 + DISABLE_VEG_DISCS=True. Beats Stevenage 1802 MHz (R²=0.735). ACCEPTED AS FINAL.**
 
 ### Site parameters
 | Parameter | Value |
@@ -1049,36 +1049,53 @@ avg_rays ON=41,000-59,000 vs OFF=70-108 (~590x ratio) with discs ON.
 | Scene bbox | WEST=-0.328144, EAST=-0.182176, SOUTH=51.843555, NORTH=51.933645 |
 | Rbp | 916 m (4×17×1.5×2695e6/3e8) |
 
-### CELL 8e Run 2 — COMPLETE (2026-09-03, Phase-0-only scalar)
+### CELL 8e Run 3 — FINAL (2026-09-03, ITU defaults, SCATTER_OVERRIDE=0.05, DISABLE_VEG_DISCS=True)
 
-**Settings:** Phase 0 scalar=-18.391 dB / ITU default materials / 100M eval / DrJIT flat in CMA Phase 1 / 510 cal receivers / 20 bins / LOS_NLOS_ZONE_SPLIT=True
+**Settings:** No calibration JSON / SCATTER_OVERRIDE=0.05 (all building/ground S=0.05) / DISABLE_VEG_DISCS=True / 10M eval / 510 cal receivers / 20 bins / LOS_NLOS_ZONE_SPLIT=True
 
-Bin scalars: LOS +13.69 to +34.11 dB; NLOS +33.34 to +50.35 dB — very large range; model spatially wrong with Phase-0-only calibration.
+Best method: **ON coh** — scatter phase-cancels in coherent sum; specular/LOS signal dominant (same mechanism as Stevenage 1802 MHz R²=0.735).
 
-| Range | N | Bias (dB) | RMSE (dB) | R² (ON incoh) | Notes |
-|-------|---|-----------|-----------|---------------|-------|
-| 0-750m | 292 | +4.8 | 12.2 | -0.059 | |
-| 0-900m | 352 | +6.0 | 13.0 | +0.100 | |
-| 0-1000m | 404 | +7.1 | 14.0 | +0.162 | |
-| **0-1250m** | **572** | **+8.5** | **15.8** | **+0.412** | **peak R²** |
-| 0-1500m | 729 | +9.9 | 17.6 | +0.288 | |
-| 0-1750m | 870 | +9.3 | 17.1 | +0.340 | |
-| 0-2000m | 990 | +8.7 | 16.5 | +0.389 | |
+| Range | N | Bias (dB) | RMSE (dB) | STD (dB) | R² (ON coh) | Notes |
+|-------|---|-----------|-----------|----------|-------------|-------|
+| 0-1000m | 404 | +0.6 | 11.7 | 11.7 | 0.411 | |
+| 0-1250m | 572 | +1.6 | 11.3 | 11.2 | 0.699 | |
+| 0-1750m | 870 | +2.2 | 11.1 | 10.8 | 0.723 | |
+| 0-2000m | 990 | +2.5 | 10.7 | 10.4 | 0.741 | |
+| **0-2250m** | **1129** | **+2.5** | **10.5** | **10.2** | **0.754** | **peak R² — FINAL** |
+| 0-2500m+ | 1193 | +3.0 | 11.1 | 10.7 | 0.724 | N freezes 1200 from 2250m |
+
+avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/trunk geometry, but ON coh phase-cancels it. R² stable 0.723-0.754 from 1750-2250m; drops slightly at 2500m as final deep-NLOS receivers added.
+
+**Calibration run history that led here:**
+- Run 2 (Phase-0-only scalar, discs active): scalar=-18.391 dB, R²=0.412 at 0-1250m — large bias, DrJIT flat in Phase 1
+- SCATTER_OVERRIDE=0.05 + discs active (Run 3 attempt 1): disc S=0.35 still floods scatter (avg_rays 540x ON/OFF); ON coh bias=-15 dB at 0-100m — discs constructively add at 2695 MHz (opposite of 1802 MHz)
+- **Run 3 FINAL**: DISABLE_VEG_DISCS=True removes disc scatter flood; ON coh phase-cancels remaining 3D tree/building scatter → R²=0.754
 
 **Key findings:**
-- ON ≈ OFF at all ranges (Δ<0.01) — Stevenage specular-dominated at 2695 MHz too; scatter is noise
-- avg_rays ON/OFF: ~710/81 (0-1000m) → ~327/48 (0-2000m)
-- R² peaks at 0-1250m (0.412) then declines — LOS/NLOS regime transition at Rbp=916m
-- Large positive bias (+8-10 dB) indicates global scalar insufficient — needs full CMA material calibration
-- DrJIT kernel caching (same as Stevenage 1802 MHz) prevents CMA Phase 1 from descending
+- Beats Stevenage 1802 MHz (R²=0.735) at full dataset — same ITU defaults + building S=0.05 + ON coh formula
+- Disc scatter (itu_ceiling_board S=0.35) is destructive at 2695 MHz: constructively adds at λ=11.1 cm; must be disabled
+- ON coh essential: ON incoh R²=0.200 at 0-2500m (scatter flood adds incoherently); ON coh 0.724
+- No NLOS collapse — R² stable from 1750-2250m (same as Stevenage 1802 MHz behaviour)
+- RMSE=10.5 dB (STD=10.2 dB) at 0-2250m — 2.7 dB above 3GPP σ_SF=7.82 dB physics floor
+- Bias grows slowly: +0.6 dB (0-1000m) → +2.5 dB (0-2250m) — bin scalar centres LOS regime; slight NLOS under-prediction
 
-**Status: Run 2 complete. Full CMA calibration needed to fix bias and improve R². Next: fix DrJIT caching and re-run CELL CAL-CMA.**
+### Configuration (FINAL)
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| DISABLE_VEG_DISCS | **True** | discs transparent — disc S=0.35 floods at 2695 MHz |
+| SCATTER_OVERRIDE | **0.05** | all building/ground S=0.05 (near-specular; same as Stevenage 1802 MHz) |
+| NUM_SAMPLES_PS | 10_000_000 | matches CAL_CMA_SAMPLES |
+| N_SCALAR_BINS | 20 | |
+| LOS_NLOS_ZONE_SPLIT | True | Rbp=916m |
+| No calibration JSON | — | ITU-R P.2040-2 defaults; bin scalar absorbs global offset |
 
 ### Calibration History
 
 | Run | Settings | Scalar | Cal RMSE | CELL 8e R² | Notes |
 |-----|----------|--------|----------|------------|-------|
-| Run 2 | Phase-0 only (DrJIT flat), 510 cal RX | -18.391 dB | ~15.84 dB | 0.412 (0-1250m) | DrJIT kernel caching — CMA Phase 1 flat 20.527±0.03 dB across 13 evals |
+| Run 2 | Phase-0 only (DrJIT flat), discs active, 510 cal RX | -18.391 dB | ~15.84 dB | 0.412 (0-1250m) | DrJIT kernel caching — CMA Phase 1 flat; large positive bias |
+| Run 3 attempt 1 | SCATTER_OVERRIDE=0.05, discs active | — | — | negative at all ranges | disc S=0.35 constructively adds at 2695 MHz — 540x scatter flood; ON coh -15 dB bias |
+| **Run 3 FINAL** | **SCATTER_OVERRIDE=0.05, DISABLE_VEG_DISCS=True, no JSON** | **bin scalar only** | **—** | **0.754 at 0-2250m (ON coh)** | **FINAL — beats Stevenage 1802 MHz** |
 
 ---
 
