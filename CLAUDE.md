@@ -1099,6 +1099,75 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 
 ---
 
+## Stevenage 3602 MHz Status (sionna2_3602mhz_dem_simulation_stevenage.ipynb)
+
+**CELL 8e COMPLETE (2026-09-04). Best result: R²=0.755 at 0-2000m (ON coh) — Phase 0 scalar+12.106 dB only (CMA flat/DrJIT), DISABLE_VEG_DISCS=False, DISABLE_CANOPY=True, PER_PATH_VEG=True. ACCEPTED AS FINAL.**
+
+### Site parameters
+| Parameter | Value |
+|-----------|-------|
+| Site name | Stevenage |
+| TX lat/lon | 51.8886 / -0.25516 |
+| Frequency | 3602.5 MHz |
+| TX AGL | 17 m |
+| TX EIRP | 54 dBm (TX_CONDUCTED_DBM=51.2 + 2.8 dBi) |
+| RX AGL | 1.5 m |
+| System gain (RX chain) | +16 dB (LNA +23.3 dB minus losses) |
+| Noise floor | -109 dBm |
+| Rbp | 1225 m (4×17×1.5×3602.5e6/3e8) |
+| Scene builder | reuses stevenage_ofcom_915mhz_dem |
+| BASE_DIR | ~/sionna_rt/stevenage_ofcom_3602mhz_dem |
+
+### Configuration (FINAL)
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| DISABLE_CANOPY | **True** | λ=8.3 cm — 3D canopy cones block all rays >400m |
+| DISABLE_VEG_DISCS | **False** | discs active (sigma=0.20) — consistent with Phase 0 cal |
+| PER_PATH_VEG | **True** | per-path ITU-R P.833 per ray segment |
+| CAL_MAX_DIST_KM | 1.0 | below Rbp=1225m |
+| NUM_SAMPLES_PS | 10_000_000 | matches CMA samples — avoids scatter mismatch |
+| N_SCALAR_BINS | 20 | |
+| LOS_NLOS_ZONE_SPLIT | True | Rbp=1225m |
+| Phase 0 scalar | +12.106 dB | CMA flat (DrJIT kernel caching) — Phase 0 only achievable |
+| Cal RX | 483 (0.15-1.0 km) | |
+
+### CELL 8e FINAL Results (ON coh — best method)
+
+| Range | N | Bias (dB) | RMSE (dB) | STD (dB) | R² (ON coh) | avg_rays ON/OFF | Notes |
+|-------|---|-----------|-----------|----------|-------------|-----------------|-------|
+| 0-750m | 358 | +0.8 | 12.1 | 12.1 | -0.012 | 37336/79 | near-field geometry noise |
+| 0-900m | 489 | +0.4 | 11.8 | 11.8 | 0.418 | 30042/66 | |
+| 0-1000m | 547 | +0.4 | 11.6 | 11.6 | 0.482 | 27981/62 | |
+| 0-1250m | 650 | +1.2 | 11.6 | 11.5 | 0.625 | 25132/56 | |
+| 0-1500m | 752 | +2.0 | 11.8 | 11.6 | 0.674 | 22345/51 | |
+| 0-1750m | 865 | +2.1 | 11.7 | 11.5 | 0.731 | 20108/46 | |
+| **0-2000m** | **967** | **+2.1** | **11.7** | **11.5** | **0.755** | **18864/44** | **peak R² — FINAL** |
+
+### Key findings
+- **R²=0.755 at 0-2000m (ON coh)** — beats Stevenage 1802 MHz (R²=0.735) and matches Stevenage 2695 MHz (R²=0.754)
+- ON coh best method: scatter flood (~420x ON/OFF ratio) phase-cancels in coherent sum — same mechanism as Stevenage 1802 and 2695
+- RMSE=11.7 dB stable from 0-1250m onward — physics floor for Stevenage 3602 MHz (~3.9 dB above 3GPP σ_SF=7.82 dB)
+- Bias: near-zero at 0-1000m (+0.4 dB), grows slowly to +2.1 dB at 0-2000m
+- DISABLE_VEG_DISCS=False self-consistent: Phase 0 scalar (+12.106 dB) calibrated with active discs; CELL 8e uses same disc budget
+- ON incoh fails: scatter flood adds incoherently → +12.9 dB bias at 0-2000m (same failure mode as Stevenage 1802 MHz incoh)
+- CMA failed (DrJIT kernel caching) — flat at 21.18-21.21 dB across 9 evals; Phase 0 scalar only achievable (same as Stevenage 1802 MHz)
+- Phase 0 scalar +12.106 dB much smaller than Nottingham 3602 (+28 dB) — active discs compensate ~16 dB of path loss
+
+### vs Stevenage cross-frequency comparison
+| Frequency | Best R² | Range | Method | Notes |
+|-----------|---------|-------|--------|-------|
+| 915 MHz | 0.744 | 0-2250m | ON incoh | ITU defaults, no JSON |
+| 1802 MHz | 0.735 | 0-1750m | ON coh | DISABLE_VEG_DISCS=False, discs active |
+| 2695 MHz | 0.754 | 0-2250m | ON coh | DISABLE_VEG_DISCS=True, SCATTER_OVERRIDE=0.05 |
+| **3602 MHz** | **0.755** | **0-2000m** | **ON coh** | **DISABLE_VEG_DISCS=False, Phase 0 scalar only** |
+
+### Calibration History
+| Run | Settings | Scalar | Cal RMSE | CELL 8e R² | Notes |
+|-----|----------|--------|----------|------------|-------|
+| CMA Run 1 (Phase 0 only) | DISABLE_VEG_DISCS=False, DISABLE_CANOPY=True, PER_PATH_VEG=True, 10M | +12.106 dB | Phase 0 only (CMA flat eval 9) | **0.755 at 0-2000m (ON coh)** | CMA DrJIT kernel caching — same as Stevenage 1802/2695; Phase 0 + bin scalar sufficient |
+
+---
+
 ## Southampton 915 MHz Status (sionna2_915mhz_dem_simulation_southampton.ipynb)
 
 **CELL 8e COMPLETE (2026-09-04). Best result: R²=0.725 at 0-900m (ON incoh) — SCATTER_OVERRIDE=0.15, N_SCALAR_BINS=20, DISABLE_VEG_DISCS=True. ACCEPTED AS FINAL.**
