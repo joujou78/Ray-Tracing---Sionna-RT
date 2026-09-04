@@ -8,7 +8,7 @@ This is **simulation-based, model-driven quantitative research**, combining dete
 
 Two software generations were used across the project's timeline: an initial **Sionna 0.19** pipeline (TensorFlow backend, Mitsuba 2.1.0-format `scene.xml`), later migrated to **Sionna 2.0** (Mitsuba 3.5.2/Dr.Jit backend, `scene_sionna2.xml`) using a dedicated migration script, once the newer engine's GPU performance and differentiable-calibration support proved necessary for the sample counts this thesis required (Section 4.2).
 
-The overall workflow, applied independently at each site/frequency combination (Nottingham at 915/1802/2695/3602 MHz, London at 915 MHz, Scar Hill at 915 MHz, Stevenage at 915 MHz), follows the pipeline detailed in full in Section 3.4 (Figure 3.2). Figure 3.1 shows the geographic distribution and environment type of these four sites.
+The overall workflow, applied independently at each site/frequency combination — Nottingham at 915/1802/2695/3602 MHz, London at 915/1802 MHz (2695 MHz calibration in progress at the time of writing), Scar Hill at 915 MHz, and Stevenage at 915/1802/2695 MHz — follows the pipeline detailed in full in Section 3.4 (Figure 3.2). Figure 3.1 shows the geographic distribution and environment type of these four originally-selected sites. A fifth site, Southampton (915 MHz), was added later in the project and is reported alongside the others in Chapters 4–5; it is not shown in Figure 3.1, as its exact transmitter coordinates had not yet been confirmed against the site's CSV header at the time the map was produced.
 
 ![Figure 3.1 — Ofcom 2018 measurement sites used in this thesis](figures/fig3_3_site_map.png)
 
