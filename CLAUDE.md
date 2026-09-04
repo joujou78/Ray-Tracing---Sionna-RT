@@ -1099,6 +1099,61 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 
 ---
 
+## Southampton 915 MHz Status (sionna2_915mhz_dem_simulation_southampton.ipynb)
+
+**CELL 8e COMPLETE (2026-09-04). Best result: R²=0.725 at 0-900m (ON incoh) — SCATTER_OVERRIDE=0.15, N_SCALAR_BINS=20, DISABLE_VEG_DISCS=True. ACCEPTED AS FINAL.**
+
+### Site parameters
+| Parameter | Value |
+|-----------|-------|
+| Site name | Southampton |
+| TX lat/lon | TBD (from CSV header) |
+| Frequency | 915 MHz |
+| CRS | EPSG:27700 (British National Grid) |
+| Rbp | 0.31 km (4×17×1.5×915e6/3e8) |
+| Scene builder | `sionna019_scene_builder_southampton.ipynb` |
+| BASE_DIR | `~/sionna_rt/southampton_ofcom_915mhz_dem/` |
+
+### Configuration (FINAL)
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| DISABLE_VEG_DISCS | **True** | discs transparent |
+| SCATTER_OVERRIDE | **0.15** | raised from 0.05 — NLOS bins showed +17-22 dB corrections at S=0.05 (too few scatter paths) |
+| N_SCALAR_BINS | **20** | raised from 5 — finer NLOS transition resolution; same fix as Nottingham 3602 MHz Run 3 |
+| LOS_NLOS_ZONE_SPLIT | True | Rbp=310m; only 37 LOS receivers (no effect in practice) |
+| NUM_SAMPLES_PS | 100_000_000 | 100M eval |
+| No calibration JSON | — | ITU defaults; bin scalar absorbs global offset |
+
+### CELL 8e FINAL Results (ON incoh — best method)
+
+| Range | N | Bias (dB) | RMSE (dB) | R² (ON incoh) | avg_rays ON | Notes |
+|-------|---|-----------|-----------|---------------|-------------|-------|
+| 0-750m | 233 | +1.0 | 5.0 | **0.707** | ~29877 | near-LOS regime |
+| **0-900m** | **338** | **+1.1** | **6.4** | **0.725** | — | **peak R² — FINAL** |
+| 0-1000m | 400 | +1.0 | 7.2 | 0.698 | — | |
+| 0-1250m | 596 | +1.6 | 9.2 | 0.602 | — | |
+| 0-1500m | 718 | +1.6 | 11.2 | **0.437** | — | NLOS collapse partly fixed (+0.172 vs S=0.05) |
+| 0-1750m | 815 | +2.8 | 13.4 | **0.224** | — | dramatically improved (+0.254 vs S=0.05) |
+
+### Improvement history
+
+| Configuration | Best R² | Range | RMSE | Notes |
+|--------------|---------|-------|------|-------|
+| Baseline (S=0.05, 5 bins) | 0.675 | 0-900m | ~7 dB | starting point |
+| N_SCALAR_BINS=20 (S=0.05) | 0.708 | 0-900m | ~6.8 dB | +0.033 from finer binning |
+| **SCATTER_OVERRIDE=0.15, 20 bins** | **0.725** | **0-900m** | **6.4 dB** | **+0.017 more; large NLOS gain** |
+
+### Key findings
+- R²=0.725 at 0-900m without calibration JSON — ITU defaults + bin scalar only
+- SCATTER_OVERRIDE raised from 0.05 (S²=0.25% scatter power) to 0.15 (S²=2.25%): more valid NLOS scatter paths, +17-22 dB bin corrections reduced
+- ON incoh avg_rays=29877 at 0-100m (vs 3694 at S=0.05) — scatter now providing real NLOS coverage
+- LOS/NLOS zone split had no effect: only 37 LOS receivers (Rbp=310m) vs 644 NLOS, both zone offsets ~+0.07 dB
+- NLOS collapse at 1500m largely fixed: R²=0.437 (was 0.265) and 0-1750m: R²=0.224 (was -0.030)
+- Large bin corrections remain (+11-22 dB in NLOS) — reflects physics limit without CMA calibration
+- **R²=0.725 accepted as Southampton 915 MHz FINAL. No further runs planned.**
+
+---
+
 ## London 1802 MHz Status (sionna2_1802mhz_dem_simulation_london.ipynb)
 
 **CMA Run 1 FAILED (2026-08-26): eval 605, best=12.477 dB — kernel hung at eval 605. CELL 8e: scatter flood (392x ON/OFF ratio), -30 dB bias, R² negative at all ranges. Root cause: CAL_MAX_DIST_KM=0.90 ≈ Rbp=0.901 (regime mixing) + S caps too loose (brick S=0.449 at cap).**
