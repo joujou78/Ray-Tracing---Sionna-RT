@@ -1170,7 +1170,8 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 
 ## Southampton 915 MHz Status (sionna2_915mhz_dem_simulation_southampton.ipynb)
 
-**CELL 8e COMPLETE (2026-09-04). Best result: R²=0.725 at 0-900m (ON incoh) — SCATTER_OVERRIDE=0.15, N_SCALAR_BINS=20, DISABLE_VEG_DISCS=True. ACCEPTED AS FINAL.**
+**CELL 8e Run 1 COMPLETE (2026-09-04): R²=0.725 at 0-900m (ON incoh) — SCATTER_OVERRIDE=0.15, N_SCALAR_BINS=20, no JSON.**
+**CELL 8e Run 2 COMPLETE (2026-09-05): R²=0.730 at 0-900m (ON incoh) — Phase 0 CMA JSON (scalar=-11.767 dB, 4 free mats, 681 cal RX), N_SCALAR_BINS=25, DISABLE_VEG_DISCS=True. ACCEPTED AS FINAL.**
 
 ### Site parameters
 | Parameter | Value |
@@ -1183,26 +1184,27 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 | Scene builder | `sionna019_scene_builder_southampton.ipynb` |
 | BASE_DIR | `~/sionna_rt/southampton_ofcom_915mhz_dem/` |
 
-### Configuration (FINAL)
+### Configuration (Run 2 — FINAL)
 | Parameter | Value | Notes |
 |-----------|-------|-------|
 | DISABLE_VEG_DISCS | **True** | discs transparent |
-| SCATTER_OVERRIDE | **0.15** | raised from 0.05 — NLOS bins showed +17-22 dB corrections at S=0.05 (too few scatter paths) |
-| N_SCALAR_BINS | **20** | raised from 5 — finer NLOS transition resolution; same fix as Nottingham 3602 MHz Run 3 |
-| LOS_NLOS_ZONE_SPLIT | True | Rbp=310m; only 37 LOS receivers (no effect in practice) |
+| SCATTER_OVERRIDE | **None** (CMA warm prior) | S=brick:0.250, concrete:0.300, glass:0.080, wet_ground:0.300 |
+| N_SCALAR_BINS | **25** | finer NLOS resolution (681 cal RX / 25 bins = ~27 RX/bin) |
+| LOS_NLOS_ZONE_SPLIT | True | Rbp=310m; LOS offset=-11.78 dB, NLOS offset=-11.87 dB (near-identical) |
 | NUM_SAMPLES_PS | 100_000_000 | 100M eval |
-| No calibration JSON | — | ITU defaults; bin scalar absorbs global offset |
+| Calibration JSON | Phase 0 checkpoint | scalar=-11.767 dB, 4 free mats (εᵣ/σ optimised; S=warm prior) |
+| Cal RX | 681 (0.15-1.5 km) | Phase 0 only; CMA Phase 1 had scalar application bug — not run |
 
-### CELL 8e FINAL Results (ON incoh — best method)
+### CELL 8e FINAL Results (Run 2, ON incoh — best method)
 
 | Range | N | Bias (dB) | RMSE (dB) | R² (ON incoh) | avg_rays ON | Notes |
 |-------|---|-----------|-----------|---------------|-------------|-------|
-| 0-750m | 233 | +1.0 | 5.0 | **0.707** | ~29877 | near-LOS regime |
-| **0-900m** | **338** | **+1.1** | **6.4** | **0.725** | — | **peak R² — FINAL** |
-| 0-1000m | 400 | +1.0 | 7.2 | 0.698 | — | |
-| 0-1250m | 596 | +1.6 | 9.2 | 0.602 | — | |
-| 0-1500m | 718 | +1.6 | 11.2 | **0.437** | — | NLOS collapse partly fixed (+0.172 vs S=0.05) |
-| 0-1750m | 815 | +2.8 | 13.4 | **0.224** | — | dramatically improved (+0.254 vs S=0.05) |
+| 0-500m | 117 | +0.3 | 3.3 | 0.593 | ~42712 | excellent short-range |
+| 0-750m | 233 | +1.2 | 4.9 | **0.711** | ~43776 | |
+| **0-900m** | **338** | **+1.3** | **6.3** | **0.730** | **~38720** | **peak R² — FINAL** |
+| **0-1000m** | **400** | **+1.2** | **6.8** | **0.730** | **~36411** | **R² flat plateau** |
+| 0-1250m | 596 | +1.7 | 8.4 | 0.667 | ~25083 | |
+| 0-1500m | 718 | +1.8 | 10.1 | 0.544 | ~22447 | |
 
 ### Improvement history
 
@@ -1210,16 +1212,18 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 |--------------|---------|-------|------|-------|
 | Baseline (S=0.05, 5 bins) | 0.675 | 0-900m | ~7 dB | starting point |
 | N_SCALAR_BINS=20 (S=0.05) | 0.708 | 0-900m | ~6.8 dB | +0.033 from finer binning |
-| **SCATTER_OVERRIDE=0.15, 20 bins** | **0.725** | **0-900m** | **6.4 dB** | **+0.017 more; large NLOS gain** |
+| SCATTER_OVERRIDE=0.15, 20 bins, no JSON | 0.725 | 0-900m | 6.4 dB | +0.017 more; large NLOS gain |
+| **Phase 0 CMA JSON, 25 bins** | **0.730** | **0-900m** | **6.3 dB** | **+0.005 from εᵣ/σ calibration** |
 
 ### Key findings
-- R²=0.725 at 0-900m without calibration JSON — ITU defaults + bin scalar only
-- SCATTER_OVERRIDE raised from 0.05 (S²=0.25% scatter power) to 0.15 (S²=2.25%): more valid NLOS scatter paths, +17-22 dB bin corrections reduced
-- ON incoh avg_rays=29877 at 0-100m (vs 3694 at S=0.05) — scatter now providing real NLOS coverage
-- LOS/NLOS zone split had no effect: only 37 LOS receivers (Rbp=310m) vs 644 NLOS, both zone offsets ~+0.07 dB
-- NLOS collapse at 1500m largely fixed: R²=0.437 (was 0.265) and 0-1750m: R²=0.224 (was -0.030)
-- Large bin corrections remain (+11-22 dB in NLOS) — reflects physics limit without CMA calibration
-- **R²=0.725 accepted as Southampton 915 MHz FINAL. No further runs planned.**
+- R²=0.730 at 0-900m with Phase 0 CMA materials — 0.005 improvement over no-JSON baseline (0.725)
+- R² stable at 0.730 from 0-900m to 0-1000m — unusually flat plateau (both ranges identical)
+- Phase 0 calibration (εᵣ/σ optimised for brick/concrete/glass/wet_ground) gave small but real gain
+- CMA Phase 1 had scalar application bug (eval 1 = 21.189 dB vs Phase 0 = 14.11 dB — Phase 1 not applying scalar); Phase 0 checkpoint used directly
+- Large NLOS bin corrections remain (+13-24 dB at 0.7-1.5 km) — warm-prior S=0.25-0.30 generates too many NLOS scatter paths; full CMA with S optimisation could reduce corrections and push R² toward 0.75+
+- avg_rays ON=43k-60k vs OFF=125-215 (~320x ratio) — scatter dominant throughout
+- LOS/NLOS zone split had no effect: both zone offsets =-11.78/-11.87 dB (near-identical)
+- **R²=0.730 accepted as Southampton 915 MHz FINAL (2026-09-05)**
 
 ---
 
