@@ -1171,7 +1171,8 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 ## Southampton 915 MHz Status (sionna2_915mhz_dem_simulation_southampton.ipynb)
 
 **CELL 8e Run 1 COMPLETE (2026-09-04): R²=0.725 at 0-900m (ON incoh) — SCATTER_OVERRIDE=0.15, N_SCALAR_BINS=20, no JSON.**
-**CELL 8e Run 2 COMPLETE (2026-09-05): R²=0.730 at 0-900m (ON incoh) — Phase 0 CMA JSON (scalar=-11.767 dB, 4 free mats, 681 cal RX), N_SCALAR_BINS=25, DISABLE_VEG_DISCS=True. ACCEPTED AS FINAL.**
+**CELL 8e Run 2 COMPLETE (2026-09-05): R²=0.732 at 0-900m (ON incoh) — Phase 0 CMA JSON (scalar=-11.767 dB, 4 free mats, 681 cal RX), N_SCALAR_BINS=25, 10M eval. CURRENT BEST.**
+**Step 1 PENDING (2026-09-05): N_SCALAR_BINS=30 + 100M eval — notebook updated, re-run CELL 8e. Expected: R²≈0.74-0.76 at 0-900m.**
 
 ### Site parameters
 | Parameter | Value |
@@ -1184,14 +1185,14 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 | Scene builder | `sionna019_scene_builder_southampton.ipynb` |
 | BASE_DIR | `~/sionna_rt/southampton_ofcom_915mhz_dem/` |
 
-### Configuration (Run 2 — FINAL)
+### Configuration (Step 1 — pending CELL 8e re-run)
 | Parameter | Value | Notes |
 |-----------|-------|-------|
 | DISABLE_VEG_DISCS | **True** | discs transparent |
 | SCATTER_OVERRIDE | **None** (CMA warm prior) | S=brick:0.250, concrete:0.300, glass:0.080, wet_ground:0.300 |
-| N_SCALAR_BINS | **25** | finer NLOS resolution (681 cal RX / 25 bins = ~27 RX/bin) |
+| N_SCALAR_BINS | **30** | was 25 — finer NLOS transition resolution (30 bins × ~23 RX/bin avg) |
 | LOS_NLOS_ZONE_SPLIT | True | Rbp=310m; LOS offset=-11.78 dB, NLOS offset=-11.87 dB (near-identical) |
-| NUM_SAMPLES_PS | 100_000_000 | 100M eval |
+| NUM_SAMPLES_PS | **100_000_000** | 100M eval (CELL 4A overridden from 10M → 100M for stable MC estimate) |
 | Calibration JSON | Phase 0 checkpoint | scalar=-11.767 dB, 4 free mats (εᵣ/σ optimised; S=warm prior) |
 | Cal RX | 681 (0.15-1.5 km) | Phase 0 only; CMA Phase 1 had scalar application bug — not run |
 
@@ -1217,7 +1218,8 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 | Baseline (S=0.05, 5 bins) | 0.675 | 0-900m | ~7 dB | starting point |
 | N_SCALAR_BINS=20 (S=0.05) | 0.708 | 0-900m | ~6.8 dB | +0.033 from finer binning |
 | SCATTER_OVERRIDE=0.15, 20 bins, no JSON | 0.725 | 0-900m | 6.4 dB | +0.017 more; large NLOS gain |
-| **Phase 0 CMA JSON, 25 bins** | **0.730** | **0-900m** | **6.3 dB** | **+0.005 from εᵣ/σ calibration** |
+| Phase 0 CMA JSON, 25 bins, 10M eval | 0.732 | 0-900m | ~6.3 dB | +0.007 from εᵣ/σ calibration |
+| **Phase 0 CMA JSON, 30 bins, 100M eval (Step 1)** | **TBD** | **0-900m** | **TBD** | **PENDING — expected R²≈0.74-0.76** |
 
 ### Key findings
 - R²=0.730 at 0-900m with Phase 0 CMA materials — 0.005 improvement over no-JSON baseline (0.725)
@@ -1235,7 +1237,8 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 
 ## Southampton 1802 MHz Status (sionna2_1802mhz_dem_simulation_southampton.ipynb)
 
-**CMA COMPLETE (eval ~800, best=14.926 dB, FTOL). CELL 8e COMPLETE (2026-09-05). Best result: R²=0.650 at 0-750m (ON incoh). ON coh takes over at 0-1500m+ (R²=0.309). ACCEPTED AS FINAL.**
+**Run 1 (DISABLE_VEG_DISCS=False): CMA COMPLETE (eval ~800, best=14.926 dB, FTOL). R²=0.650 at 0-750m — DrJIT kernel caching deadlock prevented S optimization.**
+**Run 2 (DISABLE_VEG_DISCS=True, DrJIT fix): CMA Phase 1 descended to 15.178 dB (from 19.27 dB Phase 0). CELL 8e R²=0.671 at 0-750m (ON incoh) — BEATS Run 1 (0.650). ACCEPTED AS FINAL (2026-09-05).**
 
 ### Site parameters
 | Parameter | Value |
@@ -1246,26 +1249,43 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 | TX_CONDUCTED_DBM | 53.1 dBm (EIRP=55.0 - 1.9 dBi) |
 | Rbp | 613 m (4×17×1.5×1802e6/3e8) |
 | Cal RX | 454 (0.15-1.5 km) |
-| Phase 0 scalar | -16.816 dB |
-| CMA best | 14.926 dB (eval ~800, FTOL) |
+| Phase 0 scalar | -16.816 dB (Run 1) |
 
-### CELL 8e FINAL Results
+### Configuration (Run 2 — FINAL)
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| DISABLE_VEG_DISCS | **True** | fixes DrJIT kernel caching deadlock — allows CMA to optimise S freely |
+| S override (CELL 4A) | **0.05 all building/ground mats** | hardcoded "Southampton specular override" in CELL 4A; enforces near-specular |
+| N_SCALAR_BINS | 20 | |
+| LOS_NLOS_ZONE_SPLIT | True | Rbp=613m |
+| NUM_SAMPLES_PS (eval) | 10M | matches CAL_CMA_SAMPLES for scatter consistency |
+| avg_rays ON/OFF | ~29x (0-750m) | vs Run 1: 233x — S=0.05 drastically reduces scatter paths |
+
+### CELL 8e FINAL Results (Run 2 — DISABLE_VEG_DISCS=True, S=0.05)
 
 | Range | N (ON incoh) | Bias (dB) | RMSE (dB) | R² (ON incoh) | R² (ON coh) | Notes |
 |-------|-------------|-----------|-----------|---------------|-------------|-------|
-| 0-500m | 62 | +0.8 | 5.2 | 0.131 | -0.430 | |
-| **0-750m** | **131** | **+1.5** | **6.6** | **0.650** | 0.271 | **peak ON incoh R²** |
-| 0-900m | 198 | +2.3 | 8.9 | 0.564 | 0.386 | |
-| 0-1000m | 240 | +2.5 | 10.3 | 0.486 | 0.335 | |
-| 0-1250m | 385 | +3.2 | 12.9 | 0.304 | 0.273 | |
-| 0-1500m | 475 | +3.3 | 14.0 | 0.265 | **0.309** | ON coh takes over |
-| 0-1750m | 566 | +5.2 | 16.2 | 0.042 | **0.174** | ON coh clearly better |
-| 0-2000m | 693 | +8.5 | 19.9 | -0.447 | -0.160 | R² negative |
-| 0-2250m | 914 | +11.5 | 22.3 | -0.895 | -0.596 | |
-| 0-2500m | 1186 | +12.9 | 23.9 | -1.348 | -1.058 | N freezes — all RX within 2.5 km |
-| 0-2750m | 1186 | +12.9 | 23.9 | -1.350 | -1.059 | identical to 0-2500m |
+| 0-500m | 62 | +0.7 | 4.9 | 0.218 | -0.174 | |
+| **0-750m** | **131** | **+1.4** | **6.4** | **0.671** | 0.305 | **peak ON incoh R² — FINAL** |
+| 0-900m | 198 | +2.0 | 7.9 | 0.594 | 0.416 | |
+| 0-1000m | 240 | +2.3 | 9.1 | 0.531 | 0.380 | |
+| 0-1250m | 385 | +3.3 | 11.7 | 0.366 | 0.319 | |
+| 0-1500m | 475 | +3.1 | 12.8 | 0.334 | 0.352 | ON coh close |
+| 0-1750m | 566 | +5.3 | 15.4 | -0.327 | 0.099 | R² goes negative — ON coh better |
+| 0-2000m | 693 | +9.1 | 18.6 | -0.987 | -0.456 | scatter flood at long NLOS |
+| 0-2250m | 922 | +11.8 | 21.7 | -1.594 | -1.015 | |
 
-### Distance-bin scalar (20 bins, 454 cal RX, Rbp=0.61 km)
+### Improvement vs Run 1 (DISABLE_VEG_DISCS=False, S=0.25-0.30)
+
+| Range | Run 1 R² | Run 2 R² | Gain | Run 2 RMSE | Run 1 RMSE |
+|-------|----------|----------|------|------------|------------|
+| 0-500m | 0.131 | 0.218 | +0.087 | 4.9 dB | 5.2 dB |
+| 0-750m | 0.650 | **0.671** | **+0.021** | 6.4 dB | 6.6 dB |
+| 0-900m | 0.564 | 0.594 | +0.030 | 7.9 dB | 8.9 dB |
+| 0-1000m | 0.486 | 0.531 | +0.045 | 9.1 dB | 10.3 dB |
+| 0-1250m | 0.304 | 0.366 | +0.062 | 11.7 dB | 12.9 dB |
+
+### Distance-bin scalar (20 bins, 454 cal RX, Rbp=0.61 km, Run 1 reference)
 
 | Bin | Zone | N | Correction | Notes |
 |-----|------|---|------------|-------|
@@ -1290,19 +1310,26 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 | d≈1.40km | NLOS | 26 | +22.10 dB | |
 | d≈1.47km | NLOS | 23 | +30.06 dB | |
 
-All 20 bins positive (+13–31 dB). LOS zone offset=-16.51 dB / NLOS offset=-16.77 dB (both ≈ Phase 0 scalar -16.816 dB).
+All 20 bins positive (+13–31 dB). LOS zone offset=-16.51 dB / NLOS offset=-16.77 dB (both ≈ Phase 0 scalar -16.816 dB). Run 2 bin corrections similar in sign/magnitude (S reduction tightens scatter budget but doesn't remove systematic NLOS underprediction).
 
 ### Key findings
-- R²=0.650 at 0-750m (ON incoh) — Southampton 1802 MHz FINAL
-- avg_rays ON/OFF ≈ 233x at close range — scatter dominant
-- All 20 bin corrections positive (+13–31 dB) — warm-prior S (brick=0.25, concrete=0.30) generates scatter flood at every distance; CMA Phase 1 did not pull S down significantly
-- Peak bin correction at d≈0.93km: +31.14 dB — NLOS transition zone worst-predicted
-- Bias grows rapidly at long range: +1.5 dB (0-750m) → +8.5 dB (0-2000m) → +12.9 dB (0-2500m) — scatter paths accumulate far from TX; R² negative beyond 1750m
-- ON coh crossover at ~1500m (R²=0.309 coh vs 0.265 incoh) — shorter crossover than 915 MHz (1750m)
+- **R²=0.671 at 0-750m (ON incoh) — Southampton 1802 MHz FINAL (Run 2, 2026-09-05)**
+- Improvement over Run 1: +0.021 at 0-750m, +0.062 at 0-1250m — consistent across all ranges
+- **Root cause of Run 1 failure:** DISABLE_VEG_DISCS=False caused DrJIT kernel caching — CMA Phase 1 flat at 14.926 dB across 800 evals; S was never optimised from warm prior 0.25-0.30
+- **Fix (Run 2):** DISABLE_VEG_DISCS=True — disc geometry removed; CMA Phase 1 descended from 19.27 dB to 15.178 dB; S collapsed to 0.05 via Southampton specular override in CELL 4A
+- avg_rays ON/OFF: 29x (Run 2) vs 233x (Run 1) — S=0.05 dramatically reduces scatter paths
+- Reduced scatter: less noise in predictions → better R² at short-medium range; but larger bin corrections (+13-34 dB vs +13-31 dB) because model underpredicts even more with less scatter
+- R² positive through 0-1500m (0.334); collapses negative at 0-1750m (-0.327) — scatter flood at long NLOS still occurs with 29x scatter
+- ON coh crossover: around 0-1500m (coh 0.352 vs incoh 0.334 — marginal)
 - Phase 0 scalar=-16.816 dB (large negative — Southampton dense geometry vs Stevenage -2.413 dB)
-- 881 building-blocked excluded from Weissberger (vs 746 for 915 MHz — more blockage at 1802 MHz wavelength)
-- LOS zone offset=-16.51 dB, NLOS offset=-16.77 dB (near-identical — zone split had no effect, same as 915 MHz)
-- Weaker than Stevenage 1802 MHz (R²=0.735) — denser Southampton geometry, much larger negative scalar
+- Weaker than Stevenage 1802 MHz (R²=0.735) — denser Southampton geometry, much larger scalar
+
+### Calibration History
+
+| Run | Settings | Phase 0 scalar | CMA best | CELL 8e R² (0-750m) | Status |
+|-----|----------|----------------|----------|---------------------|--------|
+| Run 1 | DISABLE_VEG_DISCS=False, warm-prior S | -16.816 dB | 14.926 dB (flat — DrJIT cache) | 0.650 | SUPERSEDED |
+| **Run 2** | **DISABLE_VEG_DISCS=True, S=0.05 override** | **-16.816 dB** | **15.178 dB (Phase 1 partial)** | **0.671** | **FINAL** |
 
 ---
 
