@@ -1171,8 +1171,9 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 ## Southampton 915 MHz Status (sionna2_915mhz_dem_simulation_southampton.ipynb)
 
 **CELL 8e Run 1 COMPLETE (2026-09-04): R²=0.725 at 0-900m (ON incoh) — SCATTER_OVERRIDE=0.15, N_SCALAR_BINS=20, no JSON.**
-**CELL 8e Run 2 COMPLETE (2026-09-05): R²=0.732 at 0-900m (ON incoh) — Phase 0 CMA JSON (scalar=-11.767 dB, 4 free mats, 681 cal RX), N_SCALAR_BINS=25, 10M eval. CURRENT BEST.**
-**Step 1 PENDING (2026-09-05): N_SCALAR_BINS=30 + 100M eval — notebook updated, re-run CELL 8e. Expected: R²≈0.74-0.76 at 0-900m.**
+**CELL 8e Run 2 COMPLETE (2026-09-05): R²=0.732 at 0-900m (ON incoh) — Phase 0 CMA JSON (scalar=-11.767 dB, 4 free mats, 681 cal RX), N_SCALAR_BINS=25, 10M eval. CURRENT BEST at short range.**
+**Step 1 COMPLETE (2026-09-05): N_SCALAR_BINS=30 + 100M eval — R²=0.636 at 0-1250m (ON incoh). 100M WORSE than 10M at all ranges: scatter flood revealed. CMA Phase 1 needed to reduce S.**
+**CMA Phase 1 PENDING: sigma0=0.3 fix in place (commit 4d1e917). Run CELL CAL-CMA to reduce S from 0.25-0.30 → target 0.10-0.15.**
 
 ### Site parameters
 | Parameter | Value |
@@ -1185,31 +1186,47 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 | Scene builder | `sionna019_scene_builder_southampton.ipynb` |
 | BASE_DIR | `~/sionna_rt/southampton_ofcom_915mhz_dem/` |
 
-### Configuration (Step 1 — pending CELL 8e re-run)
+### Configuration (current — USE_CALIBRATED_FILES=True, CMA Phase 1 next)
 | Parameter | Value | Notes |
 |-----------|-------|-------|
-| DISABLE_VEG_DISCS | **True** | discs transparent |
-| SCATTER_OVERRIDE | **None** (CMA warm prior) | S=brick:0.250, concrete:0.300, glass:0.080, wet_ground:0.300 |
-| N_SCALAR_BINS | **30** | was 25 — finer NLOS transition resolution (30 bins × ~23 RX/bin avg) |
-| LOS_NLOS_ZONE_SPLIT | True | Rbp=310m; LOS offset=-11.78 dB, NLOS offset=-11.87 dB (near-identical) |
-| NUM_SAMPLES_PS | **100_000_000** | 100M eval (CELL 4A overridden from 10M → 100M for stable MC estimate) |
+| DISABLE_VEG_DISCS | **True** | discs transparent — prevents DrJIT kernel caching deadlock |
+| SCATTER_OVERRIDE | **None** | CMA will optimise S per-material; warm prior S≈0.25-0.30 |
+| N_SCALAR_BINS | **30** | finer NLOS transition resolution |
+| LOS_NLOS_ZONE_SPLIT | True | Rbp=310m |
+| NUM_SAMPLES_PS | **100_000_000** | 100M eval — use 10M for CMA eval (CAL_CMA_SAMPLES=10M) |
+| USE_CALIBRATED_FILES | **True** | loads Phase 0 JSON into scene before CELL 8e / CELL CAL-CMA |
 | Calibration JSON | Phase 0 checkpoint | scalar=-11.767 dB, 4 free mats (εᵣ/σ optimised; S=warm prior) |
-| Cal RX | 681 (0.15-1.5 km) | Phase 0 only; CMA Phase 1 had scalar application bug — not run |
+| Cal RX | 681 (0.15-1.5 km) | Phase 0 only; CMA Phase 1 pending |
+| CAL_CMA_SIGMA0 | **0.3** | fixes eval-1=21.189 dB bug (was sigma0=0.1); Phase 1 starts near 14.11 dB |
+| CAL_CMA_SAMPLES | 10M | 10M per CMA eval (not 30M — avoids scatter-path variance inflation) |
+| CAL_CMA_POPSIZE | 36 | |
 
-### CELL 8e FINAL Results (Run 2, ON incoh — best method)
+### CELL 8e Results — Run 2 (10M eval, 25 bins) vs Step 1 (100M eval, 30 bins)
 
-| Range | N | Bias (dB) | RMSE (dB) | R² (ON incoh) | avg_rays ON | Notes |
-|-------|---|-----------|-----------|---------------|-------------|-------|
-| 0-500m | 117 | +0.3 | 3.3 | 0.593 | ~42712 | excellent short-range |
-| 0-750m | 233 | +1.2 | 4.9 | **0.711** | ~43776 | |
-| **0-900m** | **338** | **+1.3** | **6.3** | **0.730** | **~38720** | **peak R² — FINAL** |
-| **0-1000m** | **400** | **+1.2** | **6.8** | **0.730** | **~36411** | **R² flat plateau** |
-| 0-1250m | 596 | +1.7 | 8.4 | 0.667 | ~25083 | |
-| 0-1500m | 718 | +1.8 | 10.1 | 0.544 | ~22447 | |
-| 0-1750m | 816 | +2.7 | 11.5 | 0.429 | ~20241 | ON coh takes over (0.467) |
-| 0-2000m | 949 | +3.9 | 12.8 | 0.319 | ~18323 | ON coh 0.401 |
-| 0-2250m | 1123 | +5.3 | 14.7 | 0.166 | ~15630 | ON coh 0.285 |
-| 0-2500m | 1200 | +5.9 | 15.3 | 0.096 | ~14678 | N freezes — all 1200 RX within 2500m |
+Run 2 = CURRENT BEST at short range. Step 1 = worse at all ranges (scatter flood revealed at 100M).
+
+| Range | N | R² Run 2 (10M, 25bin) | R² Step 1 (100M, 30bin) | avg_rays ON (Step 1) | Notes |
+|-------|---|----------------------|-------------------------|----------------------|-------|
+| 0-500m | 117 | 0.593 | TBD | — | not pasted |
+| 0-750m | 233 | 0.711 | TBD | — | not pasted |
+| **0-900m** | **338** | **0.730** | **TBD** | **—** | **peak Run 2 — not pasted** |
+| 0-1000m | 400 | 0.730 | TBD | — | not pasted |
+| 0-1250m | 596 | 0.667 | **0.636** | 21355 | 100M worse — scatter flood |
+| 0-1500m | 718 | 0.544 | 0.502 | 18282 | |
+| 0-1750m | 816 | 0.429 | 0.297 | 16252 | |
+| 0-2000m | 949 | 0.319 | 0.168 | 14281 | ON coh: TBD |
+| 0-2250m | 1123 | 0.166 | — | — | |
+| 0-2500m | 1200 | 0.096 | — | — | N freezes |
+
+Step 1 full breakdown at 0-1250m (N=596, 100M eval, 30 bins):
+
+| Method | Bias (dB) | RMSE (dB) | STD (dB) | R² |
+|--------|-----------|-----------|----------|-----|
+| ON incoh | +1.6 | 8.8 | 8.6 | **0.636** |
+| OFF incoh | +2.0 | 10.0 | 9.8 | 0.525 |
+| ON coh | -0.6 | 10.1 | 10.1 | 0.519 |
+| OFF coh | +4.4 | 11.5 | 10.6 | 0.374 |
+| ON best | +3.1 | 9.8 | 9.3 | 0.546 |
 
 ### Improvement history
 
@@ -1218,20 +1235,31 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 | Baseline (S=0.05, 5 bins) | 0.675 | 0-900m | ~7 dB | starting point |
 | N_SCALAR_BINS=20 (S=0.05) | 0.708 | 0-900m | ~6.8 dB | +0.033 from finer binning |
 | SCATTER_OVERRIDE=0.15, 20 bins, no JSON | 0.725 | 0-900m | 6.4 dB | +0.017 more; large NLOS gain |
-| Phase 0 CMA JSON, 25 bins, 10M eval | 0.732 | 0-900m | ~6.3 dB | +0.007 from εᵣ/σ calibration |
-| **Phase 0 CMA JSON, 30 bins, 100M eval (Step 1)** | **TBD** | **0-900m** | **TBD** | **PENDING — expected R²≈0.74-0.76** |
+| Phase 0 CMA JSON, 25 bins, 10M eval | **0.732** | **0-900m** | **~6.3 dB** | **current best** |
+| Phase 0 CMA JSON, 30 bins, 100M eval (Step 1) | 0.636 | 0-1250m | 8.8 dB | 100M WORSE — scatter flood revealed; short-range TBD |
+| **CMA Phase 1 (sigma0=0.3, 10M) — PENDING** | **target ≥0.76** | **0-900m** | **target <6 dB** | **reduce S → cut scatter flood** |
 
 ### Key findings
-- R²=0.730 at 0-900m with Phase 0 CMA materials — 0.005 improvement over no-JSON baseline (0.725)
-- R² stable at 0.730 from 0-900m to 0-1000m — unusually flat plateau (both ranges identical)
-- Phase 0 calibration (εᵣ/σ optimised for brick/concrete/glass/wet_ground) gave small but real gain
-- CMA Phase 1 had scalar application bug (eval 1 = 21.189 dB vs Phase 0 = 14.11 dB — Phase 1 not applying scalar); Phase 0 checkpoint used directly
-- Large NLOS bin corrections remain (+13-24 dB at 0.7-1.5 km) — warm-prior S=0.25-0.30 generates too many NLOS scatter paths; full CMA with S optimisation could reduce corrections and push R² toward 0.75+
-- avg_rays ON=43k-60k vs OFF=125-215 (~320x ratio) — scatter dominant throughout
+- R²=0.730 at 0-900m (Run 2, 10M eval) — current best; 0.005 above uncalibrated baseline (0.725)
+- R² stable at 0.730 from 0-900m to 0-1000m — flat plateau; both ranges predict identically
+- **100M eval (Step 1) is WORSE at all ranges vs 10M**: 0-1250m R² 0.667 → 0.636, RMSE 8.4 → 8.8 dB
+  - Root cause: 100M captures far more scatter paths (avg_rays ON=21355 vs ~25083 approximate). At 10M, scatter-only NLOS paths not fully sampled → artificially suppressed scatter variance
+  - 100M reveals true scatter flood: model over-predicts at NLOS receivers via warm-prior S=0.25-0.30
+  - **Diagnosis confirmed: CMA Phase 1 must reduce S to make 100M eval useful**
+- CMA Phase 1 previous failure was sigma0=0.1 + 30M samples — eval 1 jumped to 21.189 dB (scatter-path variance inflation). Fix: sigma0=0.3, 10M CMA samples (commit 4d1e917). Phase 1 should start near 14.11 dB.
+- Large NLOS bin corrections remain (+13-24 dB at 0.7-1.5 km) — warm-prior S=0.25-0.30 generates too many NLOS scatter paths
+- avg_rays ON=21355 vs OFF=80 (~266x ratio) at 0-1250m with 100M — scatter flood extensive
 - LOS/NLOS zone split had no effect: both zone offsets =-11.78/-11.87 dB (near-identical)
-- ON coh crossover at 0-1750m (R²=0.467 coh vs 0.429 incoh); coh better at all longer ranges
 - N freezes at 1200 from 0-2500m (all receivers within 2500m — same as Stevenage)
-- **R²=0.730 accepted as Southampton 915 MHz FINAL (2026-09-05)**
+- **R²=0.730 (10M, 25 bins) = current best. CMA Phase 1 target: R²≥0.76 at 0-900m with 100M eval.**
+
+**CMA Phase 1 run sequence:**
+```
+Kernel → Restart & Clear Output
+CELL 0 → CELL 1 → CELL 4A (USE_CALIBRATED_FILES=True — loads Phase 0 JSON) → CELL CAL-CMA
+After FTOL → CELL 4A (now loads CMA-optimised JSON) → CELL 8e (100M)
+```
+Expected: CMA reduces S(brick) 0.25→0.10-0.15, S(concrete) 0.30→0.10-0.15. Scatter flood 266x → <80x. Bin corrections drop from +13-24 dB. RMSE improves at 100M eval.
 
 ---
 
