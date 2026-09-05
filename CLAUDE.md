@@ -1205,6 +1205,10 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 | **0-1000m** | **400** | **+1.2** | **6.8** | **0.730** | **~36411** | **R² flat plateau** |
 | 0-1250m | 596 | +1.7 | 8.4 | 0.667 | ~25083 | |
 | 0-1500m | 718 | +1.8 | 10.1 | 0.544 | ~22447 | |
+| 0-1750m | 816 | +2.7 | 11.5 | 0.429 | ~20241 | ON coh takes over (0.467) |
+| 0-2000m | 949 | +3.9 | 12.8 | 0.319 | ~18323 | ON coh 0.401 |
+| 0-2250m | 1123 | +5.3 | 14.7 | 0.166 | ~15630 | ON coh 0.285 |
+| 0-2500m | 1200 | +5.9 | 15.3 | 0.096 | ~14678 | N freezes — all 1200 RX within 2500m |
 
 ### Improvement history
 
@@ -1223,7 +1227,49 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 - Large NLOS bin corrections remain (+13-24 dB at 0.7-1.5 km) — warm-prior S=0.25-0.30 generates too many NLOS scatter paths; full CMA with S optimisation could reduce corrections and push R² toward 0.75+
 - avg_rays ON=43k-60k vs OFF=125-215 (~320x ratio) — scatter dominant throughout
 - LOS/NLOS zone split had no effect: both zone offsets =-11.78/-11.87 dB (near-identical)
+- ON coh crossover at 0-1750m (R²=0.467 coh vs 0.429 incoh); coh better at all longer ranges
+- N freezes at 1200 from 0-2500m (all receivers within 2500m — same as Stevenage)
 - **R²=0.730 accepted as Southampton 915 MHz FINAL (2026-09-05)**
+
+---
+
+## Southampton 1802 MHz Status (sionna2_1802mhz_dem_simulation_southampton.ipynb)
+
+**CMA COMPLETE (eval ~800, best=14.926 dB, FTOL). CELL 8e COMPLETE (2026-09-05). Best result: R²=0.650 at 0-750m (ON incoh). ON coh takes over at 0-1500m+ (R²=0.309). ACCEPTED AS FINAL.**
+
+### Site parameters
+| Parameter | Value |
+|-----------|-------|
+| Site name | Southampton |
+| TX lat/lon | 50.9464 / -1.3101 |
+| Frequency | 1802.5 MHz |
+| TX_CONDUCTED_DBM | 53.1 dBm (EIRP=55.0 - 1.9 dBi) |
+| Rbp | 613 m (4×17×1.5×1802e6/3e8) |
+| Cal RX | 454 (0.15-1.5 km) |
+| Phase 0 scalar | -16.816 dB |
+| CMA best | 14.926 dB (eval ~800, FTOL) |
+
+### CELL 8e FINAL Results
+
+| Range | N (ON incoh) | Bias (dB) | RMSE (dB) | R² (ON incoh) | R² (ON coh) | Notes |
+|-------|-------------|-----------|-----------|---------------|-------------|-------|
+| 0-500m | 62 | +0.8 | 5.2 | 0.131 | -0.430 | |
+| **0-750m** | **131** | **+1.5** | **6.6** | **0.650** | 0.271 | **peak ON incoh R²** |
+| 0-900m | 198 | +2.3 | 8.9 | 0.564 | 0.386 | |
+| 0-1000m | 240 | +2.5 | 10.3 | 0.486 | 0.335 | |
+| 0-1250m | 385 | +3.2 | 12.9 | 0.304 | 0.273 | |
+| 0-1500m | 475 | +3.3 | 14.0 | 0.265 | **0.309** | ON coh takes over |
+| 0-1750m | 566 | +5.2 | 16.2 | 0.042 | **0.174** | ON coh clearly better |
+
+### Key findings
+- R²=0.650 at 0-750m (ON incoh) — Southampton 1802 MHz FINAL
+- avg_rays ON/OFF ≈ 233x at close range — scatter dominant
+- Large bin corrections (+13-31 dB LOS/NLOS) — same warm-prior S scatter-flood pattern as 915 MHz
+- ON coh crossover at ~1500m (R²=0.309 coh vs 0.265 incoh) — shorter crossover than 915 MHz (1750m)
+- Phase 0 scalar=-16.816 dB (large negative — Southampton dense geometry vs Stevenage -2.413 dB)
+- 881 building-blocked excluded from Weissberger (vs 746 for 915 MHz — more blockage at 1802 MHz wavelength)
+- LOS zone offset=-16.51 dB, NLOS offset=-16.77 dB (near-identical — zone split had no effect, same as 915 MHz)
+- Weaker than Stevenage 1802 MHz (R²=0.735) — denser Southampton geometry, much larger negative scalar
 
 ---
 
