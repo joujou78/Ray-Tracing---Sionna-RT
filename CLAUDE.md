@@ -1260,11 +1260,44 @@ avg_rays ON=15148-32919 vs OFF=32-91 (~500x ratio) — scatter from 3D canopy/tr
 | 0-1250m | 385 | +3.2 | 12.9 | 0.304 | 0.273 | |
 | 0-1500m | 475 | +3.3 | 14.0 | 0.265 | **0.309** | ON coh takes over |
 | 0-1750m | 566 | +5.2 | 16.2 | 0.042 | **0.174** | ON coh clearly better |
+| 0-2000m | 693 | +8.5 | 19.9 | -0.447 | -0.160 | R² negative |
+| 0-2250m | 914 | +11.5 | 22.3 | -0.895 | -0.596 | |
+| 0-2500m | 1186 | +12.9 | 23.9 | -1.348 | -1.058 | N freezes — all RX within 2.5 km |
+| 0-2750m | 1186 | +12.9 | 23.9 | -1.350 | -1.059 | identical to 0-2500m |
+
+### Distance-bin scalar (20 bins, 454 cal RX, Rbp=0.61 km)
+
+| Bin | Zone | N | Correction | Notes |
+|-----|------|---|------------|-------|
+| d≈0.18km | LOS | 8 | +22.86 dB | |
+| d≈0.25km | LOS | 8 | +15.67 dB | |
+| d≈0.32km | LOS | 8 | +20.97 dB | |
+| d≈0.39km | LOS | 7 | +13.87 dB | |
+| d≈0.45km | LOS | 9 | +13.25 dB | |
+| d≈0.52km | LOS | 9 | +20.87 dB | |
+| d≈0.59km | LOS | 13 | +16.76 dB | |
+| d≈0.66km | NLOS | 29 | +18.55 dB | |
+| d≈0.72km | NLOS | 22 | +26.37 dB | |
+| d≈0.79km | NLOS | 28 | +23.07 dB | |
+| d≈0.86km | NLOS | 35 | +24.88 dB | |
+| d≈0.93km | NLOS | 27 | +31.14 dB | **peak — NLOS transition worst-predicted** |
+| d≈0.99km | NLOS | 36 | +20.44 dB | |
+| d≈1.06km | NLOS | 55 | +17.81 dB | |
+| d≈1.13km | NLOS | 33 | +21.39 dB | |
+| d≈1.20km | NLOS | 29 | +25.12 dB | |
+| d≈1.26km | NLOS | 25 | +27.39 dB | |
+| d≈1.33km | NLOS | 24 | +25.93 dB | |
+| d≈1.40km | NLOS | 26 | +22.10 dB | |
+| d≈1.47km | NLOS | 23 | +30.06 dB | |
+
+All 20 bins positive (+13–31 dB). LOS zone offset=-16.51 dB / NLOS offset=-16.77 dB (both ≈ Phase 0 scalar -16.816 dB).
 
 ### Key findings
 - R²=0.650 at 0-750m (ON incoh) — Southampton 1802 MHz FINAL
 - avg_rays ON/OFF ≈ 233x at close range — scatter dominant
-- Large bin corrections (+13-31 dB LOS/NLOS) — same warm-prior S scatter-flood pattern as 915 MHz
+- All 20 bin corrections positive (+13–31 dB) — warm-prior S (brick=0.25, concrete=0.30) generates scatter flood at every distance; CMA Phase 1 did not pull S down significantly
+- Peak bin correction at d≈0.93km: +31.14 dB — NLOS transition zone worst-predicted
+- Bias grows rapidly at long range: +1.5 dB (0-750m) → +8.5 dB (0-2000m) → +12.9 dB (0-2500m) — scatter paths accumulate far from TX; R² negative beyond 1750m
 - ON coh crossover at ~1500m (R²=0.309 coh vs 0.265 incoh) — shorter crossover than 915 MHz (1750m)
 - Phase 0 scalar=-16.816 dB (large negative — Southampton dense geometry vs Stevenage -2.413 dB)
 - 881 building-blocked excluded from Weissberger (vs 746 for 915 MHz — more blockage at 1802 MHz wavelength)
