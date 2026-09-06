@@ -21,7 +21,7 @@ project note) versus provided directly by the student.
 — Verified via arXiv abstract page search + NVIDIA Research publication page, 2026-08-16.
 
 [4] L. Yu, Y. Miao, J. Zhang, S. Liu, Y. Zhang, and G. Liu, "Road to 6G Digital Twin Networks: Multi-Task Adaptive Ray-Tracing as a Key Enabler," arXiv:2502.14290, 2025.
-— Verified via arXiv abstract page search, 2026-08-16.
+— Verified via arXiv abstract page search, 2026-08-16. No longer cited in any chapter after the scope of Chapters 1, 2, and 6 was tightened to this project's own work (6G/digital-twin framing removed as outside this thesis's actual scope); kept here, not renumbered, per this file's numbering convention.
 
 [5] Ofcom, "UK Radiowave Propagation Measurement Data" (sub-6 GHz propagation measurement dataset), Ofcom Open Data, published 2 Aug. 2019 (data collected 2015–2018 at Boston, London, Merthyr Tydfil, Nottingham, Scar Hill, Southampton, Stevenage; 449/915/1802/2695/3602/5850 MHz).
 — Verified via Ofcom open data portal document search, 2026-08-16. THIS is the dataset used throughout the thesis.
