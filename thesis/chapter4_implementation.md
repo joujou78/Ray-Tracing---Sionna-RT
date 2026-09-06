@@ -179,7 +179,7 @@ Implementing the methodology of Chapter 3 surfaced a number of concrete technica
 
 *Table 4.6 — Commit hashes refer to the project repository at `joujou78/Ray-Tracing---Sionna-RT`, branch `claude/cool-cori-rrWbY`. A representative subset; several additional minor fixes are documented alongside the code itself.*
 
-Four of these merit extended discussion.
+Four of these have a root cause not evident from Table 4.6 alone and are stated explicitly below.
 
 **Vegetation geometry at high frequencies.** At 3602 MHz (λ = 8.3 cm), tree-branch diameters approach the wavelength, making solid canopy cones nearly opaque to the ray tracer: an active-canopy calibration attempt (`DISABLE_CANOPY=False`) produced a Phase 0 scalar of +30 dB and an uncalibratable RMSE above 29 dB, with all rays beyond ~400 m absorbed before reaching the receiver. The adopted fix disables 3D canopy/trunk geometry (`DISABLE_CANOPY=True`), making trees electromagnetically transparent, and instead applies a per-path ITU-R P.833-10 correction proportional to the canopy depth each ray segment traverses — computed from intersection tests against `paths.vertices` — with a `z > 30 m` height filter excluding segments travelling entirely above canopy level (commit `b15eb12`).
 
