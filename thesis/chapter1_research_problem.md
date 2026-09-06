@@ -54,7 +54,7 @@ To answer these questions, the primary objectives of this thesis are:
 ## 1.6 Thesis Structure Overview
 
 **[FIGURE 1 - PLACEHOLDER]**
-*Research framework roadmap: Problem Definition (Ch.1) → Literature Gap (Ch.2) → Proposed Method (Ch.3) → Implementation (Ch.4) → Results & Validation (Ch.5) → Discussion and Impact (Ch.6). To be inserted.*
+*Research framework roadmap: Problem Definition (Ch.1) → Literature Gap (Ch.2) → Proposed Method (Ch.3) → Implementation (Ch.4) → Results & Validation (Ch.5) → Discussion and Impact (Ch.6) → Conclusion and Future Work (Ch.7). To be inserted.*
 
 Figure 1 illustrates the overall research framework, linking the problem definition, literature gap, proposed method, implementation, and validation stages that guide the development of this thesis. Each stage corresponds to a chapter, ensuring a logical progression from theoretical foundations to practical experimentation and final conclusions:
 
@@ -64,6 +64,7 @@ Figure 1 illustrates the overall research framework, linking the problem definit
 - **Chapter 4 - Implementation** - Details system modeling, simulation setup, data collection, and tool configuration within the Sionna RT environment.
 - **Chapter 5 - Results & Validation** - Analyzes radio environmental maps, evaluates propagation metrics, and compares results with classical models.
 - **Chapter 6 - Discussion and Impact** - Interprets the scientific and engineering significance of the results validated in Chapter 5, and the limited environmental, economic, and societal implications this project's own data can support.
+- **Chapter 7 - Conclusion and Future Work** - Summarises the research findings, states plainly which research questions and objectives were fully, partially, or not met, and proposes concrete next steps.
 
 ---
 
