@@ -38,7 +38,7 @@ Ray Tracing (RT), founded on geometric optics, explicitly models signal interact
 
 **Equation (2.3):** E_total = Σᵢ₌₁ⁿ Eᵢ · e^(−jφᵢ)
 
-where *Eᵢ* and *φᵢ* are the amplitude and phase of the *i*-th ray. This explicit representation makes RT well suited to capturing multipath-induced fading and delay spread, which are central to the failure modes investigated in this thesis (see Chapters 5–6) [2].
+where *Eᵢ* and *φᵢ* are the amplitude and phase of the *i*-th ray. This explicit representation makes RT well suited to capturing multipath-induced fading and delay spread, which are central to the failure modes investigated in this thesis (see Chapters 4–5) [2].
 
 **[FIGURE 2.1 — PLACEHOLDER]**
 *Illustration of ray-tracing propagation mechanisms in an urban street canyon: direct/LOS ray, specular reflection off a façade, edge diffraction at a rooftop or corner, and diffuse scattering off a rough surface. To be inserted.*
@@ -152,7 +152,7 @@ Throughout this thesis, simulated path loss PL_sim is compared against measured 
 
 **Equation (2.16) — Coefficient of determination:** R² = 1 − [Σᵢ (PL_meas,i − PL_sim,i)²] / [Σᵢ (PL_meas,i − PL̄_meas)²]
 
-where PL̄_meas is the mean of the measured path loss over the receiver set considered. These are the metrics reported for every frequency, site, and distance range in Chapters 5–6.
+where PL̄_meas is the mean of the measured path loss over the receiver set considered. These are the metrics reported for every frequency, site, and distance range in Chapters 4–5.
 
 ## 2.2 Review of Existing Approaches
 
