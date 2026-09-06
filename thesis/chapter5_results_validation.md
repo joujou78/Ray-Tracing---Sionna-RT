@@ -53,7 +53,13 @@ Beyond the headline R² per site, the contribution of the diffuse-scattering mec
 **[FIGURE 5.3 - PLACEHOLDER - requires real notebook output, not fabricated]**
 *Measured-vs-simulated path loss scatter plot (`cumulative_eval.png` / `cumulative_eval_thesis.png`, produced by `CELL 8e`'s plotting block), one panel per site, plotting simulated path loss against Ofcom-measured path loss with a 1:1 reference line. This is the standard per-receiver visual diagnostic underlying every R²/RMSE figure in Tables 5.1 and 5.2. This environment has no GPU, no Sionna RT installation, and no access to the underlying scene or CSV files, so this figure cannot be generated here without fabricating a result.*
 
-The `RadioMapSolver` coverage-map visualisation (Section 3.4, Step 6) is not repeated here, since it already appears as Figure 3.7 in Chapter 3. Similarly, the scene-feature ablation underlying Nottingham 915 MHz's final result is already presented as Table 3.1 (Section 3.1). Both are results of this project that are referred back to for interpretation in the sections below, rather than re-tabulated.
+**[FIGURE 5.4 - PLACEHOLDER - requires real notebook output, not fabricated]**
+*Per-distance-bin scalar correction plot, one panel per site, showing the bin-scalar corrections referenced in Table 4.2's `CAL_SCALAR_BOUNDS` and applied throughout Chapter 4's calibration (e.g. the +13 to +31 dB corrections tabulated for Southampton 1802 MHz, or the all-bins-positive pattern at Stevenage). To be inserted once the corresponding notebook output is available.*
+
+**[FIGURE 5.5 - PLACEHOLDER - requires real notebook output, not fabricated]**
+*Per-site 3D scene render or `RadioMapSolver` coverage map for a second site beyond Nottingham (already shown as Figure 3.7 in Chapter 3), illustrating a contrasting environment type, such as Stevenage's suburban/new-town geometry or Scar Hill's SRTM-terrain rural hilltop. To be inserted once the corresponding notebook output is available.*
+
+The `RadioMapSolver` coverage-map visualisation for Nottingham (Section 3.4, Step 6) is not repeated here, since it already appears as Figure 3.7 in Chapter 3. Similarly, the scene-feature ablation underlying Nottingham 915 MHz's final result is already presented as Table 3.1 (Section 3.1). Both are results of this project that are referred back to for interpretation in the sections below, rather than re-tabulated.
 
 ## 5.2 Analysis and Interpretation
 
@@ -93,6 +99,9 @@ The `RadioMapSolver` coverage-map visualisation (Section 3.4, Step 6) is not rep
 | 8 | 12.368 dB | +32.721 dB | Failed: 365x scatter-path flood; −31.5 dB bias at 0–100 m |
 
 *Table 5.3 - Eight independent CMA-ES runs were required before a stable, physically defensible result was accepted, illustrating that this project's reported accuracy figures reflect a deliberately validated convergence rather than the first calibration attempt.*
+
+**[FIGURE 5.6 - PLACEHOLDER - requires real notebook output, not fabricated]**
+*Calibration RMSE-versus-evaluation curve for one or more CMA-ES runs (e.g. London 1802 MHz Run 4, Table 5.3), showing convergence behaviour over successive evaluations. To be inserted once the corresponding notebook output is available.*
 
 This history demonstrates two distinct classes of sensitivity. The first is sensitivity to per-material scattering-coefficient bounds (Runs 2–3), where caps set even moderately too tight prevent the optimiser from reaching a genuine minimum. The second is sensitivity to the calibration receiver subset (Run 5), where an insufficiently large or representative sample allows the optimiser to overfit rather than generalise. This is the same class of risk that the coverage-fraction and minimum-valid-path constraints (Section 3.3, Table 4.6) were designed to catch elsewhere in the project.
 
