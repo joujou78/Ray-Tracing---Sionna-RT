@@ -1266,7 +1266,9 @@ Expected: CMA reduces S(brick) 0.25→0.10-0.15, S(concrete) 0.30→0.10-0.15. S
 ## Southampton 1802 MHz Status (sionna2_1802mhz_dem_simulation_southampton.ipynb)
 
 **Run 1 (DISABLE_VEG_DISCS=False): CMA COMPLETE (eval ~800, best=14.926 dB, FTOL). R²=0.650 at 0-750m — DrJIT kernel caching deadlock prevented S optimization.**
-**Run 2 (DISABLE_VEG_DISCS=True, DrJIT fix): CMA Phase 1 descended to 15.178 dB (from 19.27 dB Phase 0). CELL 8e R²=0.671 at 0-750m (ON incoh) — BEATS Run 1 (0.650). ACCEPTED AS FINAL (2026-09-05).**
+**Run 2 (DISABLE_VEG_DISCS=True, DrJIT fix): CMA Phase 1 descended to 15.178 dB (from 19.27 dB Phase 0). CELL 8e R²=0.671 at 0-750m (ON incoh). SUPERSEDED.**
+**Step A (100M eval, 30 bins, Run 2 JSON S=0.05): R²=0.680 at 0-750m (ON incoh). SUPERSEDED.**
+**Step B (Phase 0 checkpoint, S=warm prior 0.25-0.30, 100M eval, 30 bins): R²=0.683 at 0-750m (ON incoh); ON coh best from 0-900m+. ACCEPTED AS FINAL (2026-09-07).**
 
 ### Site parameters
 | Parameter | Value |
@@ -1279,85 +1281,67 @@ Expected: CMA reduces S(brick) 0.25→0.10-0.15, S(concrete) 0.30→0.10-0.15. S
 | Cal RX | 454 (0.15-1.5 km) |
 | Phase 0 scalar | -16.816 dB (Run 1) |
 
-### Configuration (Run 2 — FINAL)
+### Configuration (Step B — FINAL)
 | Parameter | Value | Notes |
 |-----------|-------|-------|
-| DISABLE_VEG_DISCS | **True** | fixes DrJIT kernel caching deadlock — allows CMA to optimise S freely |
-| S override (CELL 4A) | **0.05 all building/ground mats** | hardcoded "Southampton specular override" in CELL 4A; enforces near-specular |
-| N_SCALAR_BINS | 20 | |
+| DISABLE_VEG_DISCS | **True** | prevents DrJIT kernel caching deadlock |
+| S override (CELL 4A) | **None** | S=warm prior 0.25-0.30 preserved from Phase 0 — CMA did not reduce S |
+| N_SCALAR_BINS | 30 | 50m bins — better LOS→NLOS transition resolution |
 | LOS_NLOS_ZONE_SPLIT | True | Rbp=613m |
-| NUM_SAMPLES_PS (eval) | 10M | matches CAL_CMA_SAMPLES for scatter consistency |
-| avg_rays ON/OFF | ~29x (0-750m) | vs Run 1: 233x — S=0.05 drastically reduces scatter paths |
+| NUM_SAMPLES_PS (eval) | 100M | |
+| CAL_CMA_SAMPLES | 30M | |
+| avg_rays ON/OFF | ~311x (0-750m) | warm-prior S=0.25-0.30 generates scatter flood |
+| Phase 0 scalar (Step B) | ~-20.46 dB | larger negative than Run 2 (-16.816 dB) — 30M samples more accurate |
 
-### CELL 8e FINAL Results (Run 2 — DISABLE_VEG_DISCS=True, S=0.05)
+### CELL 8e FINAL Results (Step B — Phase 0 checkpoint, S=0.25-0.30, 100M, 30 bins)
 
-| Range | N (ON incoh) | Bias (dB) | RMSE (dB) | R² (ON incoh) | R² (ON coh) | Notes |
-|-------|-------------|-----------|-----------|---------------|-------------|-------|
-| 0-500m | 62 | +0.7 | 4.9 | 0.218 | -0.174 | |
-| **0-750m** | **131** | **+1.4** | **6.4** | **0.671** | 0.305 | **peak ON incoh R² — FINAL** |
-| 0-900m | 198 | +2.0 | 7.9 | 0.594 | 0.416 | |
-| 0-1000m | 240 | +2.3 | 9.1 | 0.531 | 0.380 | |
-| 0-1250m | 385 | +3.3 | 11.7 | 0.366 | 0.319 | |
-| 0-1500m | 475 | +3.1 | 12.8 | 0.334 | 0.352 | ON coh close |
-| 0-1750m | 566 | +5.3 | 15.4 | -0.327 | 0.099 | R² goes negative — ON coh better |
-| 0-2000m | 693 | +9.1 | 18.6 | -0.987 | -0.456 | scatter flood at long NLOS |
-| 0-2250m | 922 | +11.8 | 21.7 | -1.594 | -1.015 | |
+**Best method: ON incoh at 0-750m; ON coh best from 0-900m onward (scatter flood phase-cancels)**
 
-### Improvement vs Run 1 (DISABLE_VEG_DISCS=False, S=0.25-0.30)
+| Range | N (ON incoh) | Bias (dB) | RMSE (dB) | R² (ON incoh) | R² (ON coh) | Best |
+|-------|-------------|-----------|-----------|---------------|-------------|------|
+| 0-500m | 62 | +0.9 | 4.7 | 0.296 | -0.463 | ON incoh |
+| **0-750m** | **131** | **+1.5** | **6.2** | **0.683** | 0.604 | **ON incoh — peak R² FINAL** |
+| 0-900m | 198 | +2.5 | 9.2 | 0.542 | **0.555** | ON coh |
+| 0-1000m | 240 | +2.6 | 9.8 | 0.535 | **0.565** | ON coh |
+| 0-1250m | 385 | +3.3 | 11.0 | 0.497 | **0.571** | ON coh |
+| 0-1500m | 475 | +3.4 | 12.0 | 0.460 | **0.560** | ON coh |
+| 0-1750m | 566 | +5.0 | 14.5 | 0.230 | **0.463** | ON coh |
 
-| Range | Run 1 R² | Run 2 R² | Gain | Run 2 RMSE | Run 1 RMSE |
-|-------|----------|----------|------|------------|------------|
-| 0-500m | 0.131 | 0.218 | +0.087 | 4.9 dB | 5.2 dB |
-| 0-750m | 0.650 | **0.671** | **+0.021** | 6.4 dB | 6.6 dB |
-| 0-900m | 0.564 | 0.594 | +0.030 | 7.9 dB | 8.9 dB |
-| 0-1000m | 0.486 | 0.531 | +0.045 | 9.1 dB | 10.3 dB |
-| 0-1250m | 0.304 | 0.366 | +0.062 | 11.7 dB | 12.9 dB |
+### Improvement vs Run 2 FINAL (S=0.05, 10M eval, 20 bins)
 
-### Distance-bin scalar (20 bins, 454 cal RX, Rbp=0.61 km, Run 1 reference)
+| Range | Run 2 (ON incoh) | Step B (ON incoh) | Step B (ON coh) | Best gain |
+|-------|-----------------|-------------------|-----------------|-----------|
+| 0-750m | 0.671 | **0.683** | 0.604 | +0.012 (ON incoh) |
+| 0-900m | 0.594 | 0.542 | **0.555** | -0.039 / -0.039 |
+| 0-1000m | 0.531 | 0.535 | **0.565** | +0.034 (ON coh) |
+| 0-1250m | 0.366 | 0.497 | **0.571** | +0.205 (ON coh) |
+| 0-1500m | 0.334 | 0.460 | **0.560** | +0.226 (ON coh) |
+| 0-1750m | -0.327 | 0.230 | **0.463** | +0.790 (ON coh) |
 
-| Bin | Zone | N | Correction | Notes |
-|-----|------|---|------------|-------|
-| d≈0.18km | LOS | 8 | +22.86 dB | |
-| d≈0.25km | LOS | 8 | +15.67 dB | |
-| d≈0.32km | LOS | 8 | +20.97 dB | |
-| d≈0.39km | LOS | 7 | +13.87 dB | |
-| d≈0.45km | LOS | 9 | +13.25 dB | |
-| d≈0.52km | LOS | 9 | +20.87 dB | |
-| d≈0.59km | LOS | 13 | +16.76 dB | |
-| d≈0.66km | NLOS | 29 | +18.55 dB | |
-| d≈0.72km | NLOS | 22 | +26.37 dB | |
-| d≈0.79km | NLOS | 28 | +23.07 dB | |
-| d≈0.86km | NLOS | 35 | +24.88 dB | |
-| d≈0.93km | NLOS | 27 | +31.14 dB | **peak — NLOS transition worst-predicted** |
-| d≈0.99km | NLOS | 36 | +20.44 dB | |
-| d≈1.06km | NLOS | 55 | +17.81 dB | |
-| d≈1.13km | NLOS | 33 | +21.39 dB | |
-| d≈1.20km | NLOS | 29 | +25.12 dB | |
-| d≈1.26km | NLOS | 25 | +27.39 dB | |
-| d≈1.33km | NLOS | 24 | +25.93 dB | |
-| d≈1.40km | NLOS | 26 | +22.10 dB | |
-| d≈1.47km | NLOS | 23 | +30.06 dB | |
+### Distance-bin scalar (30 bins, 454 cal RX, Rbp=0.61 km, Step B)
 
-All 20 bins positive (+13–31 dB). LOS zone offset=-16.51 dB / NLOS offset=-16.77 dB (both ≈ Phase 0 scalar -16.816 dB). Run 2 bin corrections similar in sign/magnitude (S reduction tightens scatter budget but doesn't remove systematic NLOS underprediction).
+All 30 bins positive (+12 to +37 dB) — scatter flood at all distances.
+LOS zone offset=-20.46 dB / NLOS zone offset=-20.43 dB (both ≈ Step B Phase 0 scalar with 30M samples).
+Peak correction: d≈1.48km NLOS: +37.45 dB.
 
 ### Key findings
-- **R²=0.671 at 0-750m (ON incoh) — Southampton 1802 MHz FINAL (Run 2, 2026-09-05)**
-- Improvement over Run 1: +0.021 at 0-750m, +0.062 at 0-1250m — consistent across all ranges
-- **Root cause of Run 1 failure:** DISABLE_VEG_DISCS=False caused DrJIT kernel caching — CMA Phase 1 flat at 14.926 dB across 800 evals; S was never optimised from warm prior 0.25-0.30
-- **Fix (Run 2):** DISABLE_VEG_DISCS=True — disc geometry removed; CMA Phase 1 descended from 19.27 dB to 15.178 dB; S collapsed to 0.05 via Southampton specular override in CELL 4A
-- avg_rays ON/OFF: 29x (Run 2) vs 233x (Run 1) — S=0.05 dramatically reduces scatter paths
-- Reduced scatter: less noise in predictions → better R² at short-medium range; but larger bin corrections (+13-34 dB vs +13-31 dB) because model underpredicts even more with less scatter
-- R² positive through 0-1500m (0.334); collapses negative at 0-1750m (-0.327) — scatter flood at long NLOS still occurs with 29x scatter
-- ON coh crossover: around 0-1500m (coh 0.352 vs incoh 0.334 — marginal)
-- Phase 0 scalar=-16.816 dB (large negative — Southampton dense geometry vs Stevenage -2.413 dB)
-- Weaker than Stevenage 1802 MHz (R²=0.735) — denser Southampton geometry, much larger scalar
+- **R²=0.683 at 0-750m (ON incoh) — Southampton 1802 MHz FINAL (Step B, 2026-09-07)**
+- **ON coh phase-cancels scatter flood from 0-900m+**: same mechanism as Stevenage 1802 MHz (R²=0.735). At S=0.25-0.30 (311x ON/OFF), random-phase building scatter cancels in coherent sum, leaving specular/LOS dominant.
+- Massive gain vs Run 2 at long range: 0-1250m +0.205, 0-1500m +0.226, 0-1750m +0.790 (ON coh)
+- **Stevenage ON coh mechanism confirmed for Southampton**: works with building scatter (DISABLE_VEG_DISCS=True, S=0.25-0.30). Earlier attempt (DISABLE_VEG_DISCS=False, disc scatter) failed from DrJIT caching.
+- CMA Step B (30M, 9 gens, eval 325, best=17.719 dB) interrupted — stuck at MC noise floor + 2x GPU slowdown. Phase 0 checkpoint used directly.
+- Phase 0 scalar ≈-20.46 dB (larger negative than Run 2 -16.816 dB — 30M vs 10M more accurate)
+- avg_rays ON/OFF: 311x (0-750m) — S=0.25-0.30 warm prior preserves scatter flood
+- All bin corrections positive (+12 to +37 dB) — scatter flood at all distances; bin scalar absorbs mean
 
 ### Calibration History
 
 | Run | Settings | Phase 0 scalar | CMA best | CELL 8e R² (0-750m) | Status |
 |-----|----------|----------------|----------|---------------------|--------|
 | Run 1 | DISABLE_VEG_DISCS=False, warm-prior S | -16.816 dB | 14.926 dB (flat — DrJIT cache) | 0.650 | SUPERSEDED |
-| **Run 2** | **DISABLE_VEG_DISCS=True, S=0.05 override** | **-16.816 dB** | **15.178 dB (Phase 1 partial)** | **0.671** | **FINAL** |
+| Run 2 | DISABLE_VEG_DISCS=True, S=0.05 override | -16.816 dB | 15.178 dB (Phase 1 partial) | 0.671 | SUPERSEDED |
+| Step A | Run 2 JSON, 100M, 30 bins, S=0.05 | — | — | 0.680 | SUPERSEDED |
+| **Step B** | **Phase 0 checkpoint, S=warm prior, 100M, 30 bins** | **~-20.46 dB** | **17.719 dB (interrupted gen 9)** | **0.683** | **FINAL** |
 
 ---
 
