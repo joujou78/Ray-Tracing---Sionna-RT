@@ -1269,6 +1269,7 @@ Expected: CMA reduces S(brick) 0.25→0.10-0.15, S(concrete) 0.30→0.10-0.15. S
 **Run 2 (DISABLE_VEG_DISCS=True, DrJIT fix): CMA Phase 1 descended to 15.178 dB (from 19.27 dB Phase 0). CELL 8e R²=0.671 at 0-750m (ON incoh). SUPERSEDED.**
 **Step A (100M eval, 30 bins, Run 2 JSON S=0.05): R²=0.680 at 0-750m (ON incoh). SUPERSEDED.**
 **Step B (Phase 0 checkpoint, S=warm prior 0.25-0.30, 100M eval, 30 bins): R²=0.683 at 0-750m (ON incoh); ON coh best from 0-900m+. ACCEPTED AS FINAL (2026-09-07).**
+**S sweep COMPLETE (2026-09-08): SCATTER_OVERRIDE=0.10 at 100M gives R²=0.679 (ON incoh 0-750m) — worse than Step B at ALL ranges. Physics floor confirmed. Step B is the ceiling.**
 
 ### Site parameters
 | Parameter | Value |
@@ -1342,6 +1343,7 @@ Peak correction: d≈1.48km NLOS: +37.45 dB.
 | Run 2 | DISABLE_VEG_DISCS=True, S=0.05 override | -16.816 dB | 15.178 dB (Phase 1 partial) | 0.671 | SUPERSEDED |
 | Step A | Run 2 JSON, 100M, 30 bins, S=0.05 | — | — | 0.680 | SUPERSEDED |
 | **Step B** | **Phase 0 checkpoint, S=warm prior, 100M, 30 bins** | **~-20.46 dB** | **17.719 dB (interrupted gen 9)** | **0.683** | **FINAL** |
+| S sweep (SCATTER_OVERRIDE=0.10, 100M) | — | — | 0.679 (ON incoh 0-750m); ON coh 0.484 at 0-1250m | **WORSE — confirmed physics floor** |
 
 ---
 
