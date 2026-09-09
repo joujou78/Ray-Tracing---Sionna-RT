@@ -1348,6 +1348,90 @@ Peak correction: d≈1.47km NLOS: +38.92 dB.
 
 ---
 
+## Southampton 2695 MHz Status (sionna2_2695mhz_dem_simulation_southampton.ipynb)
+
+**CMA JSON (Phase 0 checkpoint, S=warm prior 0.25-0.30, 100M eval, 30 bins, 364 cal RX): R²=0.735 at 0-750m (ON incoh) — pre-compaction result (SUPERSEDED).**
+**Extended bin scalar COMPLETE (2026-09-09): CAL_MAX_DIST_KM=2.50, N_SCALAR_BINS=50, 364 cal RX (0.15-1.24km — receiver pool unchanged; CAL_MAX_DIST_KM=2.5 had no effect on pool). R²=0.724 at 0-750m (ON incoh); ON coh R²=0.470 at 0-1250m, R²=0.116 at 0-1750m (positive!). ACCEPTED AS FINAL (2026-09-09).**
+
+### Site parameters
+| Parameter | Value |
+|-----------|-------|
+| Site name | Southampton |
+| TX lat/lon | 50.9464 / -1.3101 |
+| Frequency | 2695 MHz |
+| TX_CONDUCTED_DBM | 53.8 dBm |
+| Noise floor | -120 dBm |
+| Rbp | 916 m (4×17×1.5×2695e6/3e8) |
+| Cal RX | 364 (0.15-1.24 km) |
+| LOS zone offset | -21.10 dB |
+| NLOS zone offset | -21.28 dB |
+
+### Configuration (Extended bin scalar — FINAL)
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| USE_CALIBRATED_FILES | True | loads CMA Phase 0 JSON |
+| CAL_MAX_DIST_KM | 2.50 | extended (but receiver pool stays at 364 to 1.24km — CMA-time range constrains pool) |
+| N_SCALAR_BINS | 50 | finer bins; avg N=3-23 per bin |
+| LOS_NLOS_ZONE_SPLIT | True | Rbp=916m |
+| NUM_SAMPLES_PS (eval) | 100M | |
+| avg_rays ON/OFF | 278x (0-750m) | 36304/130.6 — warm-prior S=0.25-0.30 scatter flood |
+| DISABLE_VEG_DISCS | True | |
+
+### CELL 8e FINAL Results (Extended bin scalar — 50 bins, 364 cal RX, 100M, 2.5km attempt)
+
+**Best method: ON incoh at 0-750m; ON coh best from 0-900m onward (scatter flood phase-cancels)**
+
+| Range | N | Bias (dB) | RMSE (dB) | R² (ON incoh) | R² (ON coh) | Best |
+|-------|---|-----------|-----------|---------------|-------------|------|
+| 0-500m | 62 | +0.4 | 4.5 | 0.299 | -0.339 | ON incoh |
+| **0-750m** | **131** | **+1.9** | **5.8** | **0.724** | 0.691 | **ON incoh** |
+| 0-900m | 198 | +2.6 | 8.3 | 0.579 | **0.669** | ON coh |
+| 0-1000m | 239 | +3.0 | 10.1 | 0.422 | **0.485** | ON coh |
+| 0-1250m | 384 | +3.6 | 11.2 | 0.423 | **0.470** | ON coh |
+| 0-1500m | 474 | +5.3 | 14.5 | 0.173 | **0.339** | ON coh |
+| **0-1750m** | **564** | **+6.7** | **17.3** | -0.145 | **0.116** | **ON coh — positive, was -0.266 with S=0.10** |
+| 0-2000m | 692 | +9.5 | 20.5 | -0.627 | -0.236 | (none positive) |
+| 0-2250m | 921 | +13.7 | 24.5 | -1.398 | -0.999 | (collapse) |
+| 0-2500m+ | 1183 | +15.0 | 26.0 | -1.834 | -1.420 | N freezes |
+
+### Distance-bin scalar (50 bins, 364 cal RX, Rbp=0.92km)
+
+All 50 bins positive (+10 to +36 dB) — warm-prior S generates scatter flood at all distances.
+LOS zone offset=-21.10 dB / NLOS zone offset=-21.28 dB.
+Cal RX pool covers 0.15-1.24km — bins only reach 1.24km despite CAL_MAX_DIST_KM=2.5.
+Peak correction: d≈1.24km NLOS: +36.09 dB.
+
+| Zone | Range | N per bin | Correction range |
+|------|-------|-----------|-----------------|
+| LOS (27 bins) | 0.16-0.91km | 3-17 | +10 to +34 dB |
+| NLOS (15 bins) | 0.93-1.24km | 9-23 | +18 to +36 dB |
+
+### Key findings
+- **R²=0.724 at 0-750m (ON incoh) — Southampton 2695 MHz FINAL (2026-09-09)**
+- ON coh recovers from S=0.10 result: R²=0.116 (ON coh) at 0-1750m (was -0.266 — now positive)
+- CAL_MAX_DIST_KM=2.5 had NO effect on bin scalar receiver pool: pool constrained by CMA-time calibration range (1.24km), not CELL 1 parameter
+- avg_rays ON=36,304 vs OFF=130.6 at 0-750m (278x) — warm-prior S=0.25-0.30 generates scatter flood
+- 50 bins trade ~0.01 R² at 0-750m (0.724 vs 0.735 with 30 bins) for significant medium-range gains: 0-1250m R²=0.470 vs 0.245, 0-1750m R²=0.116 vs -0.266
+- Hard collapse beyond 2000m (R²=-0.236) — no bin corrections at 1.25-2.5km; fully fixing requires code change to decouple bin scalar receiver range from CMA cal range
+- Same ON coh phase-cancellation mechanism as Southampton 1802 MHz (S=0.25-0.30 random-phase scatter cancels in coherent sum)
+
+### Comparison vs S=0.10 sweep and 30-bin CMA JSON
+| Configuration | 0-750m R² | 0-900m R² | 0-1250m R² | 0-1750m R² | Notes |
+|--------------|-----------|-----------|------------|------------|-------|
+| S=0.10 sweep (30 bins) | 0.699 (ON incoh) | ~0.62 | ~0.245 | -0.266 (ON coh) | Step before CMA JSON |
+| CMA JSON 30 bins 100M | **0.735** (ON incoh) | — | ~0.245 | -0.266 (ON coh) | SUPERSEDED |
+| **Extended bins 50 bins 100M** | **0.724** (ON incoh) | **0.669** (ON coh) | **0.470** (ON coh) | **0.116** (ON coh) | **FINAL** |
+
+### Calibration History
+
+| Run | Settings | Cal RX | CELL 8e R² (0-750m) | Status |
+|-----|----------|--------|---------------------|--------|
+| S=0.10 sweep, 30 bins, 10M eval | SCATTER_OVERRIDE=0.10, no JSON | — | 0.699 (ON incoh) | SUPERSEDED |
+| CMA JSON, 30 bins, 100M eval | Phase 0 JSON, warm-prior S | 364 (1.24km) | 0.735 (ON incoh) | SUPERSEDED |
+| **Extended bins, 50 bins, 100M eval** | **CAL_MAX_DIST_KM=2.5 (pool 1.24km), Phase 0 JSON** | **364 (1.24km)** | **0.724 (ON incoh)** | **FINAL** |
+
+---
+
 ## London 1802 MHz Status (sionna2_1802mhz_dem_simulation_london.ipynb)
 
 **CMA Run 1 FAILED (2026-08-26): eval 605, best=12.477 dB — kernel hung at eval 605. CELL 8e: scatter flood (392x ON/OFF ratio), -30 dB bias, R² negative at all ranges. Root cause: CAL_MAX_DIST_KM=0.90 ≈ Rbp=0.901 (regime mixing) + S caps too loose (brick S=0.449 at cap).**
