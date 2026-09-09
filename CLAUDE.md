@@ -1268,8 +1268,9 @@ Expected: CMA reduces S(brick) 0.25→0.10-0.15, S(concrete) 0.30→0.10-0.15. S
 **Run 1 (DISABLE_VEG_DISCS=False): CMA COMPLETE (eval ~800, best=14.926 dB, FTOL). R²=0.650 at 0-750m — DrJIT kernel caching deadlock prevented S optimization.**
 **Run 2 (DISABLE_VEG_DISCS=True, DrJIT fix): CMA Phase 1 descended to 15.178 dB (from 19.27 dB Phase 0). CELL 8e R²=0.671 at 0-750m (ON incoh). SUPERSEDED.**
 **Step A (100M eval, 30 bins, Run 2 JSON S=0.05): R²=0.680 at 0-750m (ON incoh). SUPERSEDED.**
-**Step B (Phase 0 checkpoint, S=warm prior 0.25-0.30, 100M eval, 30 bins): R²=0.683 at 0-750m (ON incoh); ON coh best from 0-900m+. ACCEPTED AS FINAL (2026-09-07).**
-**S sweep COMPLETE (2026-09-08): SCATTER_OVERRIDE=0.10 at 100M gives R²=0.679 (ON incoh 0-750m) — worse than Step B at ALL ranges. Physics floor confirmed. Step B is the ceiling.**
+**Step B (Phase 0 checkpoint, S=warm prior 0.25-0.30, 100M eval, 30 bins): R²=0.683 at 0-750m (ON incoh); ON coh best from 0-900m+. SUPERSEDED.**
+**S sweep COMPLETE (2026-09-08): SCATTER_OVERRIDE=0.10 at 100M gives R²=0.679 (ON incoh 0-750m) — worse than Step B at ALL ranges. Physics floor confirmed.**
+**Extended bin scalar COMPLETE (2026-09-09): CAL_MAX_DIST_KM=2.0, N_SCALAR_BINS=40, 673 cal RX. R²=0.684 at 0-750m (ON incoh); ON coh R²=0.511 at 0-1750m, 0.425 at 0-2000m, 0.210 at 0-2250m, 0.044 at 0-2500m. 1750m collapse FIXED. ACCEPTED AS FINAL (2026-09-09).**
 
 ### Site parameters
 | Parameter | Value |
@@ -1279,61 +1280,60 @@ Expected: CMA reduces S(brick) 0.25→0.10-0.15, S(concrete) 0.30→0.10-0.15. S
 | Frequency | 1802.5 MHz |
 | TX_CONDUCTED_DBM | 53.1 dBm (EIRP=55.0 - 1.9 dBi) |
 | Rbp | 613 m (4×17×1.5×1802e6/3e8) |
-| Cal RX | 454 (0.15-1.5 km) |
-| Phase 0 scalar | -16.816 dB (Run 1) |
+| Cal RX | 673 (0.15-2.0 km) — extended bin scalar FINAL |
+| Phase 0 scalar | -20.24/-20.37 dB (LOS/NLOS zone offsets) |
 
-### Configuration (Step B — FINAL)
+### Configuration (Extended bin scalar — FINAL)
 | Parameter | Value | Notes |
 |-----------|-------|-------|
 | DISABLE_VEG_DISCS | **True** | prevents DrJIT kernel caching deadlock |
 | S override (CELL 4A) | **None** | S=warm prior 0.25-0.30 preserved from Phase 0 — CMA did not reduce S |
-| N_SCALAR_BINS | 30 | 50m bins — better LOS→NLOS transition resolution |
+| CAL_MAX_DIST_KM | **2.0** | extended for bin scalar coverage at 1.5-2.0km (USE_CALIBRATED_FILES=True — CMA not re-run) |
+| N_SCALAR_BINS | **40** | ~50m bins over 0.15-2.0km |
 | LOS_NLOS_ZONE_SPLIT | True | Rbp=613m |
 | NUM_SAMPLES_PS (eval) | 100M | |
 | CAL_CMA_SAMPLES | 30M | |
-| avg_rays ON/OFF | ~311x (0-750m) | warm-prior S=0.25-0.30 generates scatter flood |
-| Phase 0 scalar (Step B) | ~-20.46 dB | larger negative than Run 2 (-16.816 dB) — 30M samples more accurate |
+| avg_rays ON/OFF | 311x (0-750m) | warm-prior S=0.25-0.30 generates scatter flood |
+| Phase 0 scalar | ~-20.24 dB (LOS) / -20.37 dB (NLOS) | zone split offsets |
+| Cal RX (bin scalar) | **673** (0.15-2.0 km) | was 454 at 1.5km — 219 additional NLOS receivers |
 
-### CELL 8e FINAL Results (Step B — Phase 0 checkpoint, S=0.25-0.30, 100M, 30 bins)
+### CELL 8e FINAL Results (Extended bin scalar — 40 bins, 673 cal RX, 100M, 2.0km)
 
 **Best method: ON incoh at 0-750m; ON coh best from 0-900m onward (scatter flood phase-cancels)**
 
-| Range | N (ON incoh) | Bias (dB) | RMSE (dB) | R² (ON incoh) | R² (ON coh) | Best |
-|-------|-------------|-----------|-----------|---------------|-------------|------|
-| 0-500m | 62 | +0.9 | 4.7 | 0.296 | -0.463 | ON incoh |
-| **0-750m** | **131** | **+1.5** | **6.2** | **0.683** | 0.604 | **ON incoh — peak R² FINAL** |
-| 0-900m | 198 | +2.5 | 9.2 | 0.542 | **0.555** | ON coh |
-| 0-1000m | 240 | +2.6 | 9.8 | 0.535 | **0.565** | ON coh |
-| 0-1250m | 385 | +3.3 | 11.0 | 0.497 | **0.571** | ON coh |
-| 0-1500m | 475 | +3.4 | 12.0 | 0.460 | **0.560** | ON coh |
-| 0-1750m | 566 | +5.0 | 14.5 | 0.230 | **0.463** | ON coh |
+| Range | N | Bias (dB) | RMSE (dB) | R² (ON incoh) | R² (ON coh) | Best |
+|-------|---|-----------|-----------|---------------|-------------|------|
+| 0-500m | 62 | +1.1 | 4.8 | 0.253 | -0.447 | ON incoh |
+| **0-750m** | **131** | **+1.5** | **6.2** | **0.684** | 0.579 | **ON incoh** |
+| 0-900m | 198 | +2.3 | 9.2 | 0.542 | **0.542** | tie |
+| 0-1000m | 240 | +2.5 | 9.9 | 0.528 | **0.555** | ON coh |
+| 0-1250m | 385 | +3.2 | 11.0 | 0.496 | **0.570** | ON coh |
+| 0-1500m | 475 | +3.3 | 12.0 | 0.461 | **0.562** | ON coh |
+| **0-1750m** | **566** | **+3.0** | **13.4** | 0.340 | **0.511** | **ON coh — 1750m collapse FIXED** |
+| **0-2000m** | **694** | **+2.6** | **14.1** | 0.269 | **0.425** | ON coh |
+| **0-2250m** | **920** | **+3.6** | **15.7** | 0.061 | **0.210** | ON coh |
+| **0-2500m** | **1194** | **+3.3** | **16.5** | -0.126 | **0.044** | ON coh |
+| 0-2750m+ | 1194 | +3.3 | 16.5 | -0.124 | 0.044 | N freezes |
 
-### Improvement vs Run 2 FINAL (S=0.05, 10M eval, 20 bins)
+### Distance-bin scalar (40 bins, 673 cal RX, Rbp=0.61 km, extended)
 
-| Range | Run 2 (ON incoh) | Step B (ON incoh) | Step B (ON coh) | Best gain |
-|-------|-----------------|-------------------|-----------------|-----------|
-| 0-750m | 0.671 | **0.683** | 0.604 | +0.012 (ON incoh) |
-| 0-900m | 0.594 | 0.542 | **0.555** | -0.039 / -0.039 |
-| 0-1000m | 0.531 | 0.535 | **0.565** | +0.034 (ON coh) |
-| 0-1250m | 0.366 | 0.497 | **0.571** | +0.205 (ON coh) |
-| 0-1500m | 0.334 | 0.460 | **0.560** | +0.226 (ON coh) |
-| 0-1750m | -0.327 | 0.230 | **0.463** | +0.790 (ON coh) |
+All 40 bins positive (+11 to +39 dB) — scatter flood at all distances.
+LOS zone offset=-20.24 dB / NLOS zone offset=-20.37 dB (near-identical).
+Peak correction: d≈1.47km NLOS: +38.92 dB.
 
-### Distance-bin scalar (30 bins, 454 cal RX, Rbp=0.61 km, Step B)
-
-All 30 bins positive (+12 to +37 dB) — scatter flood at all distances.
-LOS zone offset=-20.46 dB / NLOS zone offset=-20.43 dB (both ≈ Step B Phase 0 scalar with 30M samples).
-Peak correction: d≈1.48km NLOS: +37.45 dB.
+| Zone | Range | Correction range |
+|------|-------|-----------------|
+| LOS (10 bins) | 0.17-0.59km | +11 to +26 dB |
+| NLOS (30 bins) | 0.64-1.98km | +15 to +39 dB |
 
 ### Key findings
-- **R²=0.683 at 0-750m (ON incoh) — Southampton 1802 MHz FINAL (Step B, 2026-09-07)**
-- **ON coh phase-cancels scatter flood from 0-900m+**: same mechanism as Stevenage 1802 MHz (R²=0.735). At S=0.25-0.30 (311x ON/OFF), random-phase building scatter cancels in coherent sum, leaving specular/LOS dominant.
-- Massive gain vs Run 2 at long range: 0-1250m +0.205, 0-1500m +0.226, 0-1750m +0.790 (ON coh)
-- **Stevenage ON coh mechanism confirmed for Southampton**: works with building scatter (DISABLE_VEG_DISCS=True, S=0.25-0.30). Earlier attempt (DISABLE_VEG_DISCS=False, disc scatter) failed from DrJIT caching.
-- CMA Step B (30M, 9 gens, eval 325, best=17.719 dB) interrupted — stuck at MC noise floor + 2x GPU slowdown. Phase 0 checkpoint used directly.
-- Phase 0 scalar ≈-20.46 dB (larger negative than Run 2 -16.816 dB — 30M vs 10M more accurate)
-- avg_rays ON/OFF: 311x (0-750m) — S=0.25-0.30 warm prior preserves scatter flood
-- All bin corrections positive (+12 to +37 dB) — scatter flood at all distances; bin scalar absorbs mean
+- **R²=0.684 at 0-750m (ON incoh) — Southampton 1802 MHz FINAL (Extended bins, 2026-09-09)**
+- **1750m collapse FIXED**: R²=0.511 (ON coh) at 0-1750m (was 0.463 in Step B, +0.048)
+- **R² positive to 0-2500m via ON coh**: 0.511 (1750m) → 0.425 (2000m) → 0.210 (2250m) → 0.044 (2500m)
+- Extended bins (673 cal RX to 2.0km vs 454 to 1.5km) provide distance-specific corrections in the 1.5-2.0km NLOS zone where Step B had no coverage
+- Short-range unchanged: 0-750m ON incoh 0.684 (same as Step B 0.683)
+- ON coh mechanism: S=0.25-0.30 (311x ON/OFF) random-phase building scatter cancels coherently throughout — same as Stevenage 1802 MHz
+- avg_rays ON=22,257 vs OFF=84 at 0-2000m (265x) — scatter flood persists at long range but bias corrected by bins
 
 ### Calibration History
 
@@ -1342,8 +1342,9 @@ Peak correction: d≈1.48km NLOS: +37.45 dB.
 | Run 1 | DISABLE_VEG_DISCS=False, warm-prior S | -16.816 dB | 14.926 dB (flat — DrJIT cache) | 0.650 | SUPERSEDED |
 | Run 2 | DISABLE_VEG_DISCS=True, S=0.05 override | -16.816 dB | 15.178 dB (Phase 1 partial) | 0.671 | SUPERSEDED |
 | Step A | Run 2 JSON, 100M, 30 bins, S=0.05 | — | — | 0.680 | SUPERSEDED |
-| **Step B** | **Phase 0 checkpoint, S=warm prior, 100M, 30 bins** | **~-20.46 dB** | **17.719 dB (interrupted gen 9)** | **0.683** | **FINAL** |
-| S sweep (SCATTER_OVERRIDE=0.10, 100M) | — | — | 0.679 (ON incoh 0-750m); ON coh 0.484 at 0-1250m | **WORSE — confirmed physics floor** |
+| Step B | Phase 0 checkpoint, S=warm prior, 100M, 30 bins, 454 RX | ~-20.46 dB | 17.719 dB (interrupted) | 0.683 | SUPERSEDED |
+| S sweep (SCATTER_OVERRIDE=0.10, 100M) | — | — | 0.679 (ON incoh); 0.484 ON coh at 1250m | WORSE — physics floor |
+| **Extended bins** | **Phase 0 checkpoint, S=warm prior, 100M, 40 bins, 673 RX, 2.0km** | **-20.24/-20.37 dB** | — | **0.684** | **FINAL** |
 
 ---
 
