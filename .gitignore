@@ -27,3 +27,6 @@ Thumbs.db
 *_PRE_*.ipynb
 *_SNAPSHOT_*.ipynb
 sionna019_1802mhz_scene_builder_SNAPSHOT_*.ipynb
+node_modules/
+package-lock.json
+package.json
