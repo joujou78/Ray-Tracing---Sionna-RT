@@ -1432,6 +1432,102 @@ Peak correction: d≈1.24km NLOS: +36.09 dB.
 
 ---
 
+## Southampton 3602 MHz Status (sionna2_3602mhz_dem_simulation_southampton.ipynb)
+
+**CELL 8e COMPLETE (2026-09-09). Best result: R²=0.534 at 0-900m (ON incoh), RMSE=9.6 dB, bias=+1.7 dB. ACCEPTED AS FINAL.**
+
+### Site parameters
+| Parameter | Value |
+|-----------|-------|
+| Site name | Southampton |
+| TX lat/lon | 50.9464 / -1.3101 |
+| Frequency | 3602.5 MHz |
+| TX_CONDUCTED_DBM | 51.4 dBm |
+| RX chain | 0.0 dB |
+| Rbp | 1225 m (4x17x1.5x3602.5e6/3e8) |
+| Cal RX | 478 (0.15-1.22 km) |
+| LOS zone offset | +5.72 dB |
+| NLOS zone offset | +4.98 dB |
+
+### Configuration (FINAL)
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| DISABLE_CANOPY | True | lambda=8.3 cm -- 3D canopy cones block all rays >400m |
+| DISABLE_VEG_DISCS | False | discs active -- consistent with Stevenage 3602 (R²=0.755) |
+| PER_PATH_VEG | True | per-path ITU-R P.833 per ray segment |
+| CAL_MAX_DIST_KM | 1.22 | below Rbp=1225m |
+| N_SCALAR_BINS | 20 | |
+| LOS_NLOS_ZONE_SPLIT | True | Rbp=1225m |
+| NUM_SAMPLES_PS | 10M | matches CMA samples -- avoid scatter mismatch at 100M |
+| CAL_CMA_SIGMA0 | 0.3 | |
+| LOS zone offset | +5.72 dB | vs Stevenage 3602 +12.106 dB -- CMA calibrated materials absorb difference |
+
+### CELL 8e FINAL Results (ON incoh -- best method)
+
+| Range | N | Bias (dB) | RMSE (dB) | STD (dB) | R² (ON incoh) | R² (ON coh) | avg_rays ON/OFF |
+|-------|---|-----------|-----------|----------|---------------|-------------|-----------------|
+| 0-500m | 89 | -0.3 | 6.7 | 6.7 | -0.096 | -1.115 | 29341/116 |
+| 0-750m | 190 | +1.7 | 8.1 | 7.9 | 0.491 | 0.091 | 31605/107 |
+| **0-900m** | **277** | **+1.7** | **9.6** | **9.4** | **0.534** | 0.351 | **23933/98** |
+| 0-1000m | 330 | +2.1 | 11.8 | 11.6 | 0.362 | 0.178 | 20946/91 |
+| 0-1250m | 514 | +3.1 | 14.9 | 14.6 | 0.231 | 0.155 | 14030/68 |
+| 0-1500m | 618 | +4.1 | 15.9 | 15.4 | 0.091 | 0.075 | 12371/63 |
+| 0-1750m | 722 | +6.3 | 18.7 | 17.6 | -0.222 | -0.135 | 10788/56 |
+| 0-2000m | 868 | +9.4 | 23.1 | 21.1 | -0.774 | -0.579 | 9114/49 |
+| 0-2500m+ | 1200 | +13.7 | 26.6 | 22.8 | -1.427 | -1.245 | 6693/37 |
+
+N freezes at 1200 from 2500m (all receivers within 2.5km).
+
+### Distance-bin scalar (478 cal RX, 20 bins, Rbp=1.22km -- all LOS zone)
+
+| Bin | N | Correction |
+|-----|---|-----------|
+| d=0.18km | 9 | -1.42 dB |
+| d=0.23km | 8 | -8.14 dB |
+| d=0.29km | 8 | +0.61 dB |
+| d=0.34km | 9 | -4.90 dB |
+| d=0.40km | 8 | -8.18 dB |
+| d=0.45km | 8 | -12.75 dB |
+| d=0.51km | 7 | -11.19 dB |
+| d=0.56km | 9 | -14.02 dB |
+| d=0.62km | 38 | -5.13 dB |
+| d=0.67km | 23 | +2.44 dB |
+| d=0.73km | 30 | +0.42 dB |
+| d=0.78km | 29 | +1.74 dB |
+| d=0.84km | 39 | +2.04 dB |
+| d=0.89km | 25 | +5.96 dB |
+| d=0.95km | 30 | +6.05 dB |
+| d=1.00km | 39 | -6.53 dB |
+| d=1.06km | 66 | -8.95 dB |
+| d=1.11km | 36 | +0.45 dB |
+| d=1.17km | 32 | +8.32 dB |
+| d=1.22km | 25 | +5.57 dB |
+
+**Mixed sign corrections (-14 to +8 dB)** -- physically meaningful, unlike Southampton 1802 (all positive +11-39 dB). Model captures geometry reasonably but with distance-specific variance.
+
+### Key findings
+- **R²=0.534 at 0-900m (ON incoh) -- Southampton 3602 MHz FINAL (2026-09-09)**
+- ON incoh best method (consistent with Nottingham 3602 R²=0.515 at 0-1250m)
+- ON coh competitive at 0-900m (R²=0.351) but does not match Stevenage 3602 ON coh mechanism -- Southampton denser urban, less coherent specular
+- Sharp R² drop beyond 900m: 0.534 -> 0.362 (1km) -> 0.231 (1.25km) -> negative beyond 1.5km -- dual-slope NLOS transition (Rbp=1225m at edge of cal range)
+- avg_rays ON/OFF ~244x at 0-900m -- scatter flood present; ON incoh handles it best
+- LOS zone offset +5.72 dB (vs Stevenage 3602 +12.106 dB) -- CMA calibrated materials absorb ~6 dB of path loss gap
+- Bias near-zero at 0-900m (+1.7 dB) -- well centred
+- RMSE=9.6 dB at 0-900m -- 3.8 dB above 3GPP UMa NLOS sigma_SF=5.8 dB physics floor
+- N=277 at 0-900m; N freezes at 1200 from 2500m (all receivers within 2.5km)
+- Significantly below Stevenage 3602 (R²=0.755 at 0-2000m) -- Southampton denser urban geometry limits coherent specular signal; shorter effective range
+
+### vs Stevenage 3602 comparison
+| | Southampton 3602 | Stevenage 3602 |
+|--|--|--|
+| Best R² | 0.534 at 0-900m (ON incoh) | 0.755 at 0-2000m (ON coh) |
+| Best method | ON incoh | ON coh |
+| LOS offset | +5.72 dB | +12.106 dB (Phase 0 only) |
+| avg_rays ON/OFF | ~244x | ~420x |
+| Collapse range | beyond 900m | stable to 2000m |
+
+---
+
 ## London 1802 MHz Status (sionna2_1802mhz_dem_simulation_london.ipynb)
 
 **CMA Run 1 FAILED (2026-08-26): eval 605, best=12.477 dB — kernel hung at eval 605. CELL 8e: scatter flood (392x ON/OFF ratio), -30 dB bias, R² negative at all ranges. Root cause: CAL_MAX_DIST_KM=0.90 ≈ Rbp=0.901 (regime mixing) + S caps too loose (brick S=0.449 at cap).**
