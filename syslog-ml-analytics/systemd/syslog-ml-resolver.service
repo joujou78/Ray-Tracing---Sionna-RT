@@ -8,7 +8,7 @@ User=syslog-ml
 Group=syslog-ml
 WorkingDirectory=/opt/syslog-ml/ml
 ExecStart=/opt/syslog-ml/venv/bin/python resolve_pending.py
+EnvironmentFile=/etc/syslog-ml/resolver.env
 Environment=STATE_DB=/var/lib/syslog-ml/state.db
-Environment=SNMP_CREDENTIALS_FILE=/etc/syslog-ml/snmp_credentials.csv
 Environment=CLICKHOUSE_HOST=localhost
 Environment=CLICKHOUSE_PORT=8123

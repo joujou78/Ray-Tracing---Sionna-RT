@@ -1,23 +1,28 @@
 """
 Device identity resolution: source IP -> hostname / vendor / model.
 
-Since SNMP credentials aren't centrally tracked yet, this never guesses a
-community string. It only attempts SNMP for an IP that has a matching row
-in snmp_credentials.csv (exact IP or CIDR match). Everything else falls
-back to the hostname the device itself put in the syslog message, or
-finally the bare source IP — always with `resolution_method` recorded so
-you can see exactly how confident each row's identity is (and which
-devices still need a credential added).
+Credentials live in the web app's Postgres database (snmp_credentials
+table, managed by admins through the web UI) rather than a flat file --
+one source of truth, encrypted at rest, audited. This never guesses a
+community string: it only attempts SNMP for an IP that has a matching row
+(exact IP or CIDR match). Everything else falls back to the hostname the
+device itself put in the syslog message, or finally the bare source IP --
+always with `resolution_method` recorded so you can see exactly how
+confident each row's identity is (and which devices still need a
+credential added through the web UI).
 
 Uses the net-snmp CLI (`snmpget`) via subprocess rather than a Python SNMP
 library: it's what `apt install snmp` gives you natively on Ubuntu/Debian,
 handles v1/v2c/v3 uniformly, and one subprocess call per OID is plenty fast
 for periodic (not per-message) resolution.
 """
-import csv
 import ipaddress
 import logging
 import subprocess
+
+import psycopg2
+import psycopg2.extras
+from cryptography.fernet import Fernet
 
 log = logging.getLogger("device_resolver")
 
@@ -47,17 +52,22 @@ SNMP_TIMEOUT_SECONDS = 3
 SNMP_RETRIES = 1
 
 
+def _clean(value, default=""):
+    """Coerces a possibly-None/possibly-missing field to a stripped string."""
+    return (value or default).strip()
+
+
 class Credential:
     def __init__(self, row):
         self.network = ipaddress.ip_network(row["ip_or_cidr"], strict=False)
-        self.version = row["version"].strip().lower()
-        self.community = row.get("community", "").strip()
-        self.v3_user = row.get("v3_user", "").strip()
-        self.v3_level = row.get("v3_level", "authPriv").strip()
-        self.v3_auth_proto = row.get("v3_auth_proto", "SHA").strip()
-        self.v3_auth_pass = row.get("v3_auth_pass", "").strip()
-        self.v3_priv_proto = row.get("v3_priv_proto", "AES").strip()
-        self.v3_priv_pass = row.get("v3_priv_pass", "").strip()
+        self.version = _clean(row["version"]).lower()
+        self.community = _clean(row.get("community"))
+        self.v3_user = _clean(row.get("v3_user"))
+        self.v3_level = _clean(row.get("v3_level"), "authPriv")
+        self.v3_auth_proto = _clean(row.get("v3_auth_proto"), "SHA")
+        self.v3_auth_pass = _clean(row.get("v3_auth_pass"))
+        self.v3_priv_proto = _clean(row.get("v3_priv_proto"), "AES")
+        self.v3_priv_pass = _clean(row.get("v3_priv_pass"))
 
     def contains(self, ip):
         try:
@@ -75,22 +85,53 @@ class Credential:
         return ["-v", self.version, "-c", self.community]
 
 
-def load_credentials(path):
-    """Returns a list of Credential objects, most-specific network first."""
+def load_credentials(database_url, encryption_key):
+    """
+    Returns a list of Credential objects, most-specific network first,
+    read from the web app's snmp_credentials table and decrypted with the
+    same Fernet key the web app uses to write them
+    (SYSLOG_ML_CREDENTIAL_ENCRYPTION_KEY -- must match between both services).
+    """
+    fernet = Fernet(encryption_key.encode())
+
+    def decrypt(ciphertext):
+        return fernet.decrypt(ciphertext.encode()).decode() if ciphertext else None
+
     credentials = []
     try:
-        with open(path, newline="") as f:
-            for row in csv.DictReader(f):
-                ip_or_cidr = (row.get("ip_or_cidr") or "").strip()
-                if not ip_or_cidr or ip_or_cidr.startswith("#"):
-                    continue
-                try:
-                    credentials.append(Credential(row))
-                except (KeyError, ValueError) as exc:
-                    log.warning("Skipping malformed credential row %r: %s", row, exc)
-    except FileNotFoundError:
-        log.warning("No credentials file at %s — SNMP resolution disabled until it exists", path)
+        conn = psycopg2.connect(database_url)
+    except psycopg2.OperationalError:
+        log.exception("Could not connect to the credentials database — SNMP resolution disabled this cycle")
         return []
+
+    try:
+        with conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT ip_or_cidr, version, community_encrypted,
+                       v3_user, v3_level, v3_auth_proto, v3_auth_pass_encrypted,
+                       v3_priv_proto, v3_priv_pass_encrypted
+                FROM snmp_credentials
+                """
+            )
+            for row in cur.fetchall():
+                try:
+                    credentials.append(Credential({
+                        "ip_or_cidr": row["ip_or_cidr"],
+                        "version": row["version"],
+                        "community": decrypt(row["community_encrypted"]),
+                        "v3_user": row["v3_user"],
+                        "v3_level": row["v3_level"],
+                        "v3_auth_proto": row["v3_auth_proto"],
+                        "v3_auth_pass": decrypt(row["v3_auth_pass_encrypted"]),
+                        "v3_priv_proto": row["v3_priv_proto"],
+                        "v3_priv_pass": decrypt(row["v3_priv_pass_encrypted"]),
+                    }))
+                except (KeyError, ValueError) as exc:
+                    log.warning("Skipping malformed credential row for %r: %s", row["ip_or_cidr"], exc)
+    finally:
+        conn.close()
+
     # Prefer exact /32 host entries over broader subnets when both match.
     credentials.sort(key=lambda c: c.network.num_addresses)
     return credentials

@@ -1,9 +1,9 @@
 """
 Periodic worker (run via a systemd timer, e.g. every 10 minutes): drains the
 local queue of source IPs the classifier has seen but couldn't yet identify,
-attempts SNMP resolution for any that now have a matching row in
-snmp_credentials.csv, and writes results into ClickHouse's device_inventory
-table.
+attempts SNMP resolution for any that now have a matching credential row in
+the web app's snmp_credentials table (Postgres), and writes results into
+ClickHouse's device_inventory table.
 
 Kept as a separate process from consumer.py on purpose: SNMP round-trips
 (up to a few seconds on timeout) must never block the hot log-processing
@@ -23,7 +23,10 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 log = logging.getLogger("resolve_pending")
 
 STATE_DB = os.environ.get("STATE_DB", "/var/lib/syslog-ml/state.db")
-CREDENTIALS_FILE = os.environ.get("SNMP_CREDENTIALS_FILE", "/etc/syslog-ml/snmp_credentials.csv")
+# Same Postgres the web app uses, and the same encryption key it encrypts
+# credentials with -- these two services must agree on both.
+DATABASE_URL = os.environ["DATABASE_URL"]
+CREDENTIAL_ENCRYPTION_KEY = os.environ["CREDENTIAL_ENCRYPTION_KEY"]
 CLICKHOUSE_HOST = os.environ.get("CLICKHOUSE_HOST", "localhost")
 CLICKHOUSE_PORT = int(os.environ.get("CLICKHOUSE_PORT", "8123"))
 
@@ -62,8 +65,8 @@ def fetch_due_rows(conn):
 def main():
     conn = state_db.connect(STATE_DB)
 
-    credentials = load_credentials(CREDENTIALS_FILE)
-    log.info("Loaded %d SNMP credential entries from %s", len(credentials), CREDENTIALS_FILE)
+    credentials = load_credentials(DATABASE_URL, CREDENTIAL_ENCRYPTION_KEY)
+    log.info("Loaded %d SNMP credential entries from the credentials database", len(credentials))
 
     ch_client = clickhouse_connect.get_client(host=CLICKHOUSE_HOST, port=CLICKHOUSE_PORT)
 

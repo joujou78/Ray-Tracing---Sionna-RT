@@ -23,9 +23,15 @@ network devices --syslog--> rsyslog (existing) ----------> LogAnalyzer DB (uncha
                           (separate, async, every 10 min)
           syslog-ml-resolver.timer -> resolve_pending.py
              for each IP seen but not yet identified:
-               - has a credential in snmp_credentials.csv? -> SNMP sysName/sysDescr/sysObjectID
+               - has a credential in Postgres (snmp_credentials table,
+                 managed via the web app)? -> SNMP sysName/sysDescr/sysObjectID
                - writes result into ClickHouse device_inventory
 ```
+
+There's also a web app (`web/`) for managing SNMP credentials through a UI
+instead of hand-editing files, viewing device/resolution status, and
+(planned) log search and ML feedback — see `web/README.md`. It's optional:
+the pipeline above works standalone with Grafana as the only UI.
 
 No message broker: one VM, one rsyslog instance receiving everything, so a
 locally tailed file is enough durability without adding a Kafka/Redpanda
@@ -35,8 +41,10 @@ service to operate.
 
 - **No SNMP credential guessing.** Since communities aren't centrally
   tracked, the resolver only ever attempts SNMP for an IP that has a row in
-  `ml/snmp_credentials.csv` — never a default/common-string guess. Add rows
-  as you onboard devices; everything else keeps working in the meantime.
+  the `snmp_credentials` table (Postgres, encrypted at rest, managed
+  through the web app's admin UI — see `web/README.md`) — never a
+  default/common-string guess. Add rows as you onboard devices; everything
+  else keeps working in the meantime.
 - **Identity has three tiers, always labeled:** `resolution_method` on every
   event is `snmp` (verified via sysName), `syslog_reported` (the device's
   own hostname claim, unverified), or `unresolved` (source IP only). The
@@ -121,12 +129,14 @@ sudo apt-get install -y python3-venv snmp snmp-mibs-downloader
 sudo cp -r ml /opt/syslog-ml/ml
 sudo python3 -m venv /opt/syslog-ml/venv
 sudo /opt/syslog-ml/venv/bin/pip install -r /opt/syslog-ml/ml/requirements.txt
-sudo cp ml/snmp_credentials.csv.example /etc/syslog-ml/snmp_credentials.csv
 sudo chown syslog-ml:syslog-ml /opt/syslog-ml/ml/*.py
 ```
 
-Edit `/etc/syslog-ml/snmp_credentials.csv` and add entries as you have them
-(see the comments in the file) — it's fine to leave it empty for now.
+SNMP credentials now live in Postgres (managed via the web app's admin UI)
+rather than a file here — set up `web/` (see `web/README.md`) before or
+after this step; the resolver in Step 5 needs `/etc/syslog-ml/resolver.env`
+pointing at that same database to do anything useful, but the rest of the
+pipeline (ingestion, classification) works fine without it.
 
 ## Step 5 — wire up rsyslog and the systemd services
 
@@ -135,6 +145,15 @@ sudo cp rsyslog/60-syslog-ml.conf /etc/rsyslog.d/
 sudo systemctl restart rsyslog
 
 sudo cp systemd/syslog-ml-classifier.service systemd/syslog-ml-resolver.service systemd/syslog-ml-resolver.timer /etc/systemd/system/
+
+# The resolver needs credentials for the shared Postgres DB + the same
+# Fernet key the web app encrypts SNMP secrets with (see web/README.md
+# Step 3 for the matching web-api.env):
+sudo cp systemd/syslog-ml-resolver.env.example /etc/syslog-ml/resolver.env
+sudo $EDITOR /etc/syslog-ml/resolver.env
+sudo chmod 600 /etc/syslog-ml/resolver.env
+sudo chown syslog-ml:syslog-ml /etc/syslog-ml/resolver.env
+
 sudo systemctl daemon-reload
 sudo systemctl enable --now syslog-ml-classifier.service
 sudo systemctl enable --now syslog-ml-resolver.timer
@@ -166,9 +185,9 @@ prefers a real `category` field over the weak-supervision guess.
 - `clickhouse/init.sql` — `device_inventory`, `events`, and the per-minute rollup.
 - `rsyslog/60-syslog-ml.conf` — mirrors rsyslog's feed to a local JSON file.
 - `ml/consumer.py` — tails the file, resolves identity, classifies, writes to ClickHouse.
-- `ml/device_resolver.py` / `ml/resolve_pending.py` — the opt-in SNMP identity resolver.
-- `ml/snmp_credentials.csv.example` — per-device/subnet SNMP credentials (copy, fill in incrementally).
+- `ml/device_resolver.py` / `ml/resolve_pending.py` — the opt-in SNMP identity resolver (reads credentials from Postgres, see `web/`).
 - `ml/labeling_rules.py` — weak-supervision category rules (tune for your vendors).
 - `ml/train_classifier.py` — trains the TF-IDF + linear SVM classifier.
 - `systemd/` — unit files for the classifier and the resolver timer.
 - `grafana/` — provisioned datasource + starter dashboard.
+- `web/` — FastAPI + React admin app for managing SNMP credentials and viewing device status (see `web/README.md`).
