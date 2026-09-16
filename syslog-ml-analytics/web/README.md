@@ -131,6 +131,22 @@ sudo systemctl restart syslog-ml-resolver.timer   # if already running from befo
 
 ### 4. Build and serve the frontend
 
+Ubuntu 22.04's default `apt install nodejs` gives you Node 12.x from the
+Ubuntu archive — too old for this frontend's build tooling (Vite 8), which
+I confirmed by checking what Vite actually requires. Install a current
+Node LTS from NodeSource instead (`deb.nodesource.com` is blocked from
+this sandbox too, so the exact command below is from training data, not a
+live check — if it 404s or errors, NodeSource's current setup instructions
+are the fallback):
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+node --version   # should print v20.x, not v12.x
+```
+
+Then build and deploy:
+
 ```bash
 sudo apt-get install -y nginx
 cd web/frontend

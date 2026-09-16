@@ -78,6 +78,17 @@ sudo chown root:syslog-ml /var/log/syslog-ml /etc/syslog-ml
 
 ## Step 2 — install ClickHouse (official repo)
 
+> **I could not re-verify these exact commands before you run them.**
+> `packages.clickhouse.com` and `clickhouse.com` are both blocked by this
+> session's network sandbox, so I'm relying on training data, not a live
+> check. The GPG key line below points at a `/rpm/...` path even though
+> it's used for the `.deb` repo — that matches a documented ClickHouse
+> quirk (they reuse one key file for both), not a typo, but I can't
+> confirm it's still accurate today. **If `apt-get update` fails on the
+> clickhouse.list repo** (signature error, 404), that's your signal to
+> check ClickHouse's current install docs and paste me the corrected
+> command — I'll fix this file.
+
 ```bash
 sudo apt-get update
 sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
@@ -99,6 +110,10 @@ clickhouse-client --query "SHOW TABLES FROM syslog_ml"
 **Checkpoint** — confirm `device_inventory` and `events` are listed before continuing.
 
 ## Step 3 — install Grafana (official repo)
+
+> Same caveat as Step 2: `apt.grafana.com` and `grafana.com` are blocked
+> from this session, so this is unverified live. If `apt-get update` fails
+> on the grafana.list repo, check Grafana's current Debian install docs.
 
 ```bash
 sudo mkdir -p /etc/apt/keyrings
