@@ -42,7 +42,7 @@
       "id": 3,
       "title": "Anomalies (last 15m)",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
       "datasource": { "type": "grafana-clickhouse-datasource" },
       "targets": [
         {
@@ -54,17 +54,33 @@
       ]
     },
     {
-      "id": 4,
-      "title": "Top hosts by error+ volume (last 1h)",
-      "type": "table",
-      "gridPos": { "h": 10, "w": 18, "x": 0, "y": 12 },
+      "id": 5,
+      "title": "Device identity resolution (last 1h)",
+      "type": "piechart",
+      "description": "Share of events resolving to a verified hostname (snmp) vs. a self-reported one (syslog_reported) vs. source IP only (unresolved). The unresolved/syslog_reported slices are your onboarding backlog for snmp_credentials.csv.",
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 8 },
       "datasource": { "type": "grafana-clickhouse-datasource" },
       "targets": [
         {
           "refId": "A",
           "queryType": "sql",
           "format": 0,
-          "rawSql": "SELECT host, predicted_category, count() AS events FROM syslog_ml.events WHERE event_time >= now() - INTERVAL 1 HOUR AND severity IN ('err','crit','alert','emerg') GROUP BY host, predicted_category ORDER BY events DESC LIMIT 25"
+          "rawSql": "SELECT resolution_method, count() AS events FROM syslog_ml.events WHERE event_time >= now() - INTERVAL 1 HOUR GROUP BY resolution_method"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Top hosts by error+ volume (last 1h)",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 18, "x": 0, "y": 16 },
+      "datasource": { "type": "grafana-clickhouse-datasource" },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "sql",
+          "format": 0,
+          "rawSql": "SELECT hostname, vendor, resolution_method, predicted_category, count() AS events FROM syslog_ml.events WHERE event_time >= now() - INTERVAL 1 HOUR AND severity IN ('err','crit','alert','emerg') GROUP BY hostname, vendor, resolution_method, predicted_category ORDER BY events DESC LIMIT 25"
         }
       ]
     }

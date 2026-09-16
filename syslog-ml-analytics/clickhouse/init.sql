@@ -1,10 +1,31 @@
 CREATE DATABASE IF NOT EXISTS syslog_ml;
 
+-- One row per known device IP. ReplacingMergeTree so re-resolving an IP
+-- (SNMP re-poll, or a syslog-reported hostname arriving later) just
+-- overwrites the previous row on the next merge, keyed by ip.
+CREATE TABLE IF NOT EXISTS syslog_ml.device_inventory
+(
+    ip                  String,
+    hostname            String,
+    vendor              LowCardinality(String) DEFAULT 'unknown',
+    model               String DEFAULT '',
+    resolution_method   LowCardinality(String),  -- 'snmp' | 'syslog_reported' | 'unresolved'
+    first_seen          DateTime64(3),
+    last_resolved       DateTime64(3)
+)
+ENGINE = ReplacingMergeTree(last_resolved)
+ORDER BY ip;
+
 CREATE TABLE IF NOT EXISTS syslog_ml.events
 (
     event_time          DateTime64(3),
     received_at         DateTime64(3) DEFAULT now64(3),
-    host                LowCardinality(String),
+    source_ip           String,
+    hostname            String,             -- best-known identity: see resolution_method
+    reported_hostname   String,             -- raw hostname string the device put in the syslog message, unverified
+    vendor              LowCardinality(String) DEFAULT 'unknown',
+    model               String DEFAULT '',
+    resolution_method   LowCardinality(String),
     facility            LowCardinality(String),
     severity            LowCardinality(String),
     severity_num        UInt8,
@@ -20,7 +41,7 @@ CREATE TABLE IF NOT EXISTS syslog_ml.events
 )
 ENGINE = MergeTree
 PARTITION BY toYYYYMMDD(event_time)
-ORDER BY (event_time, host, severity)
+ORDER BY (event_time, hostname, severity)
 TTL toDateTime(event_time) + INTERVAL 90 DAY
 SETTINGS index_granularity = 8192;
 
@@ -29,14 +50,16 @@ SETTINGS index_granularity = 8192;
 CREATE MATERIALIZED VIEW IF NOT EXISTS syslog_ml.events_by_minute
 ENGINE = SummingMergeTree
 PARTITION BY toYYYYMMDD(minute)
-ORDER BY (minute, host, severity, predicted_category)
+ORDER BY (minute, hostname, vendor, severity, predicted_category)
 AS
 SELECT
     toStartOfMinute(event_time) AS minute,
-    host,
+    hostname,
+    vendor,
     severity,
     predicted_category,
     count()                      AS event_count,
-    sum(is_anomaly)              AS anomaly_count
+    sum(is_anomaly)              AS anomaly_count,
+    sum(resolution_method = 'unresolved') AS unresolved_count
 FROM syslog_ml.events
-GROUP BY minute, host, severity, predicted_category;
+GROUP BY minute, hostname, vendor, severity, predicted_category;
