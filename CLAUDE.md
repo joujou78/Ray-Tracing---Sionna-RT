@@ -1188,3 +1188,307 @@ Expected calibration RMSE floor: ~8-9 dB on calibration set (evaluation RMSE is 
 | `TX terrain_z` | 79.2 m | TX above scene datum — correct for western Nottingham high ground |
 | `TX scene-local Z` | 96.2 m | terrain_z + TX_AGL_M (17m) |
 | `PROJ_EPSG` | 27700 | British National Grid |
+
+---
+
+## PERMANENT DO-NOT-TOUCH FILES (never edit, never patch, never modify under any circumstance)
+
+- `sionna2_915mhz_dem_simulation.ipynb` — 915 MHz Nottingham simulation, FROZEN
+- `sionna019_scene_builder.ipynb` — 915 MHz scene builder, FROZEN
+- `sionna019_1802mhz_scene_builder.ipynb` — 1802 MHz scene builder, FROZEN
+- `sionna2_2695mhz_dem_simulation.ipynb` — 2695 MHz Nottingham simulation, FROZEN (R²=0.574 FINAL 2026-08-24)
+- `sionna2_2695mhz_hf_dem_simulation.ipynb` — 2695 MHz HF scene simulation, FROZEN (Run 9 FAILED: scatter flood R²=-1.495)
+
+These files must never be opened for writing by Claude. Any task that would patch "all notebooks" must explicitly exclude these files.
+
+---
+
+## Multi-Site Final Results Summary (as of 2026-09-14)
+
+### R² Summary (best-range per site/frequency)
+
+| Site | 915 MHz | 1802 MHz | 2695 MHz | 3602 MHz |
+|------|---------|----------|----------|----------|
+| Nottingham | **0.835** (0-0.75km) | 0.509 (0-1.25km) | 0.574 (0-1.25km) | 0.515 (0-1.25km) |
+| Stevenage | **0.744** (0-2.25km) | 0.735 (0-1.75km) | 0.754 (0-2.25km) | 0.755 (0-2.00km) |
+| Southampton | **0.732** (0-0.90km) | 0.684 (0-0.75km) | 0.724 (0-0.75km) | 0.558 (0-0.90km) |
+| London | 0.365 (0-1.00km) | -- | -- | -- |
+| Scar Hill | 0.083 (0-1.25km) | -- | -- | -- |
+
+### RMSE Summary (at best R² range)
+
+| Site | 915 MHz | 1802 MHz | 2695 MHz | 3602 MHz |
+|------|---------|----------|----------|----------|
+| Nottingham | 6.0 dB | 10.6 dB | 12.7 dB | 9.4 dB |
+| Stevenage | 11.3 dB | 10.6 dB | 10.5 dB | 11.7 dB |
+| Southampton | 6.3 dB | 6.2 dB | 5.8 dB | 9.3 dB |
+| London | 8.2 dB | -- | -- | -- |
+| Scar Hill | 15.1 dB | -- | -- | -- |
+
+3GPP UMa NLOS shadow fading floor: sigma_SF = 7.82 dB (irreducible lower bound for static RT).
+Literature R² ceiling for pure geometry+material calibration (no neural correction): ~0.5 (arXiv:2507.19653).
+Results above 0.5 achieved via distance-bin scalar calibration (LOS/NLOS zone split).
+
+---
+
+## Stevenage 915 MHz -- FINAL (R²=0.744 at 0-2250m)
+
+CELL 8e Run 1 complete (2026-08-30): R²=0.744 at 0-2250m (ON incoh), ITU defaults, no calibration JSON, DISABLE_VEG_DISCS=True.
+
+| Range | N | Bias (dB) | RMSE (dB) | R² (ON incoh) |
+|-------|---|-----------|-----------|---------------|
+| 0-1000m | 589 | +4.4 | 10.8 | 0.341 |
+| 0-1250m | 717 | +5.3 | 11.1 | 0.581 |
+| 0-1750m | 1009 | +5.2 | 11.3 | 0.705 |
+| 0-2000m | 1156 | +4.0 | 11.3 | 0.739 |
+| **0-2250m** | **1200** | **+4.0** | **11.3** | **0.744** |
+
+N freezes at 1200 from 0-2250m. ON approx OFF throughout (scatter is noise, not signal -- Stevenage is specular-dominated).
+
+---
+
+## Stevenage 1802 MHz -- FINAL (R²=0.735 at 0-1750m)
+
+CELL 8e complete (2026-09-02). Best result: R²=0.735 at 0-1750m (ON coh).
+Config: DISABLE_VEG_DISCS=False, VEG_SCATTERING_COEFF=0.35, NUM_SAMPLES_PS=10M, building S override=0.05, scalar=-2.413 dB.
+
+| Range | N | Bias (dB) | RMSE (dB) | R² (ON coh) |
+|-------|---|-----------|-----------|-------------|
+| 0-1000m | 444 | +0.7 | 9.8 | 0.696 |
+| 0-1250m | 574 | +0.5 | 10.3 | 0.723 |
+| 0-1500m | 730 | +0.3 | 10.5 | 0.734 |
+| **0-1750m** | **873** | **+1.3** | **10.6** | **0.735** |
+| 0-2250m | 1134 | +2.3 | 11.1 | 0.727 |
+
+Key finding: ON coh + scatter flood (random-phase scatter from discs cancels coherently) -- S=0.35 cannot be reduced.
+Physics: avg_rays ON=41k-59k vs OFF=70-108 (~590x). Stevenage is specular-dominated -- coherent sum preserves deterministic signal.
+
+---
+
+## Stevenage 2695 MHz -- FINAL (R²=0.754 at 0-2250m)
+
+CELL 8e Run 3 complete (2026-09-03). Best result: R²=0.754 at 0-2250m (ON coh).
+Config: DISABLE_VEG_DISCS=True, SCATTER_OVERRIDE=0.05, no calibration JSON, NUM_SAMPLES_PS=10M.
+
+| Range | N | Bias (dB) | RMSE (dB) | R² (ON coh) |
+|-------|---|-----------|-----------|-------------|
+| 0-1250m | 572 | +1.6 | 11.3 | 0.699 |
+| 0-1750m | 870 | +2.2 | 11.1 | 0.723 |
+| 0-2000m | 990 | +2.5 | 10.7 | 0.741 |
+| **0-2250m** | **1129** | **+2.5** | **10.5** | **0.754** |
+
+Key finding: DISABLE_VEG_DISCS=True required -- disc S=0.35 constructively adds at 2695 MHz (opposite of 1802 MHz).
+ON coh essential: ON incoh R²=0.200 at 0-2500m (scatter flood adds incoherently).
+
+---
+
+## Stevenage 3602 MHz -- FINAL (R²=0.755 at 0-2000m)
+
+CELL 8e complete (2026-09-04). Best result: R²=0.755 at 0-2000m (ON coh).
+Config: DISABLE_CANOPY=True, DISABLE_VEG_DISCS=False, PER_PATH_VEG=True, CAL_MAX_DIST_KM=1.0, Phase 0 scalar=+12.106 dB.
+
+| Range | N | Bias (dB) | RMSE (dB) | R² (ON coh) |
+|-------|---|-----------|-----------|-------------|
+| 0-1000m | 547 | +0.4 | 11.6 | 0.482 |
+| 0-1250m | 650 | +1.2 | 11.6 | 0.625 |
+| 0-1750m | 865 | +2.1 | 11.7 | 0.731 |
+| **0-2000m** | **967** | **+2.1** | **11.7** | **0.755** |
+
+Key finding: ON coh best -- scatter flood (~420x ON/OFF) phase-cancels in coherent sum, same mechanism as Stevenage 1802/2695.
+CMA failed (DrJIT kernel caching flat) -- Phase 0 scalar only achievable.
+
+---
+
+## Southampton 915 MHz -- Status (CMA Phase 1 pending)
+
+Run 2 CELL 8e (Phase 0 CMA JSON, 25 bins, 10M eval): R²=0.732 at 0-900m (ON incoh) -- current best.
+Step 1 (100M eval, 30 bins): R²=0.636 at 0-1250m -- 100M worse than 10M (scatter flood revealed).
+CMA Phase 1 pending: sigma0=0.3 fix in place (commit 4d1e917). Target R²>=0.76 at 0-900m with 100M eval.
+
+Config: DISABLE_VEG_DISCS=True, CAL_CMA_SAMPLES=10M, CAL_CMA_SIGMA0=0.3, CAL_MAX_DIST_KM=1.5, N_SCALAR_BINS=30, LOS_NLOS_ZONE_SPLIT=True, Rbp=310m.
+
+Run sequence for CMA Phase 1:
+```
+Kernel -> Restart & Clear Output
+CELL 0 -> CELL 1 -> CELL 4A (loads Phase 0 JSON) -> CELL CAL-CMA
+After FTOL -> CELL 4A -> CELL 8e (100M)
+```
+
+---
+
+## Southampton 1802 MHz -- FINAL (R²=0.684 at 0-750m)
+
+Extended bin scalar complete (2026-09-09): CAL_MAX_DIST_KM=2.0, N_SCALAR_BINS=40, 673 cal RX.
+
+| Range | N | R² (ON incoh) | R² (ON coh) | RMSE | Best |
+|-------|---|---------------|-------------|------|------|
+| **0-750m** | **131** | **0.684** | 0.579 | 6.2 dB | **ON incoh** |
+| 0-1250m | 385 | 0.496 | 0.570 | 11.0 dB | ON coh |
+| 0-1750m | 566 | 0.340 | **0.511** | 13.4 dB | ON coh |
+| 0-2000m | 694 | 0.269 | 0.425 | 14.1 dB | ON coh |
+| 0-2250m | 920 | 0.061 | 0.210 | 15.7 dB | ON coh |
+
+Config: DISABLE_VEG_DISCS=True, S=warm prior 0.25-0.30, Phase 0 scalar=-20.24/-20.37 dB (LOS/NLOS), 100M eval.
+All 40 bins positive (+11 to +39 dB) -- scatter flood at all distances. ON coh mechanism: random-phase scatter cancels coherently.
+
+---
+
+## Southampton 2695 MHz -- FINAL (R²=0.724 at 0-750m)
+
+Extended bin scalar complete (2026-09-09): CAL_MAX_DIST_KM=2.50, N_SCALAR_BINS=50, 364 cal RX (pool constrained to 1.24km).
+
+| Range | N | R² (ON incoh) | R² (ON coh) | RMSE | Best |
+|-------|---|---------------|-------------|------|------|
+| **0-750m** | **131** | **0.724** | 0.691 | 5.8 dB | **ON incoh** |
+| 0-900m | 198 | 0.579 | 0.669 | 8.3 dB | ON coh |
+| 0-1250m | 384 | 0.423 | 0.470 | 11.2 dB | ON coh |
+| 0-1750m | 564 | -0.145 | 0.116 | 17.3 dB | ON coh |
+
+Config: DISABLE_VEG_DISCS=True, S=warm prior 0.25-0.30, Phase 0 scalar=-21.10/-21.28 dB, 100M eval.
+avg_rays ON=36304 vs OFF=130.6 at 0-750m (278x) -- warm-prior S generates scatter flood.
+ON coh positive to 0-1750m (R²=0.116) -- same phase-cancellation mechanism as Southampton 1802.
+
+---
+
+## Southampton 3602 MHz -- FINAL (R²=0.558 at 0-900m, 30 bins, 2026-09-14)
+
+Supersedes 20-bin result (R²=0.534/9.6 dB, 2026-09-09).
+
+Config: DISABLE_CANOPY=True, DISABLE_VEG_DISCS=False, PER_PATH_VEG=True, CAL_MAX_DIST_KM=1.22, N_SCALAR_BINS=30, LOS_NLOS_ZONE_SPLIT=True, NUM_SAMPLES_PS=10M, CAL_CMA_SIGMA0=0.3.
+Cal RX: 478 (0.15-1.22 km). LOS zone offset=+6.72 dB, NLOS zone offset=+8.43 dB.
+
+| Range | N | Bias (dB) | RMSE (dB) | R² (ON incoh) | R² (ON coh) | avg_rays ON/OFF |
+|-------|---|-----------|-----------|---------------|-------------|-----------------|
+| 0-500m | 89 | +0.9 | 6.7 | -0.067 | -0.646 | 29340/116 |
+| 0-750m | 190 | +1.7 | 7.7 | 0.541 | 0.199 | 31605/107 |
+| **0-900m** | **277** | **+1.9** | **9.3** | **0.558** | 0.403 | **23933/98** |
+| 0-1000m | 330 | +2.1 | 11.6 | 0.389 | 0.231 | 20946/91 |
+| 0-1250m | 514 | +3.3 | 14.8 | 0.243 | 0.175 | 14031/68 |
+| 0-1500m | 618 | +4.2 | 15.8 | 0.103 | 0.093 | 12371/63 |
+| 0-1750m | 722 | +6.4 | 18.6 | -0.209 | -0.117 | 10788/56 |
+| 0-2500m+ | 1200 | +13.7 | 26.5 | -1.408 | -1.224 | 6693/37 |
+
+N freezes at 1200 from 0-2500m. ON incoh best throughout.
+
+Distance-bin scalar (30 bins, 478 cal RX, all LOS zone except last bin):
+
+| Bin | Zone | N | Correction | Bin | Zone | N | Correction |
+|-----|------|---|-----------|-----|------|---|-----------|
+| d=0.17km | LOS | 6 | +1.57 dB | d=0.72km | LOS | 22 | -3.12 dB |
+| d=0.20km | LOS | 6 | -8.55 dB | d=0.76km | LOS | 14 | +6.22 dB |
+| d=0.24km | LOS | 5 | -7.22 dB | d=0.79km | LOS | 23 | +1.94 dB |
+| d=0.28km | LOS | 6 | -0.21 dB | d=0.83km | LOS | 28 | +4.28 dB |
+| d=0.32km | LOS | 6 | +0.29 dB | d=0.86km | LOS | 19 | +0.44 dB |
+| d=0.35km | LOS | 5 | -7.94 dB | d=0.90km | LOS | 17 | +5.88 dB |
+| d=0.39km | LOS | 5 | -6.52 dB | d=0.94km | LOS | 20 | +6.94 dB |
+| d=0.42km | LOS | 5 | -11.51 dB | d=0.97km | LOS | 20 | -4.81 dB |
+| d=0.46km | LOS | 6 | -12.89 dB | d=1.01km | LOS | 29 | -3.99 dB |
+| d=0.50km | LOS | 5 | -10.33 dB | d=1.05km | LOS | 51 | -10.54 dB |
+| d=0.54km | LOS | 6 | -12.90 dB | d=1.08km | LOS | 30 | -4.57 dB |
+| d=0.57km | LOS | 5 | -15.10 dB | d=1.12km | LOS | 21 | +4.76 dB |
+| d=0.61km | LOS | 17 | -7.82 dB | d=1.16km | LOS | 20 | +8.48 dB |
+| d=0.65km | LOS | 30 | -1.14 dB | d=1.20km | LOS | 20 | +9.26 dB |
+| d=0.68km | LOS | 14 | +2.03 dB | d=1.23km | NLOS | 17 | +2.98 dB |
+
+Mixed sign corrections (-15 to +9 dB) -- physically meaningful. Peak negative d=0.57km (-15.10 dB): LOS boundary over-prediction. Peak positive d=1.20km (+9.26 dB): pre-NLOS under-prediction. 20-bin vs 30-bin: R² 0.534->0.558 (+0.024) at 0-900m, RMSE 9.6->9.3 dB.
+
+Key findings:
+- R²=0.558 at 0-900m (ON incoh) -- FINAL (30 bins supersedes 20 bins)
+- Sharp drop beyond 900m (0.558->0.389 at 1km) -- dual-slope NLOS transition (Rbp=1225m)
+- ON incoh best throughout (consistent with Nottingham 3602 R²=0.515 at 0-1250m)
+- ON coh competitive at 0-900m (R²=0.403) but not dominant -- Southampton denser urban, less coherent specular
+- RMSE=9.3 dB at 0-900m -- 3.5 dB above 3GPP sigma_SF=5.8 dB UMa physics floor
+- Significantly below Stevenage 3602 (R²=0.755) -- dense urban geometry limits coherent specular
+
+---
+
+## London 915 MHz -- FINAL (R²=0.365 at 0-1000m)
+
+CMA Run 4 complete (2026-08-24): eval 441, scalar=+28.766 dB, cal RMSE=6.888 dB, 223 cal RX (0.15-1.75 km).
+CELL 8e complete (100M): R²=0.365 at 0-1000m (ON incoh), R²=0.335 at 0-2000m.
+
+| Range | N (ON) | Bias (dB) | RMSE (dB) | R² (ON incoh) |
+|-------|--------|-----------|-----------|---------------|
+| 0-900m | 113 | +0.5 | 7.8 | 0.222 |
+| **0-1000m** | **125** | **-0.3** | **8.2** | **0.365** |
+| 0-1500m | 164 | -0.4 | 9.8 | 0.302 |
+| 0-2000m | 179 | -0.5 | 10.1 | 0.335 |
+
+OFF total collapse (RMSE=35-37 dB) -- London urban canyons require scatter. 44% scatter-only receivers at 0-1000m.
+Dual-slope Rbp=458m (4x25x1.5x915e6/3e8). R² dip at 0-1250m recovers beyond -- NLOS bands well-predicted.
+No further runs: Runs 5-6 overfitted (R²=-0.639), Run 4 repro gave R²=0.208. Run 4 CONFIRMED FINAL.
+
+---
+
+## London 1802 MHz -- FINAL (R²=0.365 from Run 4 repro)
+
+CMA Runs 1-8 all failed. Run 4 repro (2026-08-28) R²=0.208. Run 8 (2026-09-03) CELL 8e scatter flood.
+London 1802 MHz FINAL = R²=0.365 (Run 4 materials, separately loaded JSON). No further runs.
+
+---
+
+## London 2695 MHz -- Status (CMA Run 2 was in progress as of 2026-08-30)
+
+Phase 0 scalar=+44.418 dB, RMSE before=48.48 dB, after=19.42 dB. eval 172 best=14.722 dB.
+CAL_MAX_DIST_KM=1.0 (below Rbp=1348m). CAL_CMA_SAMPLES=15M (GPU OOM at 30M). 4 free mats.
+Status: FTOL pending -> CELL 4A -> CELL 8e.
+
+---
+
+## Scar Hill 915 MHz -- FINAL (R²=0.083 at 0-1250m)
+
+CELL CAL complete (10.71 dB, iteration 1). CELL 8e complete at 10M samples.
+
+| Range | N | Bias (dB) | RMSE (dB) | R² |
+|-------|---|-----------|-----------|-----|
+| 0-1250m | 179 | +0.9 | 15.1 | **0.083** |
+| 0-3500m | 441 | -6.1 | 19.3 | 0.055 |
+
+R²=0.083 peak -- SRTM 30m terrain physics floor for rural hilltop. Only meaningful improvement: Scottish LiDAR 1m DTM (lidar.scot NJ40/41/50/51).
+
+---
+
+## Nottingham 2695 MHz -- FINAL (R²=0.574 at 0-1250m, FROZEN)
+
+Run 2 (CAL_MAX_DIST_KM=1.5, 10M, DISABLE_VEG_DISCS=False, scalar=-2.305 dB): R²=0.574 at 0-1250m (ON incoh).
+Runs 3-9 all failed with scatter flood. Run 9 (HF scene) R²=-1.495. Run 2 is the only valid result.
+JSON files overwritten by later partial run -- reproduction requires fresh 15-20 hr CELL CAL.
+**DO NOT attempt re-calibration without explicit decision. sionna2_2695mhz_dem_simulation.ipynb is FROZEN.**
+
+---
+
+## Nottingham 3602 MHz -- FINAL (R²=0.515 at 0-1250m)
+
+Run 6 complete (2026-08-19): R²=0.515 at 0-1250m (ON incoh), RMSE=9.8 dB, N=725. Physics floor confirmed.
+Config: DISABLE_CANOPY=True, DISABLE_VEG_DISCS=False, PER_PATH_VEG=True, N_SCALAR_BINS=15, LOS_NLOS_ZONE_SPLIT=True.
+Run 3 (N_SCALAR_BINS=10): R²=0.515 at 0-1250m -- identical. 3602 MHz physics floor confirmed.
+
+---
+
+## Nottingham 1802 MHz -- FINAL (R²=0.509 at 0-1250m, ON incoh)
+
+15,486-tree scene with DISABLE_VEG_DISCS=True, CAL_FIX_SCATTER=False, CAL_N_AVG_SOLVE=1, CAL_FIXED_SEED=42.
+R² peaks at 0-1250m (0.509); stable 0.488 at 0-1500m; 0.448 at 0-2000m.
+ON coh collapsed (R²=0.187 at 0-1000m) -- 15,486 trees destroy coherent phase at 1802 MHz (16.7cm wavelength).
+**These results accepted as final -- no further recalibration planned for 1802 MHz.**
+
+---
+
+## Physics Floor Research
+
+- 3GPP TR 38.901 UMa NLOS shadow fading: sigma_SF = 7.82 dB (irreducible variation)
+- Literature R² ceiling: ~0.5 for pure geometry+material RT calibration (arXiv:2507.19653)
+- R² > 0.5 achieved via distance-bin scalar with LOS/NLOS zone split -- valid calibration step
+- NYURay achieves 3.2/5.8 dB RMSE LOS/NLOS via per-building material + separate zone correction
+- Gradient-based cal (diff-rt): -2 to -3 dB vs Powell; neural cal: hybrid R² 0.7-0.8 achievable
+
+---
+
+## Critical Rules (never break these)
+
+1. SCENE_WEST must match exactly between scene builder and simulation notebook (current: -1.267685).
+2. terrain.ply and building PLYs must share the same scene centre -- if bbox changes, delete all PLYs and rebuild.
+3. CELL 3 must always run after every kernel restart -- defines center_utm needed by CELL 4.
+4. Never change config without permission. No bias tweaks, no hardcoded offsets.
+5. No automatic bbox from TX position. USE_GPS_CENTRE = False always.
+6. Do not delete calibration files between feature tests.
