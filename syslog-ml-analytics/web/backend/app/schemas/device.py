@@ -18,13 +18,6 @@ class DeviceRead(BaseModel):
     event_count: int = 0
 
 
-class DeviceListResponse(BaseModel):
-    items: list[DeviceRead]
-    limit: int
-    offset: int
-    has_more: bool
-
-
 class ResolutionSummary(BaseModel):
     resolution_method: str
     device_count: int
