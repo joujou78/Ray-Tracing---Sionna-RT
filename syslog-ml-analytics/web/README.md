@@ -163,6 +163,26 @@ sudo nginx -t && sudo systemctl reload nginx
 **Checkpoint** — open `http://<vm-ip>/` and confirm the login page loads,
 then log in with the admin account from Step 2.
 
+## Devices page: pagination and auto-refresh
+
+The Devices page paginates (`GET /api/devices?limit=&offset=`, page sizes
+10/25/50/100/500 via a dropdown, Previous/Next buttons) instead of loading
+every device seen in the window in one request. The backend fetches
+`limit + 1` rows to derive `has_more` without a separate `COUNT(*)` query.
+
+The page also polls in the background every 30 seconds
+(`AUTO_REFRESH_MS` in `Devices.tsx`) and re-renders the current page in
+place — pageSize/offset are preserved across the silent refresh, only a
+"last updated" timestamp changes, so it doesn't fight with whatever page
+you're currently looking at.
+
+Covered by `web/frontend/e2e/devices_pagination.mjs`
+(`npm run test:e2e:devices`), which mocks `/api/devices` and
+`/api/devices/resolution-summary` via Playwright route interception (a
+deterministic 30-device dataset — no live ClickHouse needed) and uses
+Playwright's Clock API (`page.clock.fastForward('00:31')`) to exercise the
+30s auto-refresh without an actual wait.
+
 ## Honest limitations
 
 - No TLS in the provided nginx config — this handles login credentials and
