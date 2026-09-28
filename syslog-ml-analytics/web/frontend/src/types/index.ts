@@ -51,3 +51,42 @@ export interface ResolutionSummary {
   resolution_method: ResolutionMethod
   device_count: number
 }
+
+export interface LogEvent {
+  event_time: string
+  received_at: string
+  source_ip: string
+  hostname: string
+  vendor: string
+  model: string
+  resolution_method: ResolutionMethod
+  facility: string
+  severity: string
+  severity_num: number
+  program: string
+  pid: number | null
+  message: string
+  predicted_category: string
+  predicted_confidence: number
+  is_anomaly: boolean
+}
+
+export interface LogSearchResponse {
+  items: LogEvent[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface LogSearchFilters {
+  hours: number
+  source_ip?: string
+  hostname?: string
+  severity?: string
+  program?: string
+  predicted_category?: string
+  is_anomaly?: boolean
+  q?: string
+  page: number
+  page_size: number
+}

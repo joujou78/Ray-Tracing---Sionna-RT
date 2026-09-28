@@ -1,8 +1,34 @@
 # Syslog ML Analytics — Web App
 
 FastAPI + Postgres backend, React (Vite + TypeScript) frontend. Provides
-device/credential management now, with log search and an ML feedback/
-correction loop planned as later phases (see "Roadmap" below).
+device/credential management and log search now, with an ML feedback/
+correction loop planned as a later phase (see "Roadmap" below).
+
+## Log search
+
+The "Log search" page (`/logs`) is a filterable, paginated view over
+`syslog_ml.events` in ClickHouse — read-only, available to any
+authenticated user (same access level as the Devices page). Filters:
+time range (1h/24h/7d/30d), source IP (exact), hostname/program/message
+(case-insensitive substring), severity and predicted category (exact),
+and an anomalies-only toggle.
+
+- **Backend**: `GET /api/logs/search` (`app/api/routes/logs.py`,
+  `app/services/log_search_service.py`). Every filter is bound as a
+  ClickHouse query parameter, never string-interpolated. Substring
+  filters use `positionCaseInsensitive(col, %(param)s) > 0` rather than
+  `... ILIKE %(param)s`: tested directly against a real ClickHouse
+  instance during development, `ILIKE` let an unescaped `%`/`_` in the
+  search term act as a LIKE wildcard (searching `100%` would silently
+  misinterpret the `%`), and separately isn't available on every
+  ClickHouse version still in the wild. `positionCaseInsensitive` treats
+  the parameter as a literal substring, so neither issue applies, and it
+  was confirmed to behave identically otherwise (case-insensitivity,
+  pagination, and combined filters all verified against seeded rows in a
+  real ClickHouse before this was committed).
+- Pagination is two queries (a `count()` and a `LIMIT`/`OFFSET` page),
+  each bounded (`page_size` capped at 500, `hours` capped at 90 days —
+  matching `events`' own TTL).
 
 ## Why this stack
 
@@ -182,8 +208,6 @@ then log in with the admin account from Step 2.
 
 ## Roadmap (not yet built)
 
-- **Log search & investigation**: filterable/paginated view over
-  `syslog_ml.events` in ClickHouse.
 - **ML feedback loop**: the `classification_feedback` table already exists
   (see `app/db/models.py`) but has no API/UI yet — review predicted
   categories, correct wrong ones, feed corrections back into

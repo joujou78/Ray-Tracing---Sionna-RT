@@ -188,6 +188,43 @@ label {
   color: var(--danger);
 }
 
+.badge-severity-emergency,
+.badge-severity-alert,
+.badge-severity-critical,
+.badge-severity-error {
+  background: rgba(229, 72, 77, 0.15);
+  color: var(--danger);
+}
+
+.badge-severity-warning {
+  background: rgba(245, 166, 35, 0.15);
+  color: var(--warn);
+}
+
+.badge-severity-notice,
+.badge-severity-info,
+.badge-severity-debug {
+  background: rgba(154, 160, 170, 0.15);
+  color: var(--text-dim);
+}
+
+.badge-anomaly {
+  margin-left: 8px;
+  background: rgba(229, 72, 77, 0.15);
+  color: var(--danger);
+}
+
+.log-message {
+  max-width: 480px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pagination {
+  margin-top: 12px;
+}
+
 .summary-row {
   display: flex;
   gap: 16px;

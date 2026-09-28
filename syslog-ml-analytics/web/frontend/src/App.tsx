@@ -4,6 +4,7 @@ import { Layout } from './components/Layout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { Credentials } from './pages/Credentials'
 import { Devices } from './pages/Devices'
+import { LogSearch } from './pages/LogSearch'
 import { Login } from './pages/Login'
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route path="/" element={<Devices />} />
+            <Route path="/logs" element={<LogSearch />} />
             <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
               <Route path="/credentials" element={<Credentials />} />
             </Route>
