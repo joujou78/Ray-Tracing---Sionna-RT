@@ -29,9 +29,13 @@ network devices --syslog--> rsyslog (existing) ----------> LogAnalyzer DB (uncha
 ```
 
 There's also a web app (`web/`) for managing SNMP credentials through a UI
-instead of hand-editing files, viewing device/resolution status, and
-(planned) log search and ML feedback — see `web/README.md`. It's optional:
-the pipeline above works standalone with Grafana as the only UI.
+instead of hand-editing files, viewing device/resolution status, searching
+logs, and asking a chat-style Log Assistant questions about recent events
+(semantic search via OpenSearch + a local Ollama LLM, populated by a new
+`syslog-ml-indexer.timer`) — see `web/README.md`. It's optional: the
+pipeline above works standalone with Grafana as the only UI, and the web
+app's own Log Assistant feature is itself optional within it (needs
+OpenSearch + Ollama; everything else in the web app doesn't).
 
 No message broker: one VM, one rsyslog instance receiving everything, so a
 locally tailed file is enough durability without adding a Kafka/Redpanda
@@ -203,6 +207,7 @@ prefers a real `category` field over the weak-supervision guess.
 - `ml/device_resolver.py` / `ml/resolve_pending.py` — the opt-in SNMP identity resolver (reads credentials from Postgres, see `web/`).
 - `ml/labeling_rules.py` — weak-supervision category rules (tune for your vendors).
 - `ml/train_classifier.py` — trains the TF-IDF + linear SVM classifier.
-- `systemd/` — unit files for the classifier and the resolver timer.
+- `ml/log_assistant_indexer.py` — embeds new events (via Ollama) and indexes them into OpenSearch for the web app's Log Assistant (optional, see `web/README.md`).
+- `systemd/` — unit files for the classifier, the resolver timer, and the indexer timer.
 - `grafana/` — provisioned datasource + starter dashboard.
 - `web/` — FastAPI + React admin app for managing SNMP credentials and viewing device status (see `web/README.md`).

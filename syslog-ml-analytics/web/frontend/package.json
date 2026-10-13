@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test:e2e": "node e2e/smoke.mjs"
+    "test:e2e": "node e2e/smoke.mjs",
+    "test:e2e:log-assistant": "node e2e/log_assistant.mjs"
   },
   "dependencies": {
     "axios": "^1.20.0",

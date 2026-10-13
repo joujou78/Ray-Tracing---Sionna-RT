@@ -1,8 +1,9 @@
 # Syslog ML Analytics — Web App
 
 FastAPI + Postgres backend, React (Vite + TypeScript) frontend. Provides
-device/credential management and log search now, with an ML feedback/
-correction loop planned as a later phase (see "Roadmap" below).
+device/credential management, log search, and a semantic-search Log
+Assistant now, with an ML feedback/correction loop planned as a later phase
+(see "Roadmap" below).
 
 ## Log search
 
@@ -29,6 +30,51 @@ and an anomalies-only toggle.
 - Pagination is two queries (a `count()` and a `LIMIT`/`OFFSET` page),
   each bounded (`page_size` capped at 500, `hours` capped at 90 days —
   matching `events`' own TTL).
+
+## Log Assistant
+
+The "Log Assistant" page (`/assistant`) is a chat-style interface for asking
+natural-language questions about recent syslog events ("any auth failures on
+core-switch-1 today?"). It answers using retrieval-augmented generation, not
+the model's own general knowledge:
+
+1. The question is embedded (Ollama's `/api/embeddings`, model
+   `nomic-embed-text` by default) and matched by cosine similarity (OpenSearch
+   `knn`) against event embeddings.
+2. The top matches (`TOP_K = 8`) are given to a local chat model (Ollama,
+   `llama3.2:3b-instruct-q4_K_M` by default -- small, CPU-only inference) as
+   the *only* evidence it's allowed to use, with an explicit instruction to
+   say so when the excerpts don't answer the question rather than guess. This
+   matches the pipeline's existing "nothing pretends to know a hostname it
+   doesn't" philosophy (see the top-level `syslog-ml-analytics/README.md`).
+3. The response includes both the generated answer and the raw source log
+   entries it was based on, shown collapsed under the answer in the UI.
+
+The embeddings themselves are produced separately, not by the web app: a new
+periodic worker, `ml/log_assistant_indexer.py` (run via
+`syslog-ml-indexer.timer`, same oneshot+timer pattern as the SNMP resolver,
+every 5 minutes), reads newly-arrived `syslog_ml.events` rows from
+ClickHouse, embeds each message, and bulk-indexes them into OpenSearch.
+Keeping this out of the hot ingestion path (`ml/consumer.py`) matters the
+same way it does for SNMP resolution: embedding calls are slow enough on
+CPU-only hardware that they can't sit in line with real-time log processing.
+
+- **Backend**: `POST /api/log-assistant/ask` (and `/search` for retrieval
+  without generation) in `app/api/routes/log_assistant.py` /
+  `app/services/log_assistant_service.py`. New config fields in
+  `app/core/config.py` (`SYSLOG_ML_OLLAMA_HOST`,
+  `SYSLOG_ML_OLLAMA_CHAT_MODEL`, `SYSLOG_ML_OLLAMA_EMBED_MODEL`,
+  `SYSLOG_ML_OPENSEARCH_HOST`, etc.) follow the same env-var-override
+  convention as everything else in `Settings`.
+- **New infrastructure**: this is the first feature in the project to need
+  OpenSearch and Ollama -- neither is required for the rest of the pipeline
+  or web app. See "Production install" below for setup; both are optional
+  (the rest of the app works fine without them, same as log search works
+  without the resolver's SNMP credentials being configured).
+- **No stable event ID to link back to**: `syslog_ml.events` has no
+  `event_id` column, so a "source" shown by the assistant can't deep-link
+  into the Log search page the way a real identifier would -- it's
+  rendered as plain text (time/hostname/severity/program/message) instead.
 
 ## Why this stack
 
@@ -59,6 +105,8 @@ web/
       services/   # business logic, separated from route handlers
       api/routes/ # thin FastAPI route handlers
       clickhouse_client.py
+      opensearch_client.py  # Log Assistant: lazy OpenSearch client
+      ollama_client.py      # Log Assistant: async Ollama HTTP client (embed + chat)
     migrations/   # Alembic
     scripts/create_admin.py   # bootstrap the first admin account
   frontend/
@@ -66,8 +114,9 @@ web/
       api/        # typed API client (axios)
       auth/       # AuthContext (JWT storage, login/logout)
       components/ # Layout, ProtectedRoute (role-gated)
-      pages/      # Login, Devices, Credentials
-    e2e/smoke.mjs # Playwright smoke test of the real auth/RBAC/CRUD flow
+      pages/      # Login, Devices, Credentials, LogSearch, LogAssistant
+    e2e/smoke.mjs         # Playwright smoke test of the real auth/RBAC/CRUD flow
+    e2e/log_assistant.mjs # Playwright test of the chat page (mocks only the Ollama/OpenSearch-backed /ask call)
   systemd/        # production unit for the API (gunicorn+uvicorn workers)
   nginx/          # reverse proxy + static SPA serving config
 ```
@@ -189,6 +238,69 @@ sudo nginx -t && sudo systemctl reload nginx
 **Checkpoint** — open `http://<vm-ip>/` and confirm the login page loads,
 then log in with the admin account from Step 2.
 
+### 5. Log Assistant (optional): OpenSearch, Ollama, and the indexer timer
+
+Skip this step if you don't need the chat assistant -- the rest of the app
+works fine without it. I could not verify any of the commands in this step
+against real OpenSearch/Ollama install docs (both domains are blocked from
+this sandbox); treat them as a starting point, not a confirmed-working
+sequence, the same honesty flag already on the ClickHouse/Grafana steps in
+the top-level `syslog-ml-analytics/README.md`.
+
+```bash
+# OpenSearch (single-node, no security plugin -- same trust boundary as
+# ClickHouse: localhost-only, no auth. Put a firewall/reverse proxy in front
+# of it if that's not true in your deployment.)
+curl -fsSL https://artifacts.opensearch.org/publickeys/opensearch.pgp | sudo gpg --dearmor -o /usr/share/keyrings/opensearch-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/opensearch-keyring.gpg] https://artifacts.opensearch.org/releases/bundle/opensearch/2.x/apt stable main" | sudo tee /etc/apt/sources.list.d/opensearch.list
+sudo apt-get update
+sudo apt-get install -y opensearch
+# Disable the security plugin for a localhost-only dev/trusted deployment,
+# or configure it properly -- see OpenSearch's own docs for your situation.
+sudo systemctl enable --now opensearch
+
+# Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull nomic-embed-text               # embeddings, must match SYSLOG_ML_OLLAMA_EMBED_MODEL
+ollama pull llama3.2:3b-instruct-q4_K_M    # chat, must match SYSLOG_ML_OLLAMA_CHAT_MODEL
+```
+
+**Checkpoint** — `curl http://localhost:9200` returns a JSON cluster info
+response; `curl http://localhost:11434/api/tags` lists both pulled models.
+
+Add the Log Assistant env vars to the same `/etc/syslog-ml/web-api.env` from
+Step 2 (`SYSLOG_ML_OLLAMA_HOST`, `SYSLOG_ML_OLLAMA_CHAT_MODEL`,
+`SYSLOG_ML_OLLAMA_EMBED_MODEL`, `SYSLOG_ML_OPENSEARCH_HOST`, etc. -- see
+`app/core/config.py` for the full list and defaults), then restart the API:
+
+```bash
+sudo systemctl restart syslog-ml-web-api
+```
+
+Then wire up the indexer timer (from the repo root's `systemd/`, alongside
+the resolver):
+
+```bash
+sudo cp systemd/syslog-ml-indexer.service systemd/syslog-ml-indexer.timer /etc/systemd/system/
+sudo cp systemd/syslog-ml-indexer.env.example /etc/syslog-ml/indexer.env
+sudo $EDITOR /etc/syslog-ml/indexer.env   # only needed if you changed a default above
+sudo chmod 600 /etc/syslog-ml/indexer.env
+sudo chown syslog-ml:syslog-ml /etc/syslog-ml/indexer.env
+sudo systemctl daemon-reload
+sudo systemctl enable --now syslog-ml-indexer.timer
+```
+
+**Checkpoint:**
+
+```bash
+sudo systemctl start syslog-ml-indexer   # run once immediately, don't wait for the timer
+sudo journalctl -u syslog-ml-indexer -n 50
+curl -s http://localhost:9200/syslog_logs/_count   # should be > 0 once events exist
+```
+
+Once some events are indexed, log in and ask the Log Assistant a question
+about recent traffic you know occurred.
+
 ## Honest limitations
 
 - No TLS in the provided nginx config — this handles login credentials and
@@ -197,11 +309,22 @@ then log in with the admin account from Step 2.
   network. I didn't set this up because I don't know your domain/cert
   situation.
 - Tested in this session against a real local Postgres and a real browser
-  (Playwright) for the full auth/RBAC/credential-CRUD/persistence flow —
-  not tested against a live ClickHouse (none available in this sandbox),
-  so the Devices page's actual data rendering (as opposed to its error
-  handling, which was exercised) is unverified until you run it against
-  your real ClickHouse instance.
+  (Playwright) for the full auth/RBAC/credential-CRUD/persistence flow, and
+  again for the Log Assistant page (login, navigation, asking a question,
+  rendering the answer and its sources, clearing input state, and the
+  upstream-error path) — not tested against a live ClickHouse, OpenSearch,
+  or Ollama (none available in this sandbox), so the Devices page's actual
+  data rendering and the Log Assistant's real embedding/retrieval/generation
+  quality are both unverified until you run them against your real
+  ClickHouse/OpenSearch/Ollama instances. The `/ask` endpoint itself
+  (routing, request/response shapes, 502 handling) was only verified by
+  mocking that one HTTP call from the browser side — the backend code that
+  actually talks to OpenSearch and Ollama has not been exercised against
+  real servers.
+- The Log Assistant's answer quality depends entirely on embedding and chat
+  model choice, neither of which has been tuned or evaluated here — treat
+  early answers the same way `ml/labeling_rules.py`'s weak-supervision
+  category guesses are treated: a starting point, not verified fact.
 - Password reset / account recovery isn't built — the only way to regain
   access if the sole admin's password is lost is `scripts/create_admin.py`
   won't help (it refuses existing usernames) or a manual DB update.

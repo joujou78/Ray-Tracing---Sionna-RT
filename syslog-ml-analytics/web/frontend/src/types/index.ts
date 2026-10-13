@@ -90,3 +90,25 @@ export interface LogSearchFilters {
   page: number
   page_size: number
 }
+
+export interface LogAssistantMatch {
+  event_time: string
+  hostname: string
+  severity: string
+  program: string
+  message: string
+  predicted_category: string
+  is_anomaly: boolean
+  score: number
+}
+
+export interface AskResponse {
+  answer: string
+  sources: LogAssistantMatch[]
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+  sources?: LogAssistantMatch[]
+}

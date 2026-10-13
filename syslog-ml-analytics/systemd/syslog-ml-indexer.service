@@ -1,0 +1,14 @@
+[Unit]
+Description=Syslog ML Log Assistant embeddings indexer (one-shot, triggered by syslog-ml-indexer.timer)
+After=network.target clickhouse-server.service
+
+[Service]
+Type=oneshot
+User=syslog-ml
+Group=syslog-ml
+WorkingDirectory=/opt/syslog-ml/ml
+ExecStart=/opt/syslog-ml/venv/bin/python log_assistant_indexer.py
+EnvironmentFile=/etc/syslog-ml/indexer.env
+Environment=CLICKHOUSE_HOST=localhost
+Environment=CLICKHOUSE_PORT=8123
+Environment=CHECKPOINT_DB=/var/lib/syslog-ml/indexer_state.db
