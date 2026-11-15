@@ -97,31 +97,83 @@ Test whether the SAME per-building classification improves R² at 915 / 1802 / 2
 
 ---
 
-## Expected improvement
+## Revised priority chain (updated 2026-11-15)
 
-| Site | Current best R² | Expected with per-building classification |
-|------|----------------|------------------------------------------|
-| Nottingham 1802 MHz | 0.509 | 0.55-0.60 |
-| Nottingham 2695 MHz | 0.574 | 0.60-0.65 |
-| Stevenage 1802 MHz | 0.735 | 0.76-0.80 |
-| London 915 MHz | 0.365 | 0.40-0.45 |
+Based on Paper 1 (Yun & Iskander 2023), wall defragmentation is now Priority -3 -- a geometry pass before material classification:
 
-Gain: approximately -1 to -2 dB RMSE, +0.05 to +0.10 R² per site and frequency.
+```
+Priority -3 (NEW): Wall defragmentation -- merge co-planar OSM wall surfaces (Yun & Iskander 2023)
+Priority -2: LiDAR intensity + RGBN roof colour classifier (NEW)
+Priority -1: Oblique facade labels (confidence-gated; ceiling ~72% F1 per GT-LOD3 benchmark)
+Priority  0: OSM Overpass + VLM enrichment (building_materials_vlm.json)
+Priority  1: OSM building:material= tag
+Priority  2: Use-type heuristic
+Priority  3: Age override
+Fallback: itu_brick
+```
 
 ---
 
-## Implementation plan
+## Expected improvement
 
-1. **Implement `_material_from_rgb(geometry)`** in CELL 4 -- RGBN VOM roof colour classifier
-2. **Implement `_material_from_intensity(geometry, fallback)`** properly -- LiDAR intensity thresholds
-3. **Add Priority -2 hook** in `_bld_mat()` that calls these two signals and returns if confident
-4. **Connect LoD3 module output** (Mapillary facade labels) as a third signal
-5. **Evaluate** at all sites and frequencies; compare RMSE/R² before and after
+| Improvement | Basis | Expected delta R² |
+|-------------|-------|------------------|
+| Wall defragmentation | Eliminates systematic scatter double-counting from co-planar OSM surfaces | +0.02 to +0.05 |
+| RGBN roof classifier (Signal 2) | LiDAR intensity / VOM colour separates metal/concrete/clay | +0.03 to +0.06 |
+| LOD3 facade material (Signal 3) | Glass window surfaces; ceiling 56.5% F1 (GT-LOD3 benchmark) | +0.01 to +0.02 |
+| **Total** | | **+0.05 to +0.12 R²** |
+
+| Site | Current best R² | Expected with classification |
+|------|----------------|------------------------------|
+| Nottingham 1802 MHz | 0.509 | 0.55-0.62 |
+| Nottingham 2695 MHz | 0.574 | 0.62-0.69 |
+| Stevenage 1802 MHz | 0.735 | 0.78-0.85 |
+| London 915 MHz | 0.365 | 0.40-0.47 |
+
+---
+
+## Implementation plan (updated)
+
+1. **Wall defragmentation pass** in CELL 4 after building PLY generation -- co-planar merge using dot product of face normals (threshold 0.99); reduces triangle count ~36%, eliminates ray double counting
+2. **Implement `_material_from_rgb(geometry)`** -- RGBN VOM roof colour classifier (warm/grey/bright = clay/concrete/metal)
+3. **Implement `_material_from_intensity(geometry, fallback)`** properly -- LiDAR intensity thresholds
+4. **Add Priority -2 hook** in `_bld_mat()` calling these two signals; return if confidence > threshold
+5. **Connect LoD3 module output** (Mapillary facade labels) as Signal 3; window pixels --> glass surfaces
+6. **Evaluate** at all sites and frequencies; compare RMSE/R² before and after
+
+---
+
+## Literature notes added 2026-11-15
+
+### Paper 1 -- Yun & Iskander (2023 IEEE APS)
+"Simplifying Building Structures for Efficient Radio Propagation Modeling"
+
+- Tests on 24,023 NYC buildings from GML LOD2 data
+- Co-planar wall merging: 33 surfaces --> 21 (36% reduction) for a typical building
+- Method: dot product of face normals; if parallel (threshold ~0.99) and sharing edge, merge with RDP simplification
+- Eliminates ray double counting at co-planar junctions (adjacent fragments hit twice by same ray)
+- Small rooftop appendages can be dropped at <6 GHz without accuracy loss
+- **Direct relevance:** Our OSM Shapely extrusion produces fragmented walls with the same problem; a defragmentation pass on each material PLY would reduce scatter variance and speed up path solving
+
+### Paper 2 -- Kim et al. (ISPRS Annals 2026, GT-LOD3 Benchmark)
+"GT-LOD3: LOD3 Semantic 3D Building Reconstruction Benchmark Dataset"
+
+- First standardised benchmark for automatic LOD3 building reconstruction
+- Two sites: Gold Coast (Ohio, USA) and TUM campus (Munich, DE -- same as TUM2TWIN)
+- Pipeline: Point Transformer segmentation (5 classes) --> facade-aligned 2D projection --> opening extraction --> LOD3 CityGML
+- Only 3 datasets worldwide currently reach LOD3: TUM2TWIN, Ingolstadt, Poznań
+- **Window detection F1 = 56.5% instance-level** -- this is the current state of the art; our Mapillary approach will not exceed this
+- Wall and roof: F1 = 89-95% -- reliable input for facade material labelling
+- Simple facades (IV, V): F1 = 76-99%; complex/occluded (I, II): F1 = 46-56%
+- London canyon facades are more complex than Stevenage suburb -- expect lower window recall in London
+- Dataset: https://github.com/gdslab/GT-LOD3-Benchmark (CC BY 4.0)
 
 ---
 
 ## Key references to cite
 
+- Yun, Z. and Iskander, M.F. -- "Simplifying Building Structures for Efficient Radio Propagation Modeling," IEEE APS 2023. DOI: 10.1109/USNC-URSI52151.2023.10238157
+- Kim, H.S. et al. -- "GT-LOD3: LOD3 Semantic 3D Building Reconstruction Benchmark Dataset," ISPRS Annals XI-2-2026. DOI: 10.5194/isprs-annals-XI-2-2026-293-2026
 - Ju, S., Xing, Y., Kanhere, O., Rappaport, T.S. -- NYURay outdoor calibration paper (IEEE Xplore)
 - ITU-R P.2040-2 (2021) -- building material EM properties
 - Hoydis, J. et al. (NVIDIA) -- Sionna RT + semantic segmentation
