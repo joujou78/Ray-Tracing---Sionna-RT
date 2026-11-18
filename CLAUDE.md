@@ -2025,6 +2025,17 @@ Current scene already has 5 building PLY files (brick/concrete/glass/metal/wood)
 #### Material EM properties
 - **ITU-R P.2040-2** (2021) — "Effects of building materials and structures on radiowave propagation." Brick σ = 0.038 S/m (frequency-independent). Corrects P.2040-1 (2015) over-calculation at 2695+ MHz.
 
+#### Dynamic objects and site-specific RT motivation
+- **5G-LENA + Sionna RT integration** (CTTC, Dec 2025) — ns-3 MR2608 (`gitlab.com/nsnam/ns-3-dev/-/merge_requests/2608`). Integrates Sionna RT into ns-3 via pybind11 (`SionnaRtChannelModel`, `SionnaRtSpectrumPropagationLossModel`). Solver config: `maxDepth`, `los`, `specularReflection`, `diffuseReflection`, `refraction`, `diffraction`, `edgeDiffraction`, `syntheticArray`, `seed` — directly maps to our `scene.compute_paths()` parameters. Blog: https://5g-lena.cttc.es/blog/33/ **Thesis citation:** independently confirms dynamic objects and site-specific geometry as the core motivation for RT over stochastic models. Requires Sionna ≥ 1.1.0 (pins 1.2.0) — incompatible with our Sionna 2.0 API.
+
+#### Integration feasibility assessment (studied 2026-11-18)
+- **Direct integration: NOT feasible.** 5G-LENA is a C++ ns-3 framework calling Python Sionna via pybind11. Our pipeline is pure Python notebooks using Sionna 2.0 directly — we are already at the Python layer 5G-LENA is trying to reach from C++.
+- **Sionna version barrier:** MR2608 pins Sionna 1.2.0; our project uses Sionna 2.0. API changed significantly between 1.x and 2.0 (`scene.compute_paths()` signature, path object structure). Cannot use their code as-is.
+- **No dynamic object API:** 5G-LENA only moves the UE position between steps. Scene geometry (buildings, vehicles, pedestrians) stays fixed per run. Dynamic objects would still require our Layer A/B approach (geometry PLYs + statistical blockage).
+- **Concept we can adopt — `UpdatePeriod` pattern:** their model re-runs the path solver at each UE position step. We could apply this for time-varying simulation: run Sionna RT N times with different random pedestrian/vehicle positions (Monte Carlo), average the incoherent power. This upgrades Layer B from statistical post-processing to geometry-based Monte Carlo — feasible but expensive (~N×CELL 8e runtime).
+- **Parameter alignment:** `RtPathSolverConfig` fields (`maxDepth`=MAX_DEPTH, `diffuseReflection`=S, `edgeDiffraction`=edge_diffraction, `seed`=CAL_FIXED_SEED) already have direct equivalents in our CELL 1 config. No code change needed.
+- **Recommended action:** cite MR2608 blog in thesis introduction (dynamic objects motivation); revisit integration if CTTC publishes a Sionna 2.0-compatible version.
+
 ---
 
 ## Current Scene State (snapshot)
