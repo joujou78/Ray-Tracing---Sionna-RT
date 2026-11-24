@@ -30,6 +30,7 @@
       }
     }
     g.worst = worst;
+    g.ctrl = pf.control_points || null;
     return g;
   }
 
@@ -120,6 +121,22 @@
     ctx.fillStyle = "#ff453a";
     for (let i = 1; i < g.n - 1; i++) {
       if (g.obst[i] > g.ray[i] - 0.6 * g.r1[i]) ctx.fillRect(X(g.d[i]) - 1, Y(g.obst[i]) - 1, 2.5, 2.5);
+    }
+
+    // diffraction control points (Bullington construction / dominant edge)
+    if (g.ctrl && g.ctrl.points) {
+      ctx.save();
+      const bp = g.ctrl.points.find((q) => q.kind === "Bullington point");
+      if (bp) {
+        ctx.strokeStyle = "#bf5af2"; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(X(0), Y(g.txTop)); ctx.lineTo(X(bp.d_km), Y(bp.h_m)); ctx.lineTo(X(Dk), Y(g.rxTop)); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      for (const q of g.ctrl.points) {
+        ctx.fillStyle = "#bf5af2"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(X(q.d_km), Y(q.h_m), 5, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+      }
+      ctx.restore();
     }
 
     // hover crosshair

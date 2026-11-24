@@ -145,3 +145,31 @@ details.adv summary { cursor: pointer; color: var(--muted); margin-bottom: 6px; 
 [hidden] { display: none !important; }
 /* Keep bottom map controls (legend, scale) above the open profile panel */
 .mapwrap.pf-open .leaflet-bottom { bottom: 330px; }
+
+/* ---------- Path loss calculator page ---------- */
+a.button { text-decoration: none; }
+.mapwrap.stacked { display: flex; flex-direction: column; }
+.mapwrap.stacked #map { position: relative; inset: auto; flex: 1 1 58%; min-height: 200px; }
+.xs { flex: 0 0 42%; display: flex; flex-direction: column; min-height: 220px; background: var(--panel); border-top: 1px solid var(--line); }
+.xs[hidden] { display: none !important; }
+.xs header { display: flex; gap: 12px; align-items: center; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+.xs #pf-canvas { flex: 1; min-height: 0; width: 100%; }
+.sw.ctrl { width: 9px; height: 9px; border-radius: 50%; background: #bf5af2; border: 1px solid #fff; }
+.site h2 { display: flex; align-items: center; gap: 6px; }
+.site-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.site-dot.tx { background: #ff3b30; }
+.site-dot.rx { background: #0a84ff; }
+.row label.grow { flex: 1; margin-bottom: 0; }
+.row:has(label.grow) { align-items: flex-end; }
+button.wide { width: 100%; justify-content: center; margin-top: 6px; padding: 9px; }
+.results { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.results div { background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; }
+.results span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 2px; }
+.results b { font-size: 14px; font-variant-numeric: tabular-nums; }
+.results b.ok { color: #30d158; }
+.results b.bad { color: var(--danger); }
+.results b.mid { color: var(--warn); }
+.rx-icon { width: 18px; height: 18px; border-radius: 50%; background: #0a84ff; border: 3px solid #fff; box-shadow: 0 0 0 2px #0a84ff, 0 2px 8px rgba(0,0,0,.6); }
+dialog.notes { max-width: 640px; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px; line-height: 1.5; }
+dialog.notes::backdrop { background: rgba(0,0,0,.55); }
+dialog.notes li { margin-bottom: 6px; }

@@ -64,6 +64,7 @@ class ProfileRequest(Common):
     tx_lon: float
     rx_lat: float
     rx_lon: float
+    samples: Optional[int] = Field(None, ge=5, le=10000, description="Terrain samples; None = automatic")
 
 
 @app.get("/api/health")
@@ -108,13 +109,28 @@ def profile(req: ProfileRequest):
             provider(req.terrain), req.tx_lat, req.tx_lon, req.rx_lat, req.rx_lon,
             req.tx_height, req.rx_height, req.freq_mhz, model=req.model, p=req.time_pct,
             pl=req.loc_pct, sigma_l=req.sigma_loc, pol=1 if req.polarization == "h" else 2,
-            k_factor=req.k_factor, use_clutter=req.clutter,
+            k_factor=req.k_factor, use_clutter=req.clutter, max_points=req.samples or 2500,
         )
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
     except Exception as exc:
         log.exception("profile failed")
         raise HTTPException(500, f"Profile computation failed: {exc}") from exc
+
+
+@app.get("/api/grid")
+def grid(lat: Optional[float] = None, lon: Optional[float] = None, ref: Optional[str] = None):
+    """Convert WGS84 <-> OS National Grid reference (GB only)."""
+    from .grid import from_osgb_ref, to_osgb_ref
+    try:
+        if ref is not None:
+            la, lo = from_osgb_ref(ref)
+            return {"lat": la, "lon": lo, "osgb": to_osgb_ref(la, lo)}
+        if lat is None or lon is None:
+            raise ValueError("give lat & lon, or ref")
+        return {"lat": lat, "lon": lon, "osgb": to_osgb_ref(lat, lon)}
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
 
 
 # Static frontend (mounted last so /api routes win)

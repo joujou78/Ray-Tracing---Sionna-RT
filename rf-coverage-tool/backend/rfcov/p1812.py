@@ -236,6 +236,8 @@ def path_loss_batch(d, h, j_idx, prm: P1812Params, phi=None, clutter=None,
     htg, hrg = prm.htg, prm.hrg
 
     k50 = 157.0 / (157.0 - prm.dn)                                   # (6)
+    if model == "p1812":
+        k_factor = None   # P.1812 always derives k50 from DN (eq 6); k is for P.526 models
     ae = R_EARTH_KM * (k_factor if k_factor else k50)                # (7a)
     ab = R_EARTH_KM * 3.0                                            # (7b)
 
@@ -440,3 +442,40 @@ def path_loss(d, h, prm: P1812Params, phi=None, clutter=None, model="p1812",
             flat[k] = arr.reshape(-1)[-1].item() if arr.size else None
         return float(lb[0, 0]), flat
     return float(res[0, 0])
+
+
+def diffraction_points(d, g, hts, hrs, ae, f_ghz):
+    """
+    Geometry of the Bullington construction for one path, for display.
+
+    d (km), g (m, terrain + clutter), hts/hrs antenna heights amsl (m).
+    Heights are returned in the effective-earth frame used by eqs (13)-(20),
+    i.e. terrain plus the curvature bulge, matching the profile chart.
+
+    Returns dict(los, points=[{d_km, h_m, kind, nu?}]):
+      LoS : the point with the largest Fresnel parameter nu (dominant edge).
+      NLoS: the Tx-side and Rx-side horizon obstacles and the Bullington
+            point where the two horizon rays intersect.
+    """
+    d = np.asarray(d, float)
+    g = np.asarray(g, float)
+    dt = d[-1]
+    lam = 0.2998 / f_ghz
+    di, gi = d[1:-1], g[1:-1]
+    bulge = 500.0 / ae * di * (dt - di)
+    stim_i = (gi + bulge - hts) / di
+    srim_i = (gi + bulge - hrs) / (dt - di)
+    stim, srim = stim_i.max(), srim_i.max()
+    nu = (gi + bulge - (hts * (dt - di) + hrs * di) / dt) * np.sqrt(0.002 * dt / (lam * di * (dt - di)))
+    if stim < (hrs - hts) / dt:
+        k = int(nu.argmax())
+        return dict(los=True, points=[dict(d_km=float(di[k]), h_m=float(gi[k] + bulge[k]),
+                                           kind="dominant edge", nu=float(nu[k]))])
+    kt, kr = int(stim_i.argmax()), int(srim_i.argmax())
+    dbp = (hrs - hts + srim * dt) / (stim + srim)
+    hbp = hts + stim * dbp
+    nub = (hbp - (hts * (dt - dbp) + hrs * dbp) / dt) * np.sqrt(0.002 * dt / (lam * dbp * (dt - dbp)))
+    pts = [dict(d_km=float(di[kt]), h_m=float(gi[kt] + bulge[kt]), kind="Tx horizon"),
+           dict(d_km=float(di[kr]), h_m=float(gi[kr] + bulge[kr]), kind="Rx horizon"),
+           dict(d_km=float(dbp), h_m=float(hbp), kind="Bullington point", nu=float(nub))]
+    return dict(los=False, points=pts)

@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from . import geo, itu_maps
-from .p1812 import P1812Params, free_space_loss, path_loss, path_loss_batch
+from .p1812 import P1812Params, diffraction_points, free_space_loss, path_loss, path_loss_batch
 
 # Samples along a radial, azimuth cap for a full circle, raster pixel cap
 PRESETS = {
@@ -217,11 +217,15 @@ def _to_mercator(spec, lb, az0, daz, n_az, full, ds, rmax, max_px):
 def compute_profile(provider, tx_lat, tx_lon, rx_lat, rx_lon, htg, hrg, f_mhz,
                     model="p1812", p=50.0, pl=50.0, sigma_l=0.0, pol=2,
                     k_factor=None, use_clutter=False, max_points=2500):
-    """Full-resolution point-to-point profile and loss (used by probes)."""
+    """Full-resolution point-to-point profile and loss (probes and path calculator).
+
+    max_points: number of terrain samples ("Automatic" = up to 2500, about 2 m minimum spacing).
+    """
     dist, brg = geo.distance_bearing(tx_lat, tx_lon, rx_lat, rx_lon)
     dist = float(dist)
     if dist < 20.0:
         raise ValueError("Receiver is within 20 m of the transmitter; move the probe further away.")
+    max_points = int(min(max(max_points, 5), 10000))
     ds = max(dist / (max_points - 1), 2.0)
     n = max(int(math.ceil(dist / ds)) + 1, 5)
     d_m = np.linspace(0.0, dist, n)
@@ -234,8 +238,12 @@ def compute_profile(provider, tx_lat, tx_lon, rx_lat, rx_lon, htg, hrg, f_mhz,
                       sigma_l=sigma_l, pol=pol, dn=dn, n0=n0)
     lb, info = path_loss(d_m / 1000.0, h, prm, phi=mid, clutter=clutter, model=model,
                          k_factor=k_factor, details=True)
-    k_eff = k_factor if k_factor else 157.0 / (157.0 - dn)
+    k50 = 157.0 / (157.0 - dn)
+    k_eff = k_factor if (k_factor and model != "p1812") else k50
+    g = h + (clutter if clutter is not None else 0.0)
+    ctrl = diffraction_points(d_m / 1000.0, g, h[0] + htg, h[-1] + hrg, 6371.0 * k_eff, f_mhz / 1000.0)
     return dict(
+        control_points=ctrl, n_points=n, sample_m=float(d_m[1] - d_m[0]),
         distance_m=dist, bearing_deg=float(brg), d_km=(d_m / 1000.0).round(5).tolist(),
         h=np.round(h, 2).tolist(),
         clutter=None if clutter is None else np.round(clutter, 1).tolist(),

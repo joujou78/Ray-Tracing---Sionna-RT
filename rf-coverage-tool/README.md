@@ -18,6 +18,22 @@ python scripts/fetch_itu_maps.py      # once: ITU-R P.1812-8 ΔN / N0 maps (not 
 
 Press **Demo**, or place a TX and press **Compute coverage**.
 
+## Path loss calculator (`/pathloss.html`)
+
+Point-to-point companion page (like rfconsult.uk/pathloss):
+
+* Place TX and RX on the map, type coordinates, or enter a **grid reference**:
+  OS National Grid (`SK 086 875`) or Maidenhead locator (`IO93AK`). Both forms are shown for placed sites.
+* Inputs: frequency, effective Earth k (P.526 models), terrain samples (Automatic or a fixed 201 to 2001),
+  model (single knife-edge, delta-Bullington, P.1812-8, free space), antenna heights and gains,
+  optional TX power and feeder losses.
+* Results: distance, forward/reverse bearing, free-space loss, diffraction loss, basic loss Lb,
+  antenna-to-antenna loss (Lb − Gt − Gr), received level, LOS / Fresnel clearance.
+* Cross-section: terrain on effective-Earth curvature, clutter, direct ray, 60 % and 100 % first Fresnel
+  zones, and **diffraction control points** (dominant edge for LoS; TX/RX horizon obstacles and the
+  Bullington point for NLoS), also marked on the map.
+* Swap TX/RX, Clear, Notes, Save/Load JSON. Deep link: `pathloss.html?tx=lat,lon&rx=lat,lon`.
+
 ## Architecture
 
 ```
@@ -32,8 +48,9 @@ frontend/ (vanilla JS + Leaflet)          backend/rfcov (FastAPI + NumPy)
 | Endpoint | Purpose |
 |---|---|
 | `POST /api/coverage` | Basic transmission loss raster (float32, base64) on Web-Mercator bounds |
-| `POST /api/profile` | Full-resolution TX→RX profile, Lb and model breakdown (Lbfs, Ld, Lbs, Lba) |
+| `POST /api/profile` | Full-resolution TX→RX profile, Lb, model breakdown (Lbfs, Ld, Lbs, Lba), diffraction control points |
 | `GET /api/elevation` | Ground height at a point |
+| `GET /api/grid` | WGS84 ↔ OS National Grid reference (pyproj, OSGB36 datum shift) |
 | `GET /api/health` | Status, ITU maps present, terrain source |
 
 **Key design choice:** the server returns *basic transmission loss* only. Power,

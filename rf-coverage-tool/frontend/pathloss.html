@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RF Pathloss Calculator</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="pathloss">
+<header class="topbar">
+  <div class="brand"><span class="dot"></span> RF Pathloss Calculator
+    <small>Terrain · LiDAR clutter · Fresnel clearance · selectable propagation models</small></div>
+  <nav class="actions">
+    <a class="ghost button" href="index.html">Coverage map</a>
+    <button id="btn-save" class="ghost">Save JSON</button>
+    <label class="ghost button">Load JSON<input id="file-load" type="file" accept=".json,application/json" hidden></label>
+  </nav>
+</header>
+
+<main class="layout">
+  <aside class="sidebar">
+    <section class="panel">
+      <h2>Path</h2>
+      <div class="grid2">
+        <label>Frequency (MHz)<input id="freq" type="number" min="30" max="6000" step="0.01" value="433.92"></label>
+        <label>Effective Earth k<input id="kfac" type="number" min="0.5" max="10" step="0.001" value="1.333"></label>
+        <label>Terrain samples
+          <select id="samples">
+            <option value="">Automatic</option>
+            <option>201</option><option>401</option><option>801</option><option>1201</option><option>2001</option>
+          </select>
+        </label>
+        <label>Polarisation
+          <select id="pol"><option value="v">Vertical</option><option value="h">Horizontal</option></select>
+        </label>
+      </div>
+      <label>Propagation model
+        <select id="model">
+          <option value="knife_edge">Single knife-edge</option>
+          <option value="delta_bullington" selected>Delta-Bullington (ITU-R P.526-16)</option>
+          <option value="p1812">ITU-R P.1812-8 (terrain, time/location %)</option>
+          <option value="fspl">Free space</option>
+        </select>
+      </label>
+      <div class="grid2" id="p1812-fields" hidden>
+        <label>Time (%)<input id="time-pct" type="number" min="1" max="50" step="1" value="50"></label>
+        <label>Locations (%)<input id="loc-pct" type="number" min="1" max="99" step="1" value="50"></label>
+      </div>
+      <p id="k-note" class="note" hidden>P.1812 derives k<sub>50</sub> from the ITU ΔN map; the k field is ignored.</p>
+      <label class="check"><input id="clutter" type="checkbox"> Use LiDAR clutter (local DSM in data/dsm/)</label>
+      <label class="check"><input id="show-xs" type="checkbox" checked> Show terrain cross-section</label>
+    </section>
+
+    <section class="panel site" data-site="tx">
+      <h2><span class="site-dot tx"></span> TX site</h2>
+      <div class="row">
+        <label class="grow">Grid (OS ref or locator)<input id="tx-grid" type="text" placeholder="SK 570 395 or IO92KW" spellcheck="false"></label>
+        <button id="btn-place-tx" class="mode">Place TX</button>
+      </div>
+      <div class="grid2">
+        <label>Latitude<input id="tx-lat" type="number" step="0.00001" placeholder="Click map"></label>
+        <label>Longitude<input id="tx-lon" type="number" step="0.00001" placeholder="Click map"></label>
+        <label>Antenna height AGL (m)<input id="tx-h" type="number" min="1" step="0.5" value="10"></label>
+        <label>Antenna gain (dBi)<input id="tx-g" type="number" step="0.1" value="0"></label>
+      </div>
+      <div class="kv"><span>Ground AMSL</span><output id="tx-ground">-</output></div>
+    </section>
+
+    <section class="panel site" data-site="rx">
+      <h2><span class="site-dot rx"></span> RX site</h2>
+      <div class="row">
+        <label class="grow">Grid (OS ref or locator)<input id="rx-grid" type="text" placeholder="SK 570 395 or IO92KW" spellcheck="false"></label>
+        <button id="btn-place-rx" class="mode">Place RX</button>
+      </div>
+      <div class="grid2">
+        <label>Latitude<input id="rx-lat" type="number" step="0.00001" placeholder="Click map"></label>
+        <label>Longitude<input id="rx-lon" type="number" step="0.00001" placeholder="Click map"></label>
+        <label>Antenna height AGL (m)<input id="rx-h" type="number" min="1" step="0.5" value="10"></label>
+        <label>Antenna gain (dBi)<input id="rx-g" type="number" step="0.1" value="0"></label>
+      </div>
+      <div class="kv"><span>Ground AMSL</span><output id="rx-ground">-</output></div>
+    </section>
+
+    <section class="panel">
+      <details class="adv">
+        <summary>Link budget (optional)</summary>
+        <div class="grid3">
+          <label>TX power (dBm)<input id="tx-p" type="number" step="0.5" value="10"></label>
+          <label>TX feeder (dB)<input id="tx-l" type="number" step="0.1" min="0" value="0"></label>
+          <label>RX feeder (dB)<input id="rx-l" type="number" step="0.1" min="0" value="0"></label>
+        </div>
+      </details>
+      <div class="row">
+        <button id="btn-swap" class="ghost">Swap TX / RX</button>
+        <button id="btn-clear" class="ghost">Clear</button>
+        <button id="btn-notes" class="ghost">Notes</button>
+      </div>
+      <button id="btn-calc" class="primary wide">Calculate path</button>
+      <p id="status" class="note">Place TX and RX on the map, then calculate.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Results</h2>
+      <div class="results" id="results">
+        <div><span>Distance</span><b id="r-dist">-</b></div>
+        <div><span>Bearing TX→RX / RX→TX</span><b id="r-brg">-</b></div>
+        <div><span>Free-space loss</span><b id="r-fsl">-</b></div>
+        <div><span>Diffraction loss</span><b id="r-ld">-</b></div>
+        <div><span>Basic propagation loss L<sub>b</sub></span><b id="r-lb">-</b></div>
+        <div><span>Antenna-to-antenna loss (L<sub>b</sub> − G<sub>t</sub> − G<sub>r</sub>)</span><b id="r-net">-</b></div>
+        <div><span>Received level</span><b id="r-prx">-</b></div>
+        <div><span>LOS / Fresnel</span><b id="r-los">-</b></div>
+      </div>
+      <div id="r-extra" class="meta"></div>
+    </section>
+    <footer class="credits">
+      Terrain: AWS Terrain Tiles (Mapzen; EA LiDAR DTM over England, SRTM and others elsewhere) or your local DTM/DSM.
+      Base map © OpenStreetMap contributors. Planning aid only.
+    </footer>
+  </aside>
+
+  <div class="mapwrap stacked">
+    <div id="map"></div>
+    <div id="busy" class="busy" hidden><div class="spinner"></div><span>Calculating…</span></div>
+    <section id="xs" class="xs">
+      <header>
+        <strong>Terrain cross-section</strong>
+        <span id="xs-info" class="pf-info">No path calculated</span>
+      </header>
+      <canvas id="pf-canvas"></canvas>
+      <div class="pf-legend">
+        <span><i class="sw terrain"></i>Terrain or LiDAR surface with effective Earth curvature</span>
+        <span><i class="sw clutter"></i>Clutter</span>
+        <span><i class="sw ray"></i>Direct TX–RX ray</span>
+        <span><i class="sw f60"></i>60% first Fresnel zone</span>
+        <span><i class="sw f100"></i>100% first Fresnel zone</span>
+        <span><i class="sw ctrl"></i>Diffraction control point(s)</span>
+      </div>
+    </section>
+  </div>
+</main>
+
+<dialog id="notes" class="notes">
+  <h3>Notes</h3>
+  <ul>
+    <li><b>Single knife-edge</b>: free-space loss plus J(ν) of the dominant edge, ν from the largest
+      Fresnel–Kirchhoff parameter along the path with effective-Earth curvature (ITU-R P.526).</li>
+    <li><b>Delta-Bullington</b>: Bullington construction on the actual profile, corrected by the
+      spherical-Earth loss minus Bullington on a smooth profile (ITU-R P.526-16 §4.5, as used in P.1812-8 §4.3).
+      Median loss, using the k entered.</li>
+    <li><b>ITU-R P.1812-8</b>: full method (line-of-sight with multipath/focusing, delta-Bullington diffraction,
+      troposcatter, ducting/layer reflection), time % and location %. ΔN and N<sub>0</sub> come from the ITU maps.
+      Validated against the ITU-R SG3/Ofcom test set (land paths). Land paths only in this tool.</li>
+    <li><b>Control points</b>: line of sight shows the dominant edge. Beyond line of sight shows the
+      TX and RX horizon obstacles and the Bullington point where the two horizon rays meet.</li>
+    <li><b>Fresnel</b>: clearance is reported as the smallest (ray − surface) / r<sub>1</sub> along the path.
+      ≥ 60 % of the first zone is the usual “clear” criterion.</li>
+    <li><b>Grid</b>: enter an OS National Grid reference (e.g. <code>SK 570 395</code>) or a Maidenhead
+      locator (e.g. <code>IO92KW</code>). Placing a site fills both forms.</li>
+    <li>Planning aid only. Verify critical links with measurements.</li>
+  </ul>
+  <form method="dialog"><button class="primary">Close</button></form>
+</dialog>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="js/profile.js"></script>
+<script src="js/pathloss.js"></script>
+</body>
+</html>
