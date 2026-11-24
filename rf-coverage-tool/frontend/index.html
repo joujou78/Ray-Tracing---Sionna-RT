@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RF Coverage Mapper</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="dot"></span> RF Coverage Mapper <small>ITU-R P.1812-8 · P.526</small></div>
+  <div class="actions">
+    <button id="btn-demo" class="ghost">Demo</button>
+    <button id="btn-save" class="ghost">Save JSON</button>
+    <label class="ghost button">Load JSON<input id="file-load" type="file" accept=".json,application/json" hidden></label>
+    <button id="btn-png" class="ghost">Export PNG</button>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="sidebar" id="sidebar">
+
+    <section class="panel">
+      <h2>Transmitter</h2>
+      <div class="row">
+        <button id="btn-place-tx" class="mode">Place TX</button>
+        <span class="hint">or drag the marker</span>
+      </div>
+      <div class="grid2">
+        <label>Latitude<input id="tx-lat" type="number" step="0.00001"></label>
+        <label>Longitude<input id="tx-lon" type="number" step="0.00001"></label>
+        <label>Frequency (MHz)<input id="freq" type="number" min="30" max="6000" step="1" value="915" data-recompute></label>
+        <label>Antenna height AGL (m)<input id="tx-h" type="number" min="1" step="1" value="30" data-recompute></label>
+        <label>Power (dBm)<input id="tx-p" type="number" step="0.5" value="43"></label>
+        <label>Gain (dBi)<input id="tx-g" type="number" step="0.1" value="10"></label>
+        <label>Feeder loss (dB)<input id="tx-l" type="number" step="0.1" min="0" value="2"></label>
+        <label>Ground AMSL<output id="tx-ground">-</output></label>
+      </div>
+      <label>Azimuth pattern
+        <select id="pattern">
+          <option value="omni">Omnidirectional</option>
+          <option value="dir">Directional (parabolic, F/B limited)</option>
+        </select>
+      </label>
+      <div class="grid3" id="dir-fields" hidden>
+        <label>Azimuth (°T)<input id="az" type="number" step="1" value="0"></label>
+        <label>3 dB width (°)<input id="bw" type="number" min="1" max="360" step="1" value="65"></label>
+        <label>F/B (dB)<input id="fb" type="number" min="0" step="1" value="25"></label>
+      </div>
+      <div class="kv"><span>EIRP</span><output id="eirp">-</output></div>
+    </section>
+
+    <section class="panel">
+      <h2>Coverage</h2>
+      <div class="grid2">
+        <label>Area
+          <select id="area" data-recompute>
+            <option value="radius">Radius around TX</option>
+            <option value="view">Current map view</option>
+          </select>
+        </label>
+        <label>Resolution
+          <select id="res">
+            <option value="draft">Draft (fast)</option>
+            <option value="standard" selected>Standard</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+        <label>Radius (km)<input id="radius" type="number" min="0.5" max="150" step="0.5" value="20" data-recompute></label>
+        <label>RX height AGL (m)<input id="rx-h" type="number" min="1" step="0.5" value="1.5" data-recompute></label>
+      </div>
+      <label>Propagation model
+        <select id="model" data-recompute>
+          <option value="p1812">ITU-R P.1812-8 (terrain, time/location %)</option>
+          <option value="delta_bullington">Delta-Bullington (P.526-16 §4.5)</option>
+          <option value="knife_edge">Single knife-edge (P.526)</option>
+          <option value="fspl">Free space</option>
+        </select>
+      </label>
+      <details class="adv">
+        <summary>Advanced</summary>
+        <div class="grid2">
+          <label>Time (%)<input id="time-pct" type="number" min="1" max="50" step="1" value="50" data-recompute></label>
+          <label>Locations (%)<input id="loc-pct" type="number" min="1" max="99" step="1" value="50" data-recompute></label>
+          <label>σ<sub>L</sub> (dB)<input id="sigma-l" type="number" min="0" max="20" step="0.5" value="0" data-recompute></label>
+          <label>Polarisation
+            <select id="pol" data-recompute><option value="v">Vertical</option><option value="h">Horizontal</option></select>
+          </label>
+          <label>Effective Earth k<input id="kfac" type="number" min="0.5" max="10" step="0.01" placeholder="ITU ΔN" data-recompute></label>
+          <label>Terrain
+            <select id="terrain" data-recompute>
+              <option value="auto">Auto (local DTM → tiles)</option>
+              <option value="terrarium">Terrain tiles only</option>
+              <option value="local">Local DTM only</option>
+            </select>
+          </label>
+        </div>
+        <label class="check"><input id="clutter" type="checkbox" data-recompute> Use clutter heights (needs local DSM)</label>
+        <p class="note">k applies to the P.526 models. P.1812 derives k<sub>50</sub> from the ITU ΔN map.</p>
+      </details>
+      <div class="row">
+        <button id="btn-compute" class="primary">Compute coverage</button>
+        <span id="status" class="status"></span>
+      </div>
+      <div id="stale" class="warn" hidden>Inputs changed since the last run. Recompute to update.</div>
+      <div id="meta" class="meta"></div>
+      <p class="note">Tip: compute a wide radius first, then use “Current map view” for a sharper patch. Power, gains, pattern and colours update without recomputing.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Receiver</h2>
+      <div class="grid2">
+        <label>RX gain (dBi)<input id="rx-g" type="number" step="0.1" value="0"></label>
+        <label>RX feeder loss (dB)<input id="rx-l" type="number" step="0.1" min="0" value="0"></label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Display</h2>
+      <div class="grid3">
+        <label>Min (dBm)<input id="vmin" type="number" step="1" value="-110"></label>
+        <label>Max (dBm)<input id="vmax" type="number" step="1" value="-50"></label>
+        <label>Bands (dB)<input id="bands" type="number" min="0" step="1" value="10" title="0 = smooth"></label>
+      </div>
+      <div class="grid2">
+        <label>Colour scheme
+          <select id="cmap">
+            <option value="rainbow">Rainbow</option>
+            <option value="viridis">Viridis</option>
+            <option value="rdgn">Red → green</option>
+            <option value="blue">Blue</option>
+          </select>
+        </label>
+        <label>Opacity <output id="op-val">65%</output><input id="opacity" type="range" min="0" max="100" value="65"></label>
+      </div>
+      <label class="check"><input id="contours" type="checkbox" checked> Contour lines at band edges</label>
+      <label class="check"><input id="show-below" type="checkbox"> Shade values below Min</label>
+      <button id="btn-clear" class="ghost">Clear coverage</button>
+    </section>
+
+    <section class="panel">
+      <h2>Probes</h2>
+      <div class="row">
+        <button id="btn-place-probe" class="mode">Place probe</button>
+        <button id="btn-clear-probes" class="ghost">Clear probes</button>
+      </div>
+      <div class="grid3">
+        <label>Height AGL (m)<input id="pr-h" type="number" min="1" step="0.5" value="1.5"></label>
+        <label>Gain (dBi)<input id="pr-g" type="number" step="0.1" value="0"></label>
+        <label>Feeder loss (dB)<input id="pr-l" type="number" step="0.1" min="0" value="0"></label>
+      </div>
+      <ol id="probe-list" class="probes"></ol>
+      <p class="note">Click anywhere on the coverage for a quick dBm read-out. Probes run a full-resolution profile.</p>
+    </section>
+
+    <footer class="credits">
+      Terrain: AWS Terrain Tiles (Mapzen; EA LiDAR DTM over England, SRTM and others elsewhere) or your local DTM.
+      Base map © OpenStreetMap contributors. Planning aid only; verify with measurements.
+    </footer>
+  </aside>
+
+  <div class="mapwrap">
+    <div id="map"></div>
+    <div id="busy" class="busy" hidden><div class="spinner"></div><span id="busy-text">Computing…</span></div>
+    <section id="profile" class="profile" hidden>
+      <header>
+        <strong id="pf-title">Path cross-section</strong>
+        <span id="pf-info" class="pf-info"></span>
+        <button id="pf-close" class="ghost small">Close</button>
+      </header>
+      <div class="pf-body">
+        <canvas id="pf-canvas"></canvas>
+        <div id="pf-side" class="pf-side"></div>
+      </div>
+      <div class="pf-legend">
+        <span><i class="sw terrain"></i>Terrain (effective-Earth curvature)</span>
+        <span><i class="sw clutter"></i>Clutter</span>
+        <span><i class="sw ray"></i>Direct TX→RX ray</span>
+        <span><i class="sw f60"></i>60% 1st Fresnel</span>
+        <span><i class="sw f100"></i>100% 1st Fresnel</span>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="js/colormaps.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
