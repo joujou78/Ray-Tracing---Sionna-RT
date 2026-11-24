@@ -252,3 +252,22 @@ def compute_profile(provider, tx_lat, tx_lon, rx_lat, rx_lon, htg, hrg, f_mhz,
         k_eff=k_eff, dn=dn, n0=n0, terrain_zoom=zoom,
         tx_ground=float(h[0]), rx_ground=float(h[-1]),
     )
+
+
+def clutter_raster(provider, bbox, max_px=700):
+    """Representative clutter heights (DSM - DTM) on a Web-Mercator grid covering bbox."""
+    s, w, n, e = bbox
+    x0, y0 = geo.lonlat_to_merc(w, s)
+    x1, y1 = geo.lonlat_to_merc(e, n)
+    px = max((x1 - x0), (y1 - y0)) / max_px
+    W = max(2, int(math.ceil((x1 - x0) / px)))
+    H = max(2, int(math.ceil((y1 - y0) / px)))
+    xs = x0 + (np.arange(W) + 0.5) * (x1 - x0) / W
+    ys = y1 - (np.arange(H) + 0.5) * (y1 - y0) / H
+    lon, lat = geo.merc_to_lonlat(xs[None, :], ys[:, None])
+    lon, lat = np.broadcast_arrays(lon, lat)
+    res_m = px * math.cos(math.radians(0.5 * (s + n)))
+    r = provider.clutter(lat, lon, res_m=res_m)
+    if r is None:
+        r = np.zeros(lat.shape)
+    return dict(r=r.astype(np.float32), width=W, height=H, bounds=[s, w, n, e], res_m=res_m)

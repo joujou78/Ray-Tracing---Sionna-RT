@@ -193,7 +193,10 @@ class GeoTiffProvider:
             if not inside.any():
                 continue
             with rasterio.open(it["path"]) as ds:
-                col, row = ~ds.transform * (x[inside], y[inside])
+                inv = ~ds.transform   # affine world -> pixel (continuous)
+                xi, yi = x[inside], y[inside]
+                col = inv.a * xi + inv.b * yi + inv.c
+                row = inv.d * xi + inv.e * yi + inv.f
                 c0 = max(int(np.floor(col.min())) - 1, 0)
                 r0 = max(int(np.floor(row.min())) - 1, 0)
                 c1 = min(int(np.ceil(col.max())) + 2, ds.width)

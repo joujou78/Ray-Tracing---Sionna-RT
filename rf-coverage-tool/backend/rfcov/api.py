@@ -18,7 +18,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import itu_maps
-from .coverage import CoverageSpec, compute_coverage, compute_profile
+from .coverage import CoverageSpec, clutter_raster, compute_coverage, compute_profile
+from .p2108 import terminal_clutter
 from .terrain import make_provider
 
 log = logging.getLogger("rfcov")
@@ -48,6 +49,9 @@ class Common(BaseModel):
     k_factor: Optional[float] = Field(None, gt=0.3, le=10, description="P.526 models only")
     terrain: Literal["auto", "terrarium", "local"] = "auto"
     clutter: bool = False
+    rx_clutter: Literal["none", "water", "open", "suburban", "urban", "dense_urban"] = Field(
+        "none", description="ITU-R P.2108 §3.1 terminal clutter at the Rx")
+    rx_clutter_height: Optional[float] = Field(None, gt=0, le=100, description="Override representative R, m")
 
 
 class CoverageRequest(Common):
@@ -84,8 +88,10 @@ def elevation(lat: float = Query(..., ge=-85, le=85), lon: float = Query(..., ge
 def coverage(req: CoverageRequest):
     if req.area == "view" and (not req.bbox or len(req.bbox) != 4):
         raise HTTPException(422, "area='view' needs bbox [south, west, north, east]")
+    ah, hrg_eff, note = terminal_clutter(req.freq_mhz / 1000.0, req.rx_height, req.rx_clutter,
+                                         req.rx_clutter_height)
     spec = CoverageSpec(
-        tx_lat=req.lat, tx_lon=req.lon, htg=req.tx_height, hrg=req.rx_height,
+        tx_lat=req.lat, tx_lon=req.lon, htg=req.tx_height, hrg=hrg_eff,
         f_mhz=req.freq_mhz, model=req.model, radius_km=req.radius_km,
         bbox=tuple(req.bbox) if req.area == "view" else None, resolution=req.resolution,
         p=req.time_pct, pl=req.loc_pct, sigma_l=req.sigma_loc,
@@ -96,7 +102,9 @@ def coverage(req: CoverageRequest):
     except Exception as exc:  # surface terrain/network errors clearly
         log.exception("coverage failed")
         raise HTTPException(500, f"Coverage computation failed: {exc}") from exc
-    lb = res.pop("lb")
+    lb = res.pop("lb") + np.float32(ah)
+    res["meta"]["rx_clutter"] = {"category": req.rx_clutter, "Ah_dB": round(ah, 2),
+                                 "path_rx_height_m": hrg_eff, "note": note}
     res["lb_b64"] = base64.b64encode(np.ascontiguousarray(lb, dtype="<f4").tobytes()).decode()
     res["tx"] = {"lat": req.lat, "lon": req.lon}
     return res
@@ -105,17 +113,45 @@ def coverage(req: CoverageRequest):
 @app.post("/api/profile")
 def profile(req: ProfileRequest):
     try:
-        return compute_profile(
+        ah, hrg_eff, note = terminal_clutter(req.freq_mhz / 1000.0, req.rx_height, req.rx_clutter,
+                                             req.rx_clutter_height)
+        out = compute_profile(
             provider(req.terrain), req.tx_lat, req.tx_lon, req.rx_lat, req.rx_lon,
-            req.tx_height, req.rx_height, req.freq_mhz, model=req.model, p=req.time_pct,
+            req.tx_height, hrg_eff, req.freq_mhz, model=req.model, p=req.time_pct,
             pl=req.loc_pct, sigma_l=req.sigma_loc, pol=1 if req.polarization == "h" else 2,
             k_factor=req.k_factor, use_clutter=req.clutter, max_points=req.samples or 2500,
         )
+        out["lb_path"] = out["lb"]
+        out["lb"] = out["lb"] + ah
+        out["rx_clutter"] = {"category": req.rx_clutter, "Ah_dB": round(ah, 2),
+                             "path_rx_height_m": hrg_eff, "note": note}
+        return out
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
     except Exception as exc:
         log.exception("profile failed")
         raise HTTPException(500, f"Profile computation failed: {exc}") from exc
+
+
+@app.get("/api/clutter")
+def clutter(south: float, west: float, north: float, east: float, max_px: int = Query(700, ge=50, le=2000)):
+    """Clutter height raster R = DSM - DTM (local LiDAR) for the map view, Web-Mercator grid."""
+    prov = provider("local") if _has_local() else None
+    if prov is None or not getattr(prov, "dsm", None):
+        return {"available": False,
+                "reason": "No local DSM/DTM rasters. Put EA LiDAR DTM tiles in data/dtm/ and DSM tiles in data/dsm/."}
+    res = clutter_raster(prov, (south, west, north, east), max_px=max_px)
+    r = res.pop("r")
+    res["available"] = True
+    res["r_b64"] = base64.b64encode(np.ascontiguousarray(r, dtype="<f4").tobytes()).decode()
+    return res
+
+
+def _has_local() -> bool:
+    try:
+        return bool(getattr(provider("local"), "dtm", None))
+    except Exception:  # rasterio missing etc.
+        return False
 
 
 @app.get("/api/grid")

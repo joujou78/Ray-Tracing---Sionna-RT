@@ -77,6 +77,11 @@
     },
   });
   new Readout().addTo(map);
+  const Coords = L.Control.extend({
+    options: { position: "bottomleft" },
+    onAdd() { const d = L.DomUtil.create("div", "coords"); d.id = "coords"; d.textContent = "-"; return d; },
+  });
+  new Coords().addTo(map);
 
   // ------------------------------------------------------------ geo helpers
   function distBearing(lat1, lon1, lat2, lon2) {
@@ -116,6 +121,7 @@
     $("tx-lon").value = state.tx.lon.toFixed(5);
     txMarker.setLatLng([state.tx.lat, state.tx.lon]);
     if (pan) map.panTo([state.tx.lat, state.tx.lon]);
+    Grid.label(state.tx.lat, state.tx.lon).then((t) => { $("tx-grid").value = t; $("tx-grid").dataset.auto = t; });
     fetchGround();
     markStale();
     refreshProbes();
@@ -142,6 +148,7 @@
       resolution: $("res").value, time_pct: num("time-pct"), loc_pct: num("loc-pct"),
       sigma_loc: num("sigma-l"), polarization: $("pol").value,
       k_factor: isFinite(k) ? k : null, terrain: $("terrain").value, clutter: $("clutter").checked,
+      rx_clutter: $("rx-clutter").value,
     };
     if (req.area === "view") {
       const b = map.getBounds();
@@ -154,7 +161,7 @@
     if (!state.result) return;
     const now = computeInputs(), then = state.result.inputs;
     const keys = ["lat", "lon", "freq_mhz", "tx_height", "rx_height", "model", "time_pct", "loc_pct",
-      "sigma_loc", "polarization", "k_factor", "terrain", "clutter"];
+      "sigma_loc", "polarization", "k_factor", "terrain", "clutter", "rx_clutter"];
     $("stale").hidden = keys.every((k) => now[k] === then[k]);
   }
 
@@ -217,7 +224,11 @@
     $("meta").innerHTML =
       `Model <b>${m.model}</b> · ${m.n_radials} radials × ${m.n_range} pts @ ${m.ds_m.toFixed(0)} m<br>` +
       `Terrain: ${m.terrain}${m.terrain_zoom != null ? " z" + m.terrain_zoom : ""} (${m.terrain_s}s) · propagation ${m.propagation_s}s · total ${wall.toFixed(1)}s<br>` +
-      `ΔN ${m.dn.toFixed(1)}, N₀ ${m.n0.toFixed(1)} (${ituNote})${m.clutter ? " · clutter on" : ""}`;
+      `ΔN ${m.dn.toFixed(1)}, N₀ ${m.n0.toFixed(1)} (${ituNote})${m.clutter ? " · LiDAR clutter on" : ""}` +
+      (m.rx_clutter && m.rx_clutter.category !== "none"
+        ? `<br>P.2108 RX clutter: ${m.rx_clutter.category}, A<sub>h</sub> ${m.rx_clutter.Ah_dB.toFixed(1)} dB, path RX height ${m.rx_clutter.path_rx_height_m} m` +
+          (m.rx_clutter.note ? ` (${m.rx_clutter.note})` : "")
+        : "");
   }
 
   // ---------------------------------------------------------------- render
@@ -289,6 +300,7 @@
       state.overlay = L.imageOverlay(url, [[s, w], [n, e]], { opacity: dp.opacity, interactive: false }).addTo(map);
       state.overlay.getElement().style.imageRendering = "pixelated";
     }
+    window.dispatchEvent(new Event("coverage-render"));
   }
 
   function drawLegend() {
@@ -360,6 +372,7 @@
       model: $("model").value, time_pct: num("time-pct"), loc_pct: num("loc-pct"),
       sigma_loc: num("sigma-l"), polarization: $("pol").value,
       k_factor: isFinite(k) ? k : null, terrain: $("terrain").value, clutter: $("clutter").checked,
+      rx_clutter: $("rx-clutter").value,
     };
   }
 
@@ -391,6 +404,7 @@
   function renderProbeList() {
     const ol = $("probe-list");
     ol.innerHTML = "";
+    $("probe-empty").hidden = state.probes.length > 0;
     for (const p of state.probes) {
       const li = document.createElement("li");
       const pw = probePower(p);
@@ -440,6 +454,8 @@
       ["Model", req.model], ["Path type", det.trans_horizon == null ? "-" : det.trans_horizon ? "Trans-horizon" : "Line of sight"],
       ["Free space Lbfs", fmt(det.Lbfs, " dB")], ["Diffraction Ld", fmt(det.Ld, " dB")],
       ["Troposcatter Lbs", fmt(det.Lbs, " dB")], ["Ducting Lba", fmt(det.Lba, " dB")],
+      ...(d.rx_clutter && d.rx_clutter.category !== "none"
+        ? [["P.2108 A<sub>h</sub> (RX)", fmt(d.rx_clutter.Ah_dB, " dB")]] : []),
       ["Basic loss Lb", fmt(d.lb, " dB")], ["Worst clearance", pfGeom.worst.i > 0 ? `${Math.round(pfGeom.worst.ratio * 100)} % F1 @ ${d.d_km[pfGeom.worst.i].toFixed(2)} km` : "-"],
       ["TX / RX ground", `${d.tx_ground.toFixed(1)} / ${d.rx_ground.toFixed(1)} m`],
       ["k (effective)", d.k_eff.toFixed(3)], ["ΔN / N₀", `${d.dn.toFixed(1)} / ${d.n0.toFixed(1)}`],
@@ -475,12 +491,17 @@
     if (state.mode === "tx") { setTx(lat, lng); setMode("tx"); return; }
     if (state.mode === "probe") { addProbe(lat, lng); return; }
     const lb = lbAt(lat, lng);
-    if (lb == null) return;
     const db = distBearing(state.tx.lat, state.tx.lon, lat, lng);
-    const pw = rxPower(lb, db.brg, linkParams());
-    L.popup().setLatLng(e.latlng).setContent(
-      `<b>${pw.toFixed(1)} dBm</b><br>Lb ${lb.toFixed(1)} dB<br>${(db.d / 1000).toFixed(2)} km, ${db.brg.toFixed(1)}°` +
-      `<br><a href="#" id="pop-probe">Add probe here</a>`).openOn(map);
+    const head = lb == null
+      ? "<b>No coverage computed here</b>"
+      : `<b>${rxPower(lb, db.brg, linkParams()).toFixed(1)} dBm</b><br>Lb ${lb.toFixed(1)} dB · ${(db.d / 1000).toFixed(2)} km, ${db.brg.toFixed(1)}°`;
+    const pop = L.popup().setLatLng(e.latlng).setContent(
+      `${head}<div class="popup-coords" id="pop-coords">${lat.toFixed(5)}, ${lng.toFixed(5)} · ${Grid.toLocator(lat, lng)}</div>` +
+      `<button class="popup-btn" id="pop-probe">Place probe here</button>`).openOn(map);
+    Grid.label(lat, lng).then((t) => {
+      const el = document.getElementById("pop-coords");
+      if (el && pop.isOpen()) el.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} · ${t}`;
+    });
     setTimeout(() => {
       const a = document.getElementById("pop-probe");
       if (a) a.onclick = (ev) => { ev.preventDefault(); map.closePopup(); addProbe(lat, lng); };
@@ -494,11 +515,12 @@
     let html = `${lat.toFixed(5)}, ${lng.toFixed(5)}<br>${(db.d / 1000).toFixed(2)} km @ ${db.brg.toFixed(1)}°`;
     if (lb != null) html += `<br><b>${rxPower(lb, db.brg, linkParams()).toFixed(1)} dBm</b> · Lb ${lb.toFixed(1)} dB`;
     $("readout").innerHTML = html;
+    $("coords").textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} · ${Grid.toLocator(lat, lng)}`;
   });
 
   // ------------------------------------------------------------- save/load
   const FIELDS = ["freq", "tx-h", "tx-p", "tx-g", "tx-l", "pattern", "az", "bw", "fb", "area", "res", "radius",
-    "rx-h", "model", "time-pct", "loc-pct", "sigma-l", "pol", "kfac", "terrain", "clutter", "rx-g", "rx-l",
+    "rx-h", "rx-clutter", "model", "time-pct", "loc-pct", "sigma-l", "pol", "kfac", "terrain", "clutter", "rx-g", "rx-l",
     "vmin", "vmax", "bands", "cmap", "opacity", "contours", "show-below", "pr-h", "pr-g", "pr-l"];
 
   function snapshot() {
@@ -524,7 +546,7 @@
     state.probes.slice().forEach(removeProbe);
     setTx(cfg.tx.lat, cfg.tx.lon);
     (cfg.probes || []).forEach((p) => addProbe(p.lat, p.lon));
-    updateEirp(); render();
+    modelUi(); updateEirp(); render();
   }
 
   function download(blob, name) {
@@ -636,7 +658,72 @@
   $("pr-h").addEventListener("change", refreshProbes);
   map.on("moveend", () => { if ($("area").value === "view") markStale(); });
 
+  $("tx-grid").addEventListener("change", async () => {
+    const el = $("tx-grid");
+    if (el.value === el.dataset.auto) return;          // blur after a programmatic update
+    const p = await Grid.parse(el.value);
+    if (p) { setTx(p.lat, p.lon, true); setStatus(""); }
+    else setStatus(`Could not read grid reference "${el.value}".`, true);
+  });
+  $("btn-notes").onclick = () => $("notes").showModal();
+  function modelUi() {
+    const m = $("model").value;
+    $("k-note").hidden = m !== "p1812";
+    $("kfac").disabled = m === "p1812" || m === "fspl";
+  }
+  $("model").addEventListener("change", modelUi);
+
+  // LiDAR clutter overlay (DSM - DTM from local rasters)
+  let lidarLayer = null, lidarTimer = null;
+  async function updateLidar() {
+    if (!$("show-lidar").checked) { if (lidarLayer) map.removeLayer(lidarLayer); lidarLayer = null; return; }
+    const b = map.getBounds();
+    try {
+      const j = await (await fetch(`/api/clutter?south=${b.getSouth()}&west=${b.getWest()}&north=${b.getNorth()}&east=${b.getEast()}`)).json();
+      if (!j.available) { setStatus(j.reason, true); $("show-lidar").checked = false; return; }
+      const bin = atob(j.r_b64), u8 = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      const r = new Float32Array(u8.buffer);
+      const cv = document.createElement("canvas"); cv.width = j.width; cv.height = j.height;
+      const ctx = cv.getContext("2d"), img = ctx.createImageData(j.width, j.height);
+      for (let i = 0; i < r.length; i++) {
+        const v = r[i];
+        if (!(v > 1)) continue;                            // < 1 m: bare ground
+        const t = Math.min(v / 30, 1);                     // 0-30 m: light green -> dark purple
+        img.data[i * 4] = 60 + 120 * t; img.data[i * 4 + 1] = 200 - 160 * t; img.data[i * 4 + 2] = 80 + 100 * t;
+        img.data[i * 4 + 3] = 200;
+      }
+      ctx.putImageData(img, 0, 0);
+      const [s, w, n, e] = j.bounds;
+      if (lidarLayer) map.removeLayer(lidarLayer);
+      lidarLayer = L.imageOverlay(cv.toDataURL(), [[s, w], [n, e]], { opacity: 0.8 }).addTo(map);
+    } catch (err) { setStatus(`Clutter overlay failed: ${err.message}`, true); }
+  }
+  $("show-lidar").addEventListener("change", updateLidar);
+  map.on("moveend", () => { if ($("show-lidar").checked) { clearTimeout(lidarTimer); lidarTimer = setTimeout(updateLidar, 400); } });
+
+  // Read-only API for add-ons (drive-test module)
+  window.App = {
+    map, colormap: () => Colormaps.lut($("cmap").value), display: displayParams,
+    /** Predicted received level (dBm) at a point from the current raster, or null. */
+    predictAt(lat, lon) {
+      const lb = lbAt(lat, lon);
+      if (lb == null) return null;
+      return rxPower(lb, distBearing(state.tx.lat, state.tx.lon, lat, lon).brg, linkParams());
+    },
+    hasCoverage: () => !!state.result,
+    /** Set TX position and input values (e.g. from a drive-test file header). */
+    applySetup(lat, lon, inputs) {
+      for (const [k, v] of Object.entries(inputs)) if (v != null && $(k)) $(k).value = v;
+      setTx(lat, lon, true);
+      updateEirp(); render(); markStale();
+    },
+    setStatus,
+  };
+
   // init
+  modelUi();
+  renderProbeList();
   setTx(state.tx.lat, state.tx.lon);
   updateEirp();
   drawLegend();

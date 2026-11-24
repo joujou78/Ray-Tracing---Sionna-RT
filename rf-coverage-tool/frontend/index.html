@@ -24,20 +24,21 @@
   <aside class="sidebar" id="sidebar">
 
     <section class="panel">
-      <h2>Transmitter</h2>
+      <h2><span class="site-dot tx"></span> Transmitter</h2>
       <div class="row">
+        <label class="grow">Grid (OS ref or locator)<input id="tx-grid" type="text" placeholder="SK 570 395 or IO92KW" spellcheck="false"></label>
         <button id="btn-place-tx" class="mode">Place TX</button>
-        <span class="hint">or drag the marker</span>
       </div>
       <div class="grid2">
-        <label>Latitude<input id="tx-lat" type="number" step="0.00001"></label>
-        <label>Longitude<input id="tx-lon" type="number" step="0.00001"></label>
-        <label>Frequency (MHz)<input id="freq" type="number" min="30" max="6000" step="1" value="915" data-recompute></label>
-        <label>Antenna height AGL (m)<input id="tx-h" type="number" min="1" step="1" value="30" data-recompute></label>
+        <label>Latitude<input id="tx-lat" type="number" step="0.00001" min="-85" max="85" placeholder="Click map"></label>
+        <label>Longitude<input id="tx-lon" type="number" step="0.00001" min="-180" max="180" placeholder="Click map"></label>
+        <label>Frequency (MHz)<input id="freq" type="number" min="30" max="6000" step="0.01" value="915" required data-recompute></label>
+        <label>Antenna height AGL (m)<input id="tx-h" type="number" min="1" max="3000" step="0.5" value="30" required data-recompute></label>
+      </div>
+      <div class="grid3">
         <label>Power (dBm)<input id="tx-p" type="number" step="0.5" value="43"></label>
-        <label>Gain (dBi)<input id="tx-g" type="number" step="0.1" value="10"></label>
+        <label>Gain (dBi)<input id="tx-g" type="number" step="0.01" value="10"></label>
         <label>Feeder loss (dB)<input id="tx-l" type="number" step="0.1" min="0" value="2"></label>
-        <label>Ground AMSL<output id="tx-ground">-</output></label>
       </div>
       <label>Azimuth pattern
         <select id="pattern">
@@ -46,11 +47,12 @@
         </select>
       </label>
       <div class="grid3" id="dir-fields" hidden>
-        <label>Azimuth (°T)<input id="az" type="number" step="1" value="0"></label>
+        <label>Azimuth (°T)<input id="az" type="number" step="1" min="0" max="360" value="0"></label>
         <label>3 dB width (°)<input id="bw" type="number" min="1" max="360" step="1" value="65"></label>
-        <label>F/B (dB)<input id="fb" type="number" min="0" step="1" value="25"></label>
+        <label>F/B (dB)<input id="fb" type="number" min="0" max="60" step="1" value="25"></label>
       </div>
       <div class="kv"><span>EIRP</span><output id="eirp">-</output></div>
+      <div class="kv"><span>Ground AMSL</span><output id="tx-ground">-</output></div>
     </section>
 
     <section class="panel">
@@ -70,14 +72,30 @@
           </select>
         </label>
         <label>Radius (km)<input id="radius" type="number" min="0.5" max="150" step="0.5" value="20" data-recompute></label>
-        <label>RX height AGL (m)<input id="rx-h" type="number" min="1" step="0.5" value="1.5" data-recompute></label>
+        <label>Effective Earth k<input id="kfac" type="number" min="0.5" max="10" step="0.001" value="1.333" data-recompute></label>
       </div>
       <label>Propagation model
         <select id="model" data-recompute>
           <option value="p1812">ITU-R P.1812-8 (terrain, time/location %)</option>
-          <option value="delta_bullington">Delta-Bullington (P.526-16 §4.5)</option>
+          <option value="delta_bullington">Delta-Bullington (ITU-R P.526-16)</option>
           <option value="knife_edge">Single knife-edge (P.526)</option>
           <option value="fspl">Free space</option>
+        </select>
+      </label>
+      <p id="k-note" class="note" hidden>P.1812 derives k<sub>50</sub> from the ITU ΔN map; the k field is ignored.</p>
+      <div class="grid3">
+        <label>RX height AGL (m)<input id="rx-h" type="number" min="1" max="3000" step="0.5" value="1.5" required data-recompute></label>
+        <label>RX gain (dBi)<input id="rx-g" type="number" step="0.01" value="0"></label>
+        <label>RX feeder loss (dB)<input id="rx-l" type="number" step="0.1" min="0" value="0"></label>
+      </div>
+      <label>RX environment (ITU-R P.2108 terminal clutter)
+        <select id="rx-clutter" data-recompute>
+          <option value="none">None (antenna in the open)</option>
+          <option value="open">Open / rural (R = 10 m)</option>
+          <option value="suburban">Suburban (R = 10 m)</option>
+          <option value="urban">Urban / trees / forest (R = 15 m)</option>
+          <option value="dense_urban">Dense urban (R = 20 m)</option>
+          <option value="water">Water / sea (R = 10 m)</option>
         </select>
       </label>
       <details class="adv">
@@ -89,7 +107,6 @@
           <label>Polarisation
             <select id="pol" data-recompute><option value="v">Vertical</option><option value="h">Horizontal</option></select>
           </label>
-          <label>Effective Earth k<input id="kfac" type="number" min="0.5" max="10" step="0.01" placeholder="ITU ΔN" data-recompute></label>
           <label>Terrain
             <select id="terrain" data-recompute>
               <option value="auto">Auto (local DTM → tiles)</option>
@@ -98,24 +115,13 @@
             </select>
           </label>
         </div>
-        <label class="check"><input id="clutter" type="checkbox" data-recompute> Use clutter heights (needs local DSM)</label>
-        <p class="note">k applies to the P.526 models. P.1812 derives k<sub>50</sub> from the ITU ΔN map.</p>
+        <label class="check"><input id="clutter" type="checkbox" data-recompute> Use LiDAR clutter in the path profile (local DSM)</label>
       </details>
-      <div class="row">
-        <button id="btn-compute" class="primary">Compute coverage</button>
-        <span id="status" class="status"></span>
-      </div>
+      <button id="btn-compute" class="primary wide">Compute coverage</button>
+      <p id="status" class="status note">Click “Place TX”, then click the map (or type coordinates / a grid reference).</p>
       <div id="stale" class="warn" hidden>Inputs changed since the last run. Recompute to update.</div>
       <div id="meta" class="meta"></div>
       <p class="note">Tip: compute a wide radius first, then use “Current map view” for a sharper patch. Power, gains, pattern and colours update without recomputing.</p>
-    </section>
-
-    <section class="panel">
-      <h2>Receiver</h2>
-      <div class="grid2">
-        <label>RX gain (dBi)<input id="rx-g" type="number" step="0.1" value="0"></label>
-        <label>RX feeder loss (dB)<input id="rx-l" type="number" step="0.1" min="0" value="0"></label>
-      </div>
     </section>
 
     <section class="panel">
@@ -123,10 +129,10 @@
       <div class="grid3">
         <label>Min (dBm)<input id="vmin" type="number" step="1" value="-110"></label>
         <label>Max (dBm)<input id="vmax" type="number" step="1" value="-50"></label>
-        <label>Bands (dB)<input id="bands" type="number" min="0" step="1" value="10" title="0 = smooth"></label>
+        <label>Bands (dB, 0 = smooth)<input id="bands" type="number" min="0" step="1" value="10"></label>
       </div>
       <div class="grid2">
-        <label>Colour scheme
+        <label>Colours
           <select id="cmap">
             <option value="rainbow">Rainbow</option>
             <option value="viridis">Viridis</option>
@@ -138,7 +144,11 @@
       </div>
       <label class="check"><input id="contours" type="checkbox" checked> Contour lines at band edges</label>
       <label class="check"><input id="show-below" type="checkbox"> Shade values below Min</label>
-      <button id="btn-clear" class="ghost">Clear coverage</button>
+      <label class="check"><input id="show-lidar" type="checkbox"> Show LiDAR clutter data (local DSM − DTM)</label>
+      <div class="row">
+        <button id="btn-clear" class="ghost">Clear coverage</button>
+        <button id="btn-notes" class="ghost">Notes</button>
+      </div>
     </section>
 
     <section class="panel">
@@ -149,11 +159,29 @@
       </div>
       <div class="grid3">
         <label>Height AGL (m)<input id="pr-h" type="number" min="1" step="0.5" value="1.5"></label>
-        <label>Gain (dBi)<input id="pr-g" type="number" step="0.1" value="0"></label>
+        <label>Gain (dBi)<input id="pr-g" type="number" step="0.01" value="0"></label>
         <label>Feeder loss (dB)<input id="pr-l" type="number" step="0.1" min="0" value="0"></label>
       </div>
+      <p id="probe-empty" class="note">No probes. Click “Place probe”, then click the map, or use “Place probe here” in a map popup.</p>
       <ol id="probe-list" class="probes"></ol>
-      <p class="note">Click anywhere on the coverage for a quick dBm read-out. Probes run a full-resolution profile.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Drive test</h2>
+      <div class="row">
+        <label class="ghost button">Load CSV<input id="dt-file" type="file" accept=".csv,.txt,text/csv" hidden></label>
+        <button id="dt-clear" class="ghost">Clear</button>
+        <button id="dt-export" class="ghost" disabled>Export comparison</button>
+      </div>
+      <button id="dt-apply" class="ghost wide" hidden>Use site setup from file</button>
+      <div id="dt-cols" class="grid3" hidden>
+        <label>Latitude<select id="dt-lat"></select></label>
+        <label>Longitude<select id="dt-lon"></select></label>
+        <label>Measured (dBm)<select id="dt-val"></select></label>
+      </div>
+      <label class="check"><input id="dt-show-err" type="checkbox"> Colour points by error (pred − meas)</label>
+      <div id="dt-stats" class="meta"></div>
+      <p class="note">CSV with latitude, longitude and a measured level column. Ofcom drive-test files (with the “Site latitude: …” header block) are read directly and their TX/RX setup can be applied. Predictions use the current coverage raster and link budget, so statistics update live as you change gains or the pattern.</p>
     </section>
 
     <footer class="credits">
@@ -188,8 +216,28 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<dialog id="notes" class="notes">
+  <h3>Notes</h3>
+  <ul>
+    <li><b>Received level</b> = Ptx + Gtx − Lf,tx + pattern(azimuth) − L<sub>b</sub> + Grx − Lf,rx.
+      The server computes only L<sub>b</sub>, so power, gains, pattern and colours redraw instantly.</li>
+    <li><b>ITU-R P.1812-8</b>: full method (LoS with multipath/focusing, delta-Bullington diffraction, troposcatter,
+      ducting/layer reflection), time % and location %. ΔN and N<sub>0</sub> from the ITU maps; k is derived from ΔN.
+      Validated against the ITU-R SG3/Ofcom test set on land paths. Land paths only in this tool.</li>
+    <li><b>Delta-Bullington</b> (P.526-16 §4.5) and <b>single knife-edge</b> (P.526): median loss using the k entered.</li>
+    <li><b>RX environment</b>: ITU-R P.2108 §3.1. The path is computed with the receiver raised to the representative
+      clutter height R and the height-gain or diffraction correction A<sub>h</sub> is added (0.03-3 GHz).</li>
+    <li><b>Terrain</b>: AWS Terrain Tiles (EA 2 m LiDAR DTM over England; SRTM and others elsewhere) or your own
+      DTM in data/dtm/. <b>Clutter</b> (DSM − DTM) needs local DSM tiles in data/dsm/.</li>
+    <li><b>Drive test</b>: error statistics compare the coverage raster (nearest pixel) with the measured column.</li>
+    <li>Planning aid only. Verify critical links with measurements.</li>
+  </ul>
+  <form method="dialog"><button class="primary">Close</button></form>
+</dialog>
+<script src="js/grid.js"></script>
 <script src="js/colormaps.js"></script>
 <script src="js/profile.js"></script>
 <script src="js/app.js"></script>
+<script src="js/drivetest.js"></script>
 </body>
 </html>

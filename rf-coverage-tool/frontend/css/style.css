@@ -173,3 +173,9 @@ button.wide { width: 100%; justify-content: center; margin-top: 6px; padding: 9p
 dialog.notes { max-width: 640px; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px; line-height: 1.5; }
 dialog.notes::backdrop { background: rgba(0,0,0,.55); }
 dialog.notes li { margin-bottom: 6px; }
+
+/* ---------- Coverage page additions ---------- */
+input:invalid { border-color: var(--danger); box-shadow: 0 0 0 1px var(--danger) inset; }
+.coords { background: rgba(15,20,25,.85); color: var(--text); padding: 2px 6px; border-radius: 4px; font-size: 11px; font-variant-numeric: tabular-nums; }
+.popup-coords { color: #555; font-size: 11px; }
+.popup-btn { margin-top: 6px; padding: 3px 8px; font-size: 12px; background: #fff; color: #111; border: 1px solid #999; border-radius: 4px; cursor: pointer; }

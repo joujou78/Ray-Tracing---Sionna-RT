@@ -18,6 +18,19 @@ python scripts/fetch_itu_maps.py      # once: ITU-R P.1812-8 ΔN / N0 maps (not 
 
 Press **Demo**, or place a TX and press **Compute coverage**.
 
+## Coverage page extras
+
+* **TX grid field**: OS National Grid reference or Maidenhead locator; the cursor position and every map popup
+  show both. Clicking a spot with no coverage still gives coordinates and *Place probe here*.
+* **RX environment (ITU-R P.2108 §3.1)**: none / open / suburban / urban / dense urban / water. The path is
+  computed with the RX raised to the representative clutter height R (10/15/20 m) and the height-gain or
+  diffraction correction A<sub>h</sub> is added. Applies to the coverage map and probes.
+* **LiDAR clutter overlay**: DSM − DTM from local rasters in `data/dsm/` and `data/dtm/` (`GET /api/clutter`).
+* **Drive test**: load a CSV (lat, lon, measured dBm). Ofcom drive-test files with the `Site latitude: …`
+  header are read directly, and *Use site setup from file* applies TX position, frequency, heights, powers,
+  gains and the RX chain loss (cable + splitter + filter − LNA). Points are coloured by measured level or by
+  error. Statistics (mean error, σ, RMSE, MAE, r) update live, and *Export comparison* writes a CSV.
+
 ## Path loss calculator (`/pathloss.html`)
 
 Point-to-point companion page (like rfconsult.uk/pathloss):
@@ -50,6 +63,7 @@ frontend/ (vanilla JS + Leaflet)          backend/rfcov (FastAPI + NumPy)
 | `POST /api/coverage` | Basic transmission loss raster (float32, base64) on Web-Mercator bounds |
 | `POST /api/profile` | Full-resolution TX→RX profile, Lb, model breakdown (Lbfs, Ld, Lbs, Lba), diffraction control points |
 | `GET /api/elevation` | Ground height at a point |
+| `GET /api/clutter` | Clutter heights (DSM − DTM) raster for the map view, from local LiDAR |
 | `GET /api/grid` | WGS84 ↔ OS National Grid reference (pyproj, OSGB36 datum shift) |
 | `GET /api/health` | Status, ITU maps present, terrain source |
 
@@ -110,8 +124,6 @@ batched radial engine equals standalone point-to-point calls.
 
 * **Land paths only.** Every profile point is treated as radio-climatic zone 4
   (inland). Sea and coastal paths (ω, dct/dcr) are not modelled yet.
-* **No terminal clutter loss.** P.1812-8 itself dropped it. For RX in clutter,
-  apply P.2108 §3.1 separately (on the roadmap).
 * **Azimuth pattern only.** No vertical pattern or downtilt yet.
 * ΔN / N0 for coverage maps are taken at the TX location (they vary on a 1.5° grid).
 * Sea and bathymetry are clamped to 0 m.
@@ -119,9 +131,9 @@ batched radial engine equals standalone point-to-point calls.
 
 ## Roadmap
 
-1. P.2108 terminal clutter loss and P.2109 building entry loss.
+1. P.2109 building entry loss; P.2108 §3.2 statistical clutter loss for the TX side.
 2. Land/sea zones from a coastline dataset, to enable the full P.1812 mixed-path terms.
 3. Vertical antenna pattern (downtilt), and multiple TX with best-server and SINR maps.
 4. Building-level mode: export the area around a TX to a Sionna RT scene for
    site-specific ray tracing, and compare with the P.1812 layer.
-5. Drive-test CSV overlay with error statistics (mean, std, RMSE) per model.
+5. Automatic per-model calibration (offset/slope fit) from a loaded drive test.
