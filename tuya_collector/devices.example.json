@@ -1,0 +1,8 @@
+[
+  {
+    "name": "Circuit-Breaker-Example",
+    "id": "YOUR_DEVICE_ID",
+    "key": "YOUR_LOCAL_KEY",
+    "ip": "10.0.11.X"
+  }
+]

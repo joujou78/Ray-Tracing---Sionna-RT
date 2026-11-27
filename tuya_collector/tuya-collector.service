@@ -1,0 +1,23 @@
+[Unit]
+Description=Tuya circuit breaker collector -> InfluxDB
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /opt/tuya_collector/tuya_collector.py
+Restart=on-failure
+RestartSec=10
+Environment=INFLUX_URL=http://localhost:8086
+Environment=INFLUX_TOKEN=REPLACE_WITH_TOKEN
+Environment=INFLUX_ORG=grafana
+Environment=INFLUX_BUCKET=energy
+Environment=DEVICES_FILE=/etc/tuya/devices.json
+Environment=POLL_INTERVAL=30
+Environment=TUYA_VERSION=3.4
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
