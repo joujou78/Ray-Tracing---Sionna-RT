@@ -235,9 +235,13 @@
       "targets": [
         {"refId": "A", "query": "from(bucket: \"energy\")\n  |> range(start: -3m)\n  |> filter(fn: (r) => r._measurement == \"W\" and r._field == \"value\")\n  |> group(columns: [\"entity_id\"])\n  |> last()\n  |> keep(columns: [\"entity_id\", \"_value\", \"_time\"])\n  |> rename(columns: {_value: \"Power W\"})"},
         {"refId": "B", "query": "from(bucket: \"energy\")\n  |> range(start: -3m)\n  |> filter(fn: (r) => r._measurement == \"A\" and r._field == \"value\")\n  |> group(columns: [\"entity_id\"])\n  |> last()\n  |> keep(columns: [\"entity_id\", \"_value\", \"_time\"])\n  |> rename(columns: {_value: \"Current A\"})"},
-        {"refId": "C", "query": "from(bucket: \"energy\")\n  |> range(start: -3m)\n  |> filter(fn: (r) => r._measurement == \"V\" and r._field == \"value\")\n  |> group(columns: [\"entity_id\"])\n  |> last()\n  |> keep(columns: [\"entity_id\", \"_value\", \"_time\"])\n  |> rename(columns: {_value: \"Voltage V\"})"}
-      ],
-      "fieldConfig": {"defaults": {"custom": {"align": "auto", "cellOptions": {"type": "auto"}}}, "overrides": [{"matcher": {"id": "byName", "options": "Power W"}, "properties": [{"id": "unit", "value": "watt"}, {"id": "decimals", "value": 0}, {"id": "custom.width", "value": 100}, {"id": "custom.cellOptions", "value": {"type": "color-background", "mode": "gradient"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 800}, {"color": "red", "value": 1600}]}}]}, {"matcher": {"id": "byName", "options": "Current A"}, "properties": [{"id": "unit", "value": "amp"}, {"id": "decimals", "value": 2}, {"id": "custom.width", "value": 100}, {"id": "custom.cellOptions", "value": {"type": "color-background", "mode": "gradient"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 14}, {"color": "red", "value": 17}]}}]}, {"matcher": {"id": "byName", "options": "Voltage V"}, "properties": [{"id": "unit", "value": "volt"}, {"id": "decimals", "value": 1}, {"id": "custom.width", "value": 100}, {"id": "custom.cellOptions", "value": {"type": "color-background", "mode": "gradient"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 207}, {"color": "green", "value": 215}, {"color": "yellow", "value": 240}, {"color": "red", "value": 253}]}}]}, {"matcher": {"id": "byName", "options": "entity_id"}, "properties": [{"id": "displayName", "value": "Breaker"}, {"id": "custom.width", "value": 160}]}]},
+        {"refId": "C", "query": "from(bucket: \"energy\")\n  |> range(start: -3m)\n  |> filter(fn: (r) => r._measurement == \"V\" and r._field == \"value\")\n  |> group(columns: [\"entity_id\"])\n  |> last()\n  |> keep(columns: [\"entity_id\", \"_value\", \"_time\"])\n  |> rename(columns: {_value: \"Voltage V\"})"}],
+      "fieldConfig": {"defaults": {"custom": {"align": "auto", "cellOptions": {"type": "auto"}}}, "overrides": [
+        {"matcher": {"id": "byName", "options": "Power W"}, "properties": [{"id": "unit", "value": "watt"}, {"id": "decimals", "value": 0}, {"id": "custom.width", "value": 100}, {"id": "custom.cellOptions", "value": {"type": "color-background", "mode": "gradient"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 800}, {"color": "red", "value": 1600}]}}]},
+        {"matcher": {"id": "byName", "options": "Current A"}, "properties": [{"id": "unit", "value": "amp"}, {"id": "decimals", "value": 2}, {"id": "custom.width", "value": 100}, {"id": "custom.cellOptions", "value": {"type": "color-background", "mode": "gradient"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 14}, {"color": "red", "value": 17}]}}]},
+        {"matcher": {"id": "byName", "options": "Voltage V"}, "properties": [{"id": "unit", "value": "volt"}, {"id": "decimals", "value": 1}, {"id": "custom.width", "value": 100}, {"id": "custom.cellOptions", "value": {"type": "color-background", "mode": "gradient"}}, {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 207}, {"color": "green", "value": 215}, {"color": "yellow", "value": 240}, {"color": "red", "value": 253}]}}]},
+        {"matcher": {"id": "byName", "options": "entity_id"}, "properties": [{"id": "displayName", "value": "Breaker"}, {"id": "custom.width", "value": 160}]}
+      ]},
       "options": {"showHeader": true, "sortBy": [{"displayName": "Power W", "desc": true}]},
       "transformations": [{"id": "merge", "options": {}}, {"id": "sortBy", "options": {"fields": [{"displayName": "Power W", "desc": true}]}}]
     },
@@ -276,10 +280,40 @@
       "gridPos": {"h": 1, "w": 24, "x": 0, "y": 61}
     },
     {
+      "id": 70,
+      "type": "stat",
+      "title": "Daily Consumption",
+      "gridPos": {"h": 4, "w": 8, "x": 0, "y": 62},
+      "datasource": {"type": "influxdb", "uid": "${datasource}"},
+      "targets": [{"refId": "A", "query": "from(bucket: \"energy\")\n  |> range(start: today())\n  |> filter(fn: (r) => r._measurement == \"kWh\" and r._field == \"value\")\n  |> filter(fn: (r) => r.entity_id =~ /circuit_breaker_(${breaker:pipe})_total_energy/)\n  |> group(columns: [\"entity_id\"])\n  |> difference(nonNegative: true)\n  |> filter(fn: (r) => r._value >= 0.0)\n  |> group()\n  |> sum()", "datasource": {"type": "influxdb", "uid": "${datasource}"}}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "colorMode": "background", "graphMode": "none", "justifyMode": "center", "textMode": "auto", "orientation": "auto"},
+      "fieldConfig": {"defaults": {"unit": "kwh", "decimals": 2, "color": {"mode": "fixed", "fixedColor": "semi-dark-blue"}, "thresholds": {"mode": "absolute", "steps": [{"color": "semi-dark-blue", "value": null}]}}, "overrides": []}
+    },
+    {
+      "id": 71,
+      "type": "stat",
+      "title": "Weekly Consumption",
+      "gridPos": {"h": 4, "w": 8, "x": 8, "y": 62},
+      "datasource": {"type": "influxdb", "uid": "${datasource}"},
+      "targets": [{"refId": "A", "query": "from(bucket: \"energy\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"kWh\" and r._field == \"value\")\n  |> filter(fn: (r) => r.entity_id =~ /circuit_breaker_(${breaker:pipe})_total_energy/)\n  |> group(columns: [\"entity_id\"])\n  |> difference(nonNegative: true)\n  |> filter(fn: (r) => r._value >= 0.0)\n  |> group()\n  |> sum()", "datasource": {"type": "influxdb", "uid": "${datasource}"}}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "colorMode": "background", "graphMode": "none", "justifyMode": "center", "textMode": "auto", "orientation": "auto"},
+      "fieldConfig": {"defaults": {"unit": "kwh", "decimals": 2, "color": {"mode": "fixed", "fixedColor": "semi-dark-green"}, "thresholds": {"mode": "absolute", "steps": [{"color": "semi-dark-green", "value": null}]}}, "overrides": []}
+    },
+    {
+      "id": 72,
+      "type": "stat",
+      "title": "Monthly Consumption",
+      "gridPos": {"h": 4, "w": 8, "x": 16, "y": 62},
+      "datasource": {"type": "influxdb", "uid": "${datasource}"},
+      "targets": [{"refId": "A", "query": "from(bucket: \"energy\")\n  |> range(start: -30d)\n  |> filter(fn: (r) => r._measurement == \"kWh\" and r._field == \"value\")\n  |> filter(fn: (r) => r.entity_id =~ /circuit_breaker_(${breaker:pipe})_total_energy/)\n  |> group(columns: [\"entity_id\"])\n  |> difference(nonNegative: true)\n  |> filter(fn: (r) => r._value >= 0.0)\n  |> group()\n  |> sum()", "datasource": {"type": "influxdb", "uid": "${datasource}"}}],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "colorMode": "background", "graphMode": "none", "justifyMode": "center", "textMode": "auto", "orientation": "auto"},
+      "fieldConfig": {"defaults": {"unit": "kwh", "decimals": 2, "color": {"mode": "fixed", "fixedColor": "semi-dark-purple"}, "thresholds": {"mode": "absolute", "steps": [{"color": "semi-dark-purple", "value": null}]}}, "overrides": []}
+    },
+    {
       "id": 50,
       "type": "timeseries",
       "title": "Energy per Breaker — Cumulative (kWh)",
-      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 62},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 66},
       "datasource": {"type": "influxdb", "uid": "${datasource}"},
       "targets": [{"refId": "A", "query": "from(bucket: \"energy\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"kWh\" and r._field == \"value\")\n  |> filter(fn: (r) => r.entity_id =~ /circuit_breaker_(${breaker:pipe})_total_energy/)\n  |> group(columns: [\"entity_id\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> yield(name: \"cumulative\")"}],
       "fieldConfig": {"defaults": {"unit": "kwatth", "decimals": 3, "custom": {"lineWidth": 1, "fillOpacity": 5, "showPoints": "never", "spanNulls": false}}, "overrides": []},
@@ -289,7 +323,7 @@
       "id": 51,
       "type": "timeseries",
       "title": "Daily Energy Consumed per Breaker (kWh/day)",
-      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 62},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 66},
       "datasource": {"type": "influxdb", "uid": "${datasource}"},
       "targets": [{"refId": "A", "query": "from(bucket: \"energy\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"kWh\" and r._field == \"value\")\n  |> filter(fn: (r) => r.entity_id =~ /circuit_breaker_(${breaker:pipe})_total_energy/)\n  |> group(columns: [\"entity_id\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> difference(nonNegative: true)\n  |> filter(fn: (r) => r._value >= 0.0)\n  |> yield(name: \"delta\")"}],
       "fieldConfig": {"defaults": {"unit": "kwatth", "decimals": 2, "custom": {"lineWidth": 0, "fillOpacity": 80, "drawStyle": "bars", "barAlignment": 0, "showPoints": "never", "spanNulls": false}}, "overrides": []},
@@ -300,13 +334,13 @@
       "type": "row",
       "title": "Cost",
       "collapsed": false,
-      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 71}
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 75}
     },
     {
       "id": 60,
       "type": "stat",
       "title": "Cost — Today",
-      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 72},
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 76},
       "datasource": {"type": "influxdb", "uid": "${datasource}"},
       "targets": [{"refId": "A", "query": "from(bucket: \"energy\")\n  |> range(start: today())\n  |> filter(fn: (r) => r._measurement == \"kWh\" and r._field == \"value\")\n  |> group(columns: [\"entity_id\"])\n  |> difference(nonNegative: true)\n  |> filter(fn: (r) => r._value >= 0.0)\n  |> group()\n  |> sum()\n  |> map(fn: (r) => ({r with _value: r._value * 0.09}))"}],
       "fieldConfig": {"defaults": {"unit": "currencyUSD", "decimals": 2, "color": {"mode": "fixed", "fixedColor": "semi-dark-green"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}}, "overrides": []},
@@ -316,7 +350,7 @@
       "id": 61,
       "type": "stat",
       "title": "Cost — This Week",
-      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 72},
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 76},
       "datasource": {"type": "influxdb", "uid": "${datasource}"},
       "targets": [{"refId": "A", "query": "from(bucket: \"energy\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"kWh\" and r._field == \"value\")\n  |> group(columns: [\"entity_id\"])\n  |> aggregateWindow(every: 30m, fn: last, createEmpty: false)\n  |> difference(nonNegative: true)\n  |> filter(fn: (r) => r._value >= 0.0)\n  |> group()\n  |> sum()\n  |> map(fn: (r) => ({r with _value: r._value * 0.09}))"}],
       "fieldConfig": {"defaults": {"unit": "currencyUSD", "decimals": 2, "color": {"mode": "fixed", "fixedColor": "semi-dark-orange"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}}, "overrides": []},
@@ -326,7 +360,7 @@
       "id": 62,
       "type": "stat",
       "title": "Cost — This Month",
-      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 72},
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 76},
       "datasource": {"type": "influxdb", "uid": "${datasource}"},
       "targets": [{"refId": "A", "query": "from(bucket: \"energy\")\n  |> range(start: -30d)\n  |> filter(fn: (r) => r._measurement == \"kWh\" and r._field == \"value\")\n  |> group(columns: [\"entity_id\"])\n  |> aggregateWindow(every: 30m, fn: last, createEmpty: false)\n  |> difference(nonNegative: true)\n  |> filter(fn: (r) => r._value >= 0.0)\n  |> group()\n  |> sum()\n  |> map(fn: (r) => ({r with _value: r._value * 0.09}))"}],
       "fieldConfig": {"defaults": {"unit": "currencyUSD", "decimals": 1, "color": {"mode": "fixed", "fixedColor": "semi-dark-red"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}}, "overrides": []},
@@ -336,7 +370,7 @@
       "id": 63,
       "type": "stat",
       "title": "Est. Monthly Cost (from live load)",
-      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 72},
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 76},
       "datasource": {"type": "influxdb", "uid": "${datasource}"},
       "targets": [{"refId": "A", "query": "from(bucket: \"energy\")\n  |> range(start: -3m)\n  |> filter(fn: (r) => r._measurement == \"W\" and r._field == \"value\")\n  |> group()\n  |> last()\n  |> sum()\n  |> map(fn: (r) => ({r with _value: r._value / 1000.0 * 24.0 * 30.0 * 0.09}))"}],
       "fieldConfig": {"defaults": {"unit": "currencyUSD", "decimals": 1, "color": {"mode": "fixed", "fixedColor": "purple"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}}, "overrides": []},
@@ -346,7 +380,7 @@
       "id": 64,
       "type": "timeseries",
       "title": "Hourly Cost ($/h) — All Breakers",
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 76},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 80},
       "datasource": {"type": "influxdb", "uid": "${datasource}"},
       "targets": [{"refId": "A", "query": "from(bucket: \"energy\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"kWh\" and r._field == \"value\")\n  |> group(columns: [\"entity_id\"])\n  |> aggregateWindow(every: 1h, fn: last, createEmpty: false)\n  |> difference(nonNegative: true)\n  |> filter(fn: (r) => r._value >= 0.0)\n  |> group()\n  |> aggregateWindow(every: 1h, fn: sum, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value * 0.09}))"}],
       "fieldConfig": {"defaults": {"unit": "currencyUSD", "decimals": 3, "color": {"mode": "fixed", "fixedColor": "semi-dark-orange"}, "custom": {"lineWidth": 2, "fillOpacity": 20, "gradientMode": "opacity", "showPoints": "never", "spanNulls": false}}, "overrides": []},
@@ -396,6 +430,6 @@
   "timezone": "browser",
   "title": "Pescotel — Circuit Breakers (Enhanced v2)",
   "uid": "pescotel-cb-enhanced-v2",
-  "version": 4,
+  "version": 5,
   "weekStart": ""
 }
